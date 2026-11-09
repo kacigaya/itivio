@@ -1,4 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name" translatable="false">Itivio</string>
+
+    <!-- Search -->
+    <string name="search_where_to">Where to?</string>
+    <string name="search_from">From</string>
+    <string name="search_to">To</string>
+    <string name="search_my_location">My location</string>
+    <string name="search_swap">Swap origin and destination</string>
+    <string name="search_clear">Clear</string>
+    <string name="search_hint_more">Type at least 2 characters</string>
+    <string name="search_no_results">No places found for “%1$s”</string>
+    <string name="search_kind_stop">Stop</string>
+    <string name="search_kind_address">Address</string>
+    <string name="search_kind_place">Place</string>
+
+    <!-- Navigation -->
+    <string name="back">Back</string>
+    <string name="locate_me">Show my location</string>
+
+    <!-- Explore -->
+    <string name="explore_title">Plan a journey</string>
+    <string name="explore_body">Search for a stop, an address, or a place to see public transport routes.</string>
+
+    <!-- Results -->
+    <string name="results_title">Routes</string>
+    <string name="results_empty_title">No routes found</string>
+    <string name="results_empty_body">Try another time, or a nearby stop. Transit data may not cover this area.</string>
+    <string name="results_later">Later departures</string>
+    <string name="results_earlier">Earlier departures</string>
+    <string name="results_summary">Leaves %1$s from %2$s</string>
+    <string name="results_walk_only">Walk the whole way</string>
+    <plurals name="transfers">
+        <item quantity="one">%d transfer</item>
+        <item quantity="other">%d transfers</item>
+    </plurals>
+    <string name="no_transfers">Direct</string>
+    <string name="walk_distance">%1$s walk</string>
+    <string name="time_range">%1$s – %2$s</string>
+    <string name="cancelled">Cancelled</string>
+    <string name="sort_best">Best</string>
+    <string name="sort_fastest">Fastest</string>
+    <string name="sort_fewest_transfers">Fewest transfers</string>
+    <string name="sort_least_walking">Least walking</string>
+
+    <!-- Real-time -->
+    <string name="live">Live</string>
+    <string name="scheduled">Scheduled</string>
+    <string name="delay_late">%1$s late</string>
+    <string name="delay_early">%1$s early</string>
+    <string name="on_time">On time</string>
+    <string name="scheduled_time_was">Scheduled %1$s</string>
+
+    <!-- Itinerary -->
+    <string name="itinerary_title">Journey details</string>
+    <string name="itinerary_walk">Walk %1$s</string>
+    <string name="itinerary_walk_duration">Walk %1$s · %2$s</string>
+    <string name="itinerary_towards">Towards %1$s</string>
+    <string name="itinerary_track">Platform %1$s</string>
+    <plurals name="itinerary_stops">
+        <item quantity="one">%d stop</item>
+        <item quantity="other">%d stops</item>
+    </plurals>
+    <string name="itinerary_show_stops">Show stops</string>
+    <string name="itinerary_hide_stops">Hide stops</string>
+    <string name="itinerary_arrive">Arrive</string>
+    <string name="itinerary_depart">Depart</string>
+    <string name="itinerary_operated_by">Operated by %1$s</string>
+
+    <!-- Units -->
+    <string name="duration_min">%1$d min</string>
+    <string name="duration_h_min">%1$d h %2$d min</string>
+    <string name="duration_h">%1$d h</string>
+    <string name="distance_m">%1$d m</string>
+    <string name="distance_km">%1$s km</string>
+
+    <!-- Modes (content descriptions) -->
+    <string name="mode_walk">Walk</string>
+    <string name="mode_bike">Bike</string>
+    <string name="mode_car">Car</string>
+    <string name="mode_bus">Bus</string>
+    <string name="mode_coach">Coach</string>
+    <string name="mode_tram">Tram</string>
+    <string name="mode_subway">Metro</string>
+    <string name="mode_suburban">Suburban train</string>
+    <string name="mode_rail">Train</string>
+    <string name="mode_highspeed_rail">High-speed train</string>
+    <string name="mode_ferry">Ferry</string>
+    <string name="mode_airplane">Flight</string>
+    <string name="mode_aerial_lift">Cable car</string>
+    <string name="mode_funicular">Funicular</string>
+    <string name="mode_on_demand">On-demand service</string>
+    <string name="mode_other">Transit</string>
+    <string name="line_description">%1$s %2$s</string>
+
+    <!-- States -->
+    <string name="error_offline_title">You are offline</string>
+    <string name="error_offline_body">Connect to the internet and try again.</string>
+    <string name="error_server_title">Service unavailable</string>
+    <string name="error_server_body">The routing service did not respond. Try again in a moment.</string>
+    <string name="error_unexpected_title">Something went wrong</string>
+    <string name="error_unexpected_body">The app could not read the response. Try again.</string>
+    <string name="error_no_location_title">Location unavailable</string>
+    <string name="error_no_location_body">Allow location access, or pick a starting point.</string>
+    <string name="retry">Try again</string>
+    <string name="loading">Loading</string>
+    <string name="allow_location">Allow location</string>
+
+    <!-- Attribution -->
+    <string name="attribution_routing">Routing by Transitous</string>
+    <string name="attribution_sources">Data sources</string>
+    <string name="attribution_url" translatable="false">https://transitous.org/sources/</string>
 </resources>

@@ -39,6 +39,11 @@ android {
         unitTests {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
+            all {
+                it.systemProperty("robolectric.graphicsMode", "NATIVE")
+                // Screenshots are written for review only; nothing compares against goldens yet.
+                it.systemProperty("roborazzi.test.record", "true")
+            }
         }
     }
 }
@@ -78,6 +83,8 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.ktor.client.mock)
     testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
