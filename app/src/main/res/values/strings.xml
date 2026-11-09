@@ -24,12 +24,9 @@
     <string name="explore_body">Search for a stop, an address, or a place to see public transport routes.</string>
 
     <!-- Results -->
-    <string name="results_title">Routes</string>
     <string name="results_empty_title">No routes found</string>
     <string name="results_empty_body">Try another time, or a nearby stop. Transit data may not cover this area.</string>
     <string name="results_later">Later departures</string>
-    <string name="results_earlier">Earlier departures</string>
-    <string name="results_summary">Leaves %1$s from %2$s</string>
     <string name="results_walk_only">Walk the whole way</string>
     <plurals name="transfers">
         <item quantity="one">%d transfer</item>
@@ -49,13 +46,11 @@
     <string name="scheduled">Scheduled</string>
     <string name="delay_late">%1$s late</string>
     <string name="delay_early">%1$s early</string>
-    <string name="on_time">On time</string>
     <string name="scheduled_time_was">Scheduled %1$s</string>
 
     <!-- Itinerary -->
-    <string name="itinerary_title">Journey details</string>
-    <string name="itinerary_walk">Walk %1$s</string>
-    <string name="itinerary_walk_duration">Walk %1$s · %2$s</string>
+    <string name="street_leg">%1$s %2$s · %3$s</string>
+    <string name="street_leg_no_distance">%1$s · %2$s</string>
     <string name="itinerary_towards">Towards %1$s</string>
     <string name="itinerary_track">Platform %1$s</string>
     <plurals name="itinerary_stops">
@@ -65,7 +60,6 @@
     <string name="itinerary_show_stops">Show stops</string>
     <string name="itinerary_hide_stops">Hide stops</string>
     <string name="itinerary_arrive">Arrive</string>
-    <string name="itinerary_depart">Depart</string>
     <string name="itinerary_operated_by">Operated by %1$s</string>
 
     <!-- Units -->

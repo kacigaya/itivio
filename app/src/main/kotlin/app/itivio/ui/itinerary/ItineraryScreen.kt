@@ -202,9 +202,9 @@ private fun StreetLegItem(leg: Leg.Street) {
         }
         Text(
             if (leg.distanceMeters > 0) {
-                "$label ${formatDistance(leg.distanceMeters)} · ${formatDuration(leg.duration)}"
+                stringResource(R.string.street_leg, label, formatDistance(leg.distanceMeters), formatDuration(leg.duration))
             } else {
-                "$label · ${formatDuration(leg.duration)}"
+                stringResource(R.string.street_leg_no_distance, label, formatDuration(leg.duration))
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
