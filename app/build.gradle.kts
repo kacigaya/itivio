@@ -1,8 +1,19 @@
+import com.android.build.api.variant.FilterConfiguration
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
 }
+
+val releaseKeystore = providers.environmentVariable("ITIVIO_KEYSTORE")
+    .orElse(providers.gradleProperty("itivio.keystore"))
+val releaseStorePassword = providers.environmentVariable("ITIVIO_KEYSTORE_PASSWORD")
+    .orElse(providers.gradleProperty("itivio.keystorePassword"))
+val releaseKeyAlias = providers.environmentVariable("ITIVIO_KEY_ALIAS")
+    .orElse(providers.gradleProperty("itivio.keyAlias"))
+val releaseKeyPassword = providers.environmentVariable("ITIVIO_KEY_PASSWORD")
+    .orElse(providers.gradleProperty("itivio.keyPassword"))
 
 android {
     namespace = "app.itivio"
@@ -22,8 +33,30 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (listOf(releaseKeystore, releaseStorePassword, releaseKeyAlias, releaseKeyPassword)
+                .all { it.isPresent }) {
+            create("release") {
+                storeFile = file(releaseKeystore.get())
+                storePassword = releaseStorePassword.get()
+                keyAlias = releaseKeyAlias.get()
+                keyPassword = releaseKeyPassword.get()
+            }
+        }
+    }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -44,6 +77,18 @@ android {
                 // Screenshots are written for review only; nothing compares against goldens yet.
                 it.systemProperty("roborazzi.test.record", "true")
             }
+        }
+    }
+}
+
+androidComponents {
+    val baseVersionCode = requireNotNull(android.defaultConfig.versionCode)
+    val abiVersionCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            val abi = output.filters.find { it.filterType == FilterConfiguration.FilterType.ABI }
+            val abiIndex = abi?.let { abiVersionCodes.getValue(it.identifier) } ?: 0
+            output.versionCode.set(baseVersionCode * 10 + abiIndex)
         }
     }
 }

@@ -46,6 +46,19 @@ Requirements: JDK 21 and the Android SDK (compile SDK 37).
 ./gradlew :app:lintDebug
 ```
 
+### Release builds
+
+Run `./gradlew :app:assembleRelease` to build one APK per CPU type (`arm64-v8a`, `armeabi-v7a`, and `x86_64`) plus a universal APK.
+
+Set all four environment variables to sign the release APKs:
+
+- `ITIVIO_KEYSTORE`: path to the keystore file.
+- `ITIVIO_KEYSTORE_PASSWORD`: keystore password.
+- `ITIVIO_KEY_ALIAS`: signing key alias.
+- `ITIVIO_KEY_PASSWORD`: signing key password.
+
+You can also set `itivio.keystore`, `itivio.keystorePassword`, `itivio.keyAlias`, and `itivio.keyPassword` in `~/.gradle/gradle.properties`. Environment variables take priority. If any value is missing, the release APKs stay unsigned. Keep keys and passwords outside the repository.
+
 ### Transitous contact
 
 Transitous asks each app to send contact details with every request. The app puts the `itivio.contact` Gradle property in its User-Agent. If you publish a fork, change the contact to your own:
