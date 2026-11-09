@@ -1,0 +1,7 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Itivio logo</title>
+  <desc id="desc">A bold white lowercase i on a teal circle: the dot is a stop and the stem is a route that turns right at the end.</desc>
+  <circle cx="100" cy="100" r="100" fill="#1B6B5A"/>
+  <circle cx="86" cy="56" r="18" fill="#FFFFFF"/>
+  <path d="M86 104V128A22 22 0 0 0 108 150H122" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round"/>
+</svg>

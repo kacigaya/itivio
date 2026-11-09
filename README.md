@@ -1,6 +1,21 @@
-# Itivio
+<p align="center">
+  <img src="assets/logo.svg" alt="Itivio logo" width="140">
+</p>
 
-Itivio is a public transport app for Android. It plans journeys by bus, tram, metro, train, and ferry. It is open source and keeps your data on your device.
+<h1 align="center">Itivio</h1>
+
+<p align="center">
+  <strong>A public transport app for Android that keeps your data on your device.</strong><br>
+  <em>Plan journeys by bus, tram, metro, train, and ferry. Open source, no account, no ads.</em>
+</p>
+
+<p align="center">
+  <a href="https://kotlinlang.org"><img alt="Kotlin 2.4.21" src="https://shieldcn.dev/badge/Kotlin-2.4.21-7f52ff.svg?variant=secondary&amp;logo=kotlin"></a>
+  <a href="https://developer.android.com"><img alt="Android compile SDK 37" src="https://shieldcn.dev/badge/Android-SDK_37-3ddc84.svg?variant=secondary&amp;logo=android&amp;logoColor=171717"></a>
+  <a href="https://m3.material.io"><img alt="Material 3 Expressive" src="https://shieldcn.dev/badge/Material_3-Expressive-6750a4.svg?variant=secondary"></a>
+  <a href="https://gradle.org"><img alt="Gradle 9.9" src="https://shieldcn.dev/badge/Gradle-9.9-02303a.svg?variant=secondary&amp;logo=gradle"></a>
+  <a href="https://github.com/kacigaya/itivio/blob/main/LICENSE"><img alt="GPL-3.0-or-later License" src="https://shieldcn.dev/github/license/kacigaya/itivio.svg?variant=secondary"></a>
+</p>
 
 ## Features
 
