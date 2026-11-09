@@ -17,6 +17,8 @@ import app.itivio.domain.TransitMode
 import java.time.Instant
 
 class FakeRoutingRepository : RoutingRepository {
+    val nearbyCalls = mutableListOf<GeoPoint>()
+    var nearbyResult: suspend (GeoPoint) -> List<Departure> = { emptyList() }
     val searches = mutableListOf<Pair<String, GeoPoint?>>()
     val plans = mutableListOf<Pair<JourneyRequest, String?>>()
     var searchResult: suspend (String) -> List<Location> = { listOf(location(it)) }
@@ -36,7 +38,10 @@ class FakeRoutingRepository : RoutingRepository {
         return planResult(request, cursor)
     }
 
-    override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int): List<Departure> = emptyList()
+    override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int): List<Departure> {
+        nearbyCalls += point
+        return nearbyResult(point)
+    }
 
     override suspend fun stopsIn(box: BoundingBox): List<Location> = emptyList()
 

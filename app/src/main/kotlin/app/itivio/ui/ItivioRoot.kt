@@ -22,6 +22,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import app.itivio.domain.GeoPoint
+import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.UserLocation
 import app.itivio.ui.common.isWideLayout
 import app.itivio.ui.common.panelInsets
@@ -30,6 +31,8 @@ import app.itivio.ui.explore.ExploreScreen
 import app.itivio.ui.itinerary.ItineraryPeekHeight
 import app.itivio.ui.itinerary.ItineraryScreen
 import app.itivio.ui.map.TransitMap
+import app.itivio.ui.nearby.NearbyViewModel
+import app.itivio.ui.nearby.rememberNow
 import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.planner.PlannerViewModel
 import app.itivio.ui.results.ResultsPeekHeight
@@ -50,7 +53,7 @@ import org.maplibre.compose.location.rememberLocationState
  * planner ViewModel is scoped to the activity so every screen reads the same session.
  */
 @Composable
-fun ItivioRoot(planner: PlannerViewModel = koinViewModel()) {
+fun ItivioRoot(planner: PlannerViewModel = koinViewModel(), nearby: NearbyViewModel = koinViewModel()) {
     val backStack = rememberNavBackStack(ExploreRoute)
     val state by planner.state.collectAsStateWithLifecycle()
     val wide = isWideLayout()
@@ -64,6 +67,13 @@ fun ItivioRoot(planner: PlannerViewModel = koinViewModel()) {
         }
     }
     var recenterRequest by rememberSaveable { mutableIntStateOf(0) }
+    // Collected only while Explore is on top, so departures refresh only while they are visible.
+    val nearbyState = if (backStack.last() == ExploreRoute && locationGranted) {
+        nearby.departures.collectAsStateWithLifecycle().value
+    } else {
+        LoadState.Idle
+    }
+    val now by rememberNow()
 
     val top = backStack.last()
     val mapJourney = when (top) {
@@ -77,12 +87,16 @@ fun ItivioRoot(planner: PlannerViewModel = koinViewModel()) {
         else -> ExplorePeekHeight
     }
     val destinationPoint = (state.destination as? Endpoint.Place)?.location?.point?.takeIf { top != ExploreRoute }
+    val stops = (nearbyState as? LoadState.Ready)?.value.orEmpty()
+        .flatMap { group -> group.departures.map { it.stop.point } }
+        .distinct()
 
     Box(Modifier.fillMaxSize()) {
         TransitMap(
             locationState = locationState,
             journey = mapJourney,
             destination = destinationPoint,
+            stops = stops,
             insets = panelInsets(wide, peek),
             recenterRequest = recenterRequest,
             modifier = Modifier.fillMaxSize(),
@@ -102,8 +116,11 @@ fun ItivioRoot(planner: PlannerViewModel = koinViewModel()) {
                     ExploreScreen(
                         wide = wide,
                         locationGranted = locationGranted,
+                        nearby = nearbyState,
+                        now = now,
                         onRequestLocation = locationState::requestPermission,
                         onRecenter = { recenterRequest++ },
+                        onRetryNearby = nearby::retry,
                         onDestination = { endpoint ->
                             planner.setDestination(endpoint)
                             backStack.add(ResultsRoute)
@@ -121,6 +138,7 @@ fun ItivioRoot(planner: PlannerViewModel = koinViewModel()) {
                         },
                         onDestination = planner::setDestination,
                         onSwap = planner::swap,
+                        onTime = planner::setTime,
                         onSort = planner::setSort,
                         onSelect = planner::select,
                         onOpen = { id -> backStack.add(ItineraryRoute(id)) },

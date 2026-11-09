@@ -50,8 +50,8 @@ private const val DARK_STYLE = "https://tiles.openfreemap.org/styles/dark"
 private val InitialCamera = CameraPosition(center = Position(longitude = 10.0, latitude = 50.0), zoom = 3.5)
 
 /**
- * The persistent map behind every screen. Draws the device position, the [journey] legs, and
- * the [destination] marker. [insets] is the area covered by sheets or panes; the camera keeps
+ * The persistent map behind every screen. Draws the device position, nearby [stops], the
+ * [journey] legs, and the [destination] marker. [insets] is the area covered by sheets or panes; the camera keeps
  * routes clear of it. Each change of [recenterRequest] moves the camera to the device position.
  */
 @Composable
@@ -59,6 +59,7 @@ fun TransitMap(
     locationState: LocationState,
     journey: Journey?,
     destination: GeoPoint?,
+    stops: List<GeoPoint>,
     insets: PaddingValues,
     recenterRequest: Int,
     modifier: Modifier = Modifier,
@@ -67,6 +68,7 @@ fun TransitMap(
     val style = if (isSystemInDarkTheme()) DARK_STYLE else LIGHT_STYLE
     val mapState = rememberMapState(baseStyle = BaseStyle.Uri(style), initialCameraPosition = InitialCamera) {
         // Layers declared here render above the base style and follow recomposition.
+        StopsLayer(stops, fill = scheme.surface, stroke = scheme.primary)
         LocationIndicatorLayer(id = "user", locationState = locationState)
         if (journey != null) JourneyLayers(journey, accent = scheme.primary, casing = scheme.surface, walk = scheme.onSurfaceVariant)
         EndpointLayer(journey, destination, fill = scheme.primary, stroke = scheme.surface)
@@ -132,6 +134,20 @@ private fun JourneyLayers(journey: Journey, accent: Color, casing: Color, walk: 
             }
         }
     }
+}
+
+@Composable
+@MaplibreComposable
+private fun StopsLayer(stops: List<GeoPoint>, fill: Color, stroke: Color) {
+    val source = rememberGeoJsonSource(GeoJsonData.Features(remember(stops) { stops.toPoints() }))
+    CircleLayer(
+        id = "stops",
+        source = source,
+        color = const(fill),
+        radius = const(5.dp),
+        strokeColor = const(stroke),
+        strokeWidth = const(2.dp),
+    )
 }
 
 @Composable

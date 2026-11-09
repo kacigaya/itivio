@@ -2,10 +2,11 @@ package app.itivio.ui.explore
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -23,11 +24,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.ui.common.AttributionFooter
+import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.MapPanel
+import app.itivio.ui.nearby.StopDepartures
+import app.itivio.ui.nearby.nearbyDepartures
 import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.search.LocationInputField
 import app.itivio.ui.search.LocationSearchView
 import app.itivio.ui.search.rememberLocationTextState
+import java.time.Instant
 
 val ExplorePeekHeight = 232.dp
 
@@ -36,8 +41,11 @@ val ExplorePeekHeight = 232.dp
 fun ExploreScreen(
     wide: Boolean,
     locationGranted: Boolean,
+    nearby: LoadState<List<StopDepartures>>,
+    now: Instant,
     onRequestLocation: () -> Unit,
     onRecenter: () -> Unit,
+    onRetryNearby: () -> Unit,
     onDestination: (Endpoint) -> Unit,
 ) {
     val searchBarState = rememberSearchBarState()
@@ -60,7 +68,14 @@ fun ExploreScreen(
             if (wide) LocateButton(locationGranted, onRequestLocation, onRecenter)
         },
     ) {
-        ExploreSheet(locationGranted, onRequestLocation)
+        LazyColumn(contentPadding = PaddingValues(bottom = 8.dp)) {
+            if (locationGranted) {
+                nearbyDepartures(nearby, now, onRetryNearby)
+            } else {
+                item(key = "intro") { Intro(onRequestLocation) }
+            }
+            item(key = "attribution") { AttributionFooter() }
+        }
     }
 
     LocationSearchView(
@@ -82,8 +97,9 @@ private fun LocateButton(locationGranted: Boolean, onRequestLocation: () -> Unit
     }
 }
 
+/** Without location the sheet explains the app and asks for access; nearby departures need it. */
 @Composable
-private fun ColumnScope.ExploreSheet(locationGranted: Boolean, onRequestLocation: () -> Unit) {
+private fun Intro(onRequestLocation: () -> Unit) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
@@ -94,12 +110,9 @@ private fun ColumnScope.ExploreSheet(locationGranted: Boolean, onRequestLocation
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        if (!locationGranted) {
-            FilledTonalButton(onClick = onRequestLocation, modifier = Modifier.padding(top = 8.dp)) {
-                Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
-                Text(stringResource(R.string.allow_location), modifier = Modifier.padding(start = 8.dp))
-            }
+        FilledTonalButton(onClick = onRequestLocation, modifier = Modifier.padding(top = 8.dp)) {
+            Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
+            Text(stringResource(R.string.allow_location), modifier = Modifier.padding(start = 8.dp))
         }
     }
-    AttributionFooter()
 }

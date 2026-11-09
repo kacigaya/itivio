@@ -11,7 +11,9 @@ import app.itivio.ui.common.UserLocation
 import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.planner.PlannerViewModel
 import app.itivio.ui.planner.RouteSort
+import java.time.Instant
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -20,6 +22,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PlannerViewModelTest {
     @get:Rule val main = MainDispatcherRule()
 
@@ -132,5 +135,57 @@ class PlannerViewModelTest {
         val request = repository.plans.last().first
         assertEquals("Zoo", request.from.name)
         assertEquals("Home", request.to.name)
+    }
+
+    @Test
+    fun `setting an arrival time replans with that time`() = runTest(main.dispatcher) {
+        viewModel.setOrigin(Endpoint.Place(location("Home")))
+        viewModel.setDestination(Endpoint.Place(location("Zoo")))
+        advanceUntilIdle()
+        val time = Instant.parse("2026-11-09T12:00:00Z")
+
+        viewModel.setTime(time, arriveBy = true)
+        advanceUntilIdle()
+
+        assertEquals(2, repository.plans.size)
+        val request = repository.plans.last().first
+        assertEquals(time, request.time)
+        assertTrue(request.arriveBy)
+        assertEquals(time, viewModel.state.value.time)
+        assertTrue(viewModel.state.value.arriveBy)
+    }
+
+    @Test
+    fun `clearing the time replans for departure now`() = runTest(main.dispatcher) {
+        viewModel.setOrigin(Endpoint.Place(location("Home")))
+        viewModel.setTime(Instant.parse("2026-11-09T12:00:00Z"), arriveBy = true)
+        viewModel.setDestination(Endpoint.Place(location("Zoo")))
+        advanceUntilIdle()
+
+        viewModel.setTime(null, arriveBy = true)
+        advanceUntilIdle()
+
+        assertEquals(2, repository.plans.size)
+        val request = repository.plans.last().first
+        assertEquals(null, request.time)
+        assertFalse(request.arriveBy)
+        assertEquals(null, viewModel.state.value.time)
+        assertFalse(viewModel.state.value.arriveBy)
+    }
+
+    @Test
+    fun `reset clears the time and arrival mode`() = runTest(main.dispatcher) {
+        viewModel.setOrigin(Endpoint.Place(location("Home")))
+        viewModel.setTime(Instant.parse("2026-11-09T12:00:00Z"), arriveBy = true)
+        viewModel.setDestination(Endpoint.Place(location("Zoo")))
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.arriveBy)
+
+        viewModel.reset()
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.state.value.time)
+        assertFalse(viewModel.state.value.arriveBy)
+        assertEquals(1, repository.plans.size)
     }
 }

@@ -12,6 +12,7 @@ import app.itivio.ui.common.Failure
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.UserLocation
 import app.itivio.ui.common.toFailure
+import java.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,9 @@ enum class RouteSort { BEST, FASTEST, FEWEST_TRANSFERS, LEAST_WALKING }
 data class PlannerState(
     val origin: Endpoint = Endpoint.MyLocation,
     val destination: Endpoint? = null,
+    /** Null means "leave now". */
+    val time: Instant? = null,
+    val arriveBy: Boolean = false,
     val results: LoadState<List<Journey>> = LoadState.Idle,
     val sort: RouteSort = RouteSort.BEST,
     val loadingLater: Boolean = false,
@@ -85,13 +89,19 @@ class PlannerViewModel(
         planIfReady()
     }
 
+    /** Sets when to travel. A null [time] means "leave now"; [arriveBy] then has no meaning. */
+    fun setTime(time: Instant?, arriveBy: Boolean) {
+        _state.update { it.copy(time = time, arriveBy = time != null && arriveBy) }
+        planIfReady()
+    }
+
     fun setSort(sort: RouteSort) = _state.update { it.copy(sort = sort) }
 
     fun select(journeyId: String) = _state.update { it.copy(selectedId = journeyId) }
 
     fun retry() = planIfReady()
 
-    /** Clears the session when the user leaves the results. Keeps the origin choice. */
+    /** Clears the session when the user leaves the results. Keeps the origin choice; the time goes back to now. */
     fun reset() {
         planJob?.cancel()
         laterCursor = null
@@ -110,7 +120,7 @@ class PlannerViewModel(
             _state.update { it.copy(results = LoadState.Failed(Failure.NO_LOCATION), canLoadLater = false) }
             return
         }
-        val request = JourneyRequest(from = from, to = to)
+        val request = JourneyRequest(from = from, to = to, time = current.time, arriveBy = current.arriveBy)
         lastRequest = request
         _state.update { it.copy(results = LoadState.Loading, selectedId = null, canLoadLater = false, loadingLater = false) }
         planJob = viewModelScope.launch {

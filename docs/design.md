@@ -34,8 +34,16 @@ Default Material type scale (Roboto). Times and durations use `titleLarge` / `ti
 |---|---|---|
 | Home | Map, floating search bar at top, "locate me" FAB, bottom sheet with nearby departures | Map with sheet content in a 400dp side pane |
 | Search | Full-screen search view: origin and destination fields, swap button, suggestions list | Same, in the side pane |
-| Results | Sheet with route cards. Map shows the selected route | Side pane with route cards |
+| Results | Sheet with a travel time chip, sort chips, and route cards. Map shows the selected route | Side pane with route cards |
 | Itinerary | Sheet with leg timeline. Map fits the route | Side pane timeline |
+
+## Nearby departures
+
+Departures within 400 m, grouped by stop name. Groups are in order of their first departure. Each row shows the line badge, headsign, platform, and a countdown with the clock time. Departures 60 min or more away show only the clock time. Live countdowns use the tertiary role and the live icon, the same as `TimeText`. Without location access, the sheet shows an intro and an "Allow location" button. The list refreshes once a minute while it is visible, and when the user moves more than 150 m. Nearby stops show as small rings on the map.
+
+## Travel time
+
+A filter chip before the sort chips opens a time picker dialog. The dialog has a segmented button (Leave at, Arrive by), day chips for the next 7 days, and the M3 time picker with a keyboard input toggle. "Leave now" resets to the current time. Times use the device time zone. The chip shows as selected when the time is not "now".
 
 ## Route card
 

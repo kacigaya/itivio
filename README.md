@@ -6,7 +6,8 @@ Itivio is a public transport app for Android. It plans journeys by bus, tram, me
 
 - Map with your current location.
 - Place and stop search with suggestions.
-- Journey planning with all public transport modes.
+- Departures from stops near you, with live countdowns.
+- Journey planning with all public transport modes. Leave now, leave at a time, or arrive by a time.
 - Sort routes by duration, transfers, or walking distance.
 - Journey details: stops, platforms, times, and the route on the map.
 - Live times where the transit agency publishes them. Scheduled times have no live marker.

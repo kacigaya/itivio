@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -13,6 +14,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +23,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -41,6 +47,7 @@ import app.itivio.ui.planner.PlannerState
 import app.itivio.ui.planner.RouteSort
 import app.itivio.ui.search.LocationSearchView
 import app.itivio.ui.search.rememberLocationTextState
+import java.time.Instant
 import kotlinx.coroutines.launch
 
 val ResultsPeekHeight = 360.dp
@@ -54,12 +61,14 @@ fun ResultsScreen(
     onOrigin: (Endpoint) -> Unit,
     onDestination: (Endpoint) -> Unit,
     onSwap: () -> Unit,
+    onTime: (Instant?, Boolean) -> Unit,
     onSort: (RouteSort) -> Unit,
     onSelect: (String) -> Unit,
     onOpen: (String) -> Unit,
     onLater: () -> Unit,
     onRetry: () -> Unit,
 ) {
+    var pickingTime by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val originSearch = rememberSearchBarState()
     val destinationSearch = rememberSearchBarState()
@@ -80,7 +89,19 @@ fun ResultsScreen(
             )
         },
     ) {
-        ResultsList(state, onSort, onSelect, onOpen, onLater, onRetry)
+        ResultsList(state, onPickTime = { pickingTime = true }, onSort, onSelect, onOpen, onLater, onRetry)
+    }
+
+    if (pickingTime) {
+        TravelTimeDialog(
+            time = state.time,
+            arriveBy = state.arriveBy,
+            onDismiss = { pickingTime = false },
+            onConfirm = { time, arriveBy ->
+                pickingTime = false
+                onTime(time, arriveBy)
+            },
+        )
     }
 
     LocationSearchView(originSearch, originText, stringResource(R.string.search_from), offerMyLocation = true, onPick = onOrigin)
@@ -145,6 +166,7 @@ private fun EndpointField(label: String, value: String, icon: Int, onClick: () -
 @Composable
 private fun ResultsList(
     state: PlannerState,
+    onPickTime: () -> Unit,
     onSort: (RouteSort) -> Unit,
     onSelect: (String) -> Unit,
     onOpen: (String) -> Unit,
@@ -156,7 +178,7 @@ private fun ResultsList(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        item(key = "sort") { SortChips(state.sort, onSort) }
+        item(key = "filters") { FilterChips(state, onPickTime, onSort) }
         when (val results = state.results) {
             LoadState.Idle, LoadState.Loading -> item(key = "loading") { LoadingState() }
             is LoadState.Failed -> item(key = "error") { FailureState(results.failure, onRetry) }
@@ -197,12 +219,15 @@ private fun ResultsList(
     }
 }
 
+/** The travel time comes first: it changes the results, while sorting only reorders them. */
 @Composable
-private fun SortChips(selected: RouteSort, onSort: (RouteSort) -> Unit) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+private fun FilterChips(state: PlannerState, onPickTime: () -> Unit, onSort: (RouteSort) -> Unit) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        item(key = "time") { TravelTimeChip(state.time, state.arriveBy, onPickTime) }
+        item(key = "divider") { VerticalDivider(Modifier.height(24.dp), color = MaterialTheme.colorScheme.outlineVariant) }
         items(RouteSort.entries) { sort ->
             FilterChip(
-                selected = sort == selected,
+                selected = sort == state.sort,
                 onClick = { onSort(sort) },
                 label = { Text(stringResource(sort.label())) },
             )

@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onRoot
+import app.itivio.domain.Departure
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
@@ -24,9 +25,12 @@ import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.UserLocation
 import app.itivio.ui.explore.ExploreScreen
 import app.itivio.ui.itinerary.ItineraryScreen
+import app.itivio.ui.nearby.NearbyViewModel
+import app.itivio.ui.nearby.StopDepartures
 import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.planner.PlannerState
 import app.itivio.ui.results.ResultsScreen
+import app.itivio.ui.results.TravelTimeDialog
 import app.itivio.ui.search.SearchViewModel
 import app.itivio.ui.theme.ItivioTheme
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -88,7 +92,38 @@ class ScreenshotTest {
 
     @Test
     fun explore() = capture("explore") {
-        ExploreScreen(wide = false, locationGranted = false, onRequestLocation = {}, onRecenter = {}, onDestination = {})
+        ExploreScreen(
+            wide = false, locationGranted = false, nearby = LoadState.Idle, now = t0,
+            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {},
+        )
+    }
+
+    @Test
+    fun nearby() = capture("nearby") {
+        ExploreScreen(
+            wide = false, locationGranted = true, nearby = LoadState.Ready(sampleDepartures), now = t0,
+            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {},
+        )
+    }
+
+    @Test
+    fun resultsArriveBy() = capture("results_arrive_by") {
+        ResultsScreen(
+            wide = false,
+            state = PlannerState(
+                destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
+                time = t0.plusSeconds(26 * 3600),
+                arriveBy = true,
+                results = LoadState.Ready(sampleJourneys),
+            ),
+            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onSort = {}, onSelect = {},
+            onOpen = {}, onLater = {}, onRetry = {},
+        )
+    }
+
+    @Test
+    fun travelTimeDialog() = capture("travel_time") {
+        TravelTimeDialog(time = null, arriveBy = false, onDismiss = {}, onConfirm = { _, _ -> })
     }
 
     @Test
@@ -101,7 +136,7 @@ class ScreenshotTest {
                 results = LoadState.Ready(sampleJourneys),
                 canLoadLater = true,
             ),
-            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onSort = {}, onSelect = {},
+            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onSort = {}, onSelect = {},
             onOpen = {}, onLater = {}, onRetry = {},
         )
     }
@@ -114,7 +149,7 @@ class ScreenshotTest {
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
                 results = LoadState.Failed(app.itivio.ui.common.Failure.OFFLINE),
             ),
-            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onSort = {}, onSelect = {},
+            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onSort = {}, onSelect = {},
             onOpen = {}, onLater = {}, onRetry = {},
         )
     }
@@ -132,7 +167,7 @@ class ScreenshotTest {
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
                 results = LoadState.Ready(sampleJourneys),
             ),
-            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onSort = {}, onSelect = {},
+            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onSort = {}, onSelect = {},
             onOpen = {}, onLater = {}, onRetry = {},
         )
     }
@@ -143,6 +178,23 @@ class ScreenshotTest {
         fun at(min: Long, liveDelay: Long? = null) =
             StopTime(t0.plusSeconds(min * 60), liveDelay?.let { t0.plusSeconds((min + it) * 60) })
         fun stop(name: String, track: String? = null) = Stop(name, GeoPoint(52.5, 13.4), track = track, zone = berlin)
+
+        val sampleDepartures: List<StopDepartures> = NearbyViewModel.group(
+            listOf(
+                Departure(stop("S+U Alexanderplatz", "2"), Line("U2", color = 0xFFDA421E.toInt(), textColor = 0xFFFFFFFF.toInt()),
+                    TransitMode.SUBWAY, "Ruhleben", at(2, 1), false, "d1"),
+                Departure(stop("S+U Alexanderplatz", "1"), Line("U2", color = 0xFFDA421E.toInt(), textColor = 0xFFFFFFFF.toInt()),
+                    TransitMode.SUBWAY, "Pankow", at(4), false, "d2"),
+                Departure(stop("S+U Alexanderplatz", "12"), Line("S5", color = 0xFFEB7405.toInt()),
+                    TransitMode.SUBURBAN, "Strausberg Nord", at(7, 0), false, "d3"),
+                Departure(stop("Alexanderplatz/Memhardstr."), Line("M2", color = 0xFFBE1414.toInt()),
+                    TransitMode.TRAM, "Heinersdorf", at(3, 2), false, "d4"),
+                Departure(stop("Alexanderplatz/Memhardstr."), Line("M4", color = 0xFFBE1414.toInt()),
+                    TransitMode.TRAM, "Hackescher Markt", at(9), true, "d5"),
+                Departure(stop("Alexanderplatz/Memhardstr."), Line("N5"),
+                    TransitMode.BUS, "Hellersdorf", at(75), false, "d6"),
+            ),
+        )
 
         val sampleJourneys: List<Journey> = listOf(
             Journey(

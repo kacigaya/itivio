@@ -34,12 +34,14 @@ To use a self-hosted MOTIS instance, change the base URL. To use another provide
 - The UI shows a link to `https://transitous.org/sources/` and the OpenStreetMap attribution.
 - Autocomplete waits for typing to pause, needs 2 or more characters, and cancels stale requests.
 - `/plan` runs only on explicit user action. No background polling.
+- `/stoptimes` refreshes once a minute, only while the nearby list is on screen and the app is in the foreground. A move of less than 150 m does not send a new request.
 - Geocode results are cached in memory.
 
 ## Privacy
 
 - No analytics, no crash reporting, no request logging.
 - The search bias point is rounded to about 1 km before it is sent.
+- The nearby departures center is rounded to about 10 m before it is sent.
 - The origin of a journey is sent at full precision only when the user plans from their location.
 - Favorites and recent searches stay on the device. Backup and device transfer are off.
 - Location comes from the Android framework provider. Google Play services is not required.
