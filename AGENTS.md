@@ -21,6 +21,8 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 
 ## Rules
 
+- `.github/workflows/apk.yml` builds debug APKs on `workflow_dispatch`. It uses Ubuntu 24.04, JDK 21, Android platform `android-37.0`, and build-tools `36.0.0`. It runs all three checks above and uploads `itivio-debug-apks` for 14 days.
+
 - Release builds make APKs for `arm64-v8a`, `armeabi-v7a`, and `x86_64`, plus a universal APK.
 - Signing needs `ITIVIO_KEYSTORE`, `ITIVIO_KEYSTORE_PASSWORD`, `ITIVIO_KEY_ALIAS`, and `ITIVIO_KEY_PASSWORD` (or `itivio.keystore`, `itivio.keystorePassword`, `itivio.keyAlias`, and `itivio.keyPassword` in `~/.gradle/gradle.properties`); environment variables take priority. If any value is missing, release APKs stay unsigned.
 - `ui` must not import `app.itivio.data`. Use `domain` types.

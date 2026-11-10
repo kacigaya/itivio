@@ -62,6 +62,16 @@ Requirements: JDK 21 and the Android SDK (compile SDK 37).
 ./gradlew :app:lintDebug
 ```
 
+### APK builds on GitHub
+
+1. Open [Build APK](https://github.com/kacigaya/itivio/actions/workflows/apk.yml).
+2. Select **Run workflow** on `main`.
+3. Wait for the build to pass.
+4. Download `itivio-debug-apks` from the run's **Artifacts** section.
+5. Extract the archive. Install the universal APK, or select the APK for your CPU type.
+
+The workflow runs tests and lint before uploading the APKs. These are debug builds signed with a temporary debug key. Later builds can need a reinstall because the key can change. Artifacts expire after 14 days. A GitHub login is required to download them.
+
 ### Release builds
 
 Run `./gradlew :app:assembleRelease` to build one APK per CPU type (`arm64-v8a`, `armeabi-v7a`, and `x86_64`) plus a universal APK.
