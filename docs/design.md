@@ -12,7 +12,7 @@ Material 3 Expressive on Jetpack Compose. The map is the canvas. The UI floats o
 ## Color
 
 - Dynamic color on Android 12+. Fallback scheme: tonal spot from seed `#1B6B5A`.
-- Map style: OpenFreeMap Liberty (light) and Dark (dark theme).
+- Map style: OpenFreeMap Liberty in the light theme. The dark theme uses `assets/map/dark.json`: the Liberty layers with dark colors, so both themes show the same roads, stops, and places. `tools/dark-map-style.py` builds this file.
 - Route lines on the map: transit legs in the line color with a `surface` casing. Walking legs are dotted in `onSurfaceVariant`.
 
 ## Type

@@ -44,7 +44,9 @@ import kotlinx.serialization.json.JsonObject
 
 // OpenFreeMap: free OpenStreetMap vector tiles, no API key, no tracking.
 private const val LIGHT_STYLE = "https://tiles.openfreemap.org/styles/liberty"
-private const val DARK_STYLE = "https://tiles.openfreemap.org/styles/dark"
+// The Liberty layers with dark colors, built by tools/dark-map-style.py. The OpenFreeMap dark
+// style has too little contrast and no stop or place labels.
+private const val DARK_STYLE = "asset://map/dark.json"
 
 /** Europe-wide view until the first location fix or route arrives. */
 private val InitialCamera = CameraPosition(center = Position(longitude = 10.0, latitude = 50.0), zoom = 3.5)
