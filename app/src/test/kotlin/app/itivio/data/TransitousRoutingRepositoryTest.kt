@@ -21,16 +21,16 @@ class TransitousRoutingRepositoryTest {
     private val to = Location("b", "Destination", LocationKind.PLACE, GeoPoint(52.5076, 13.3904))
 
     @Test fun userAgentBuilder() {
-        assertEquals("Itivio/1 (Android)", userAgent("1", ""))
-        assertEquals("Itivio/1 (Android)", userAgent("1", "  "))
-        assertEquals("Itivio/1 (+https://example.org)", userAgent("1", "https://example.org"))
+        assertEquals("itivio/1 (Android)", userAgent("1", ""))
+        assertEquals("itivio/1 (Android)", userAgent("1", "  "))
+        assertEquals("itivio/1 (+https://example.org)", userAgent("1", "https://example.org"))
     }
 
     @Test fun allEndpointsAndParameters() = runTest {
         val seen = mutableListOf<HttpRequestData>()
         val engine = MockEngine { request ->
             seen += request
-            assertEquals("Itivio/test (Android)", request.headers[HttpHeaders.UserAgent])
+            assertEquals("itivio/test (Android)", request.headers[HttpHeaders.UserAgent])
             assertEquals("api.transitous.org", request.url.host)
             val name = when (request.url.encodedPath) {
                 "/api/v1/geocode" -> "geocode"

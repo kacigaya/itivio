@@ -1,4 +1,4 @@
-# Itivio
+# itivio
 
 Open-source, privacy-focused Android public transport app. Routing comes from Transitous (MOTIS 2).
 

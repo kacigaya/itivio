@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="Itivio app icon" width="140">
+  <img src="assets/logo.svg" alt="itivio app icon" width="140">
 </p>
 
-<h1 align="center">Itivio</h1>
+<h1 align="center">itivio</h1>
 
 <p align="center">
   <strong>A public transport app for Android that keeps your data on your device.</strong><br>
@@ -97,4 +97,4 @@ Read the [Transitous usage policy](https://transitous.org/api/) before you publi
 
 ## License
 
-Itivio is free software. You can redistribute it and change it under the terms of the [GNU General Public License](LICENSE), version 3 or any later version.
+itivio is free software. You can redistribute it and change it under the terms of the [GNU General Public License](LICENSE), version 3 or any later version.

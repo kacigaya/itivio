@@ -1,6 +1,6 @@
 # Architecture
 
-Itivio is one Android app module (`:app`). Packages give the layering. Split into Gradle modules only when build time or reuse needs it.
+itivio is one Android app module (`:app`). Packages give the layering. Split into Gradle modules only when build time or reuse needs it.
 
 ## Layers
 
@@ -30,7 +30,7 @@ To use a self-hosted MOTIS instance, change the base URL. To use another provide
 
 ## Transitous usage policy
 
-- Every request sends `User-Agent: Itivio/<version> (+<contact>)`. Set the contact with the `itivio.contact` Gradle property.
+- Every request sends `User-Agent: itivio/<version> (+<contact>)`. Set the contact with the `itivio.contact` Gradle property.
 - The UI shows a link to `https://transitous.org/sources/` and the OpenStreetMap attribution.
 - Autocomplete waits for typing to pause, needs 2 or more characters, and cancels stale requests.
 - `/plan` runs only on explicit user action. No background polling.

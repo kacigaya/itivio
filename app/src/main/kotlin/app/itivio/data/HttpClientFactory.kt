@@ -19,7 +19,7 @@ internal val transitousJson = Json {
 }
 
 internal fun userAgent(version: String, contact: String): String =
-    if (contact.isBlank()) "Itivio/$version (Android)" else "Itivio/$version (+$contact)"
+    if (contact.isBlank()) "itivio/$version (Android)" else "itivio/$version (+$contact)"
 
 fun createHttpClient(
     engine: HttpClientEngine = OkHttp.create(),

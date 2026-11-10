@@ -155,7 +155,8 @@ fun LocationSearchView(
                         )
                     }
                 } else {
-                    items(state.value, key = { it.id }) { location ->
+                    // Geocoding IDs can be blank or repeated. These stateless rows use position keys.
+                    items(state.value) { location ->
                         SuggestionRow(
                             icon = location.iconRes(),
                             title = location.name,

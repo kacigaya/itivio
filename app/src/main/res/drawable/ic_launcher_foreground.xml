@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The mark is the letter "i" of Itivio, read from the bottom as one trip:
+  The mark is the letter "i" of itivio, read from the bottom as one trip:
   a transit line between two stations, a walk (the dots), then the destination pin.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
