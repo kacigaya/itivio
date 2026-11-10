@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="Itivio logo" width="140">
+  <img src="assets/logo.svg" alt="Itivio app icon" width="140">
 </p>
 
 <h1 align="center">Itivio</h1>
