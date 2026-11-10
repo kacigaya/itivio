@@ -34,7 +34,8 @@ import app.itivio.ui.search.LocationSearchView
 import app.itivio.ui.search.rememberLocationTextState
 import java.time.Instant
 
-val ExplorePeekHeight = 232.dp
+// Drag handle, search row, title, and the first departures.
+val ExplorePeekHeight = 296.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,22 +53,20 @@ fun ExploreScreen(
     val textState = rememberLocationTextState()
     val placeholder = stringResource(R.string.search_where_to)
 
-    MapPanel(
-        wide = wide,
-        peekHeight = ExplorePeekHeight,
-        header = {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SearchBar(
-                    state = searchBarState,
-                    inputField = { LocationInputField(textState, searchBarState, placeholder, onBack = null) },
-                    shadowElevation = 3.dp,
-                    modifier = Modifier.weight(1f),
-                )
-                if (!wide) LocateButton(locationGranted, onRequestLocation, onRecenter)
-            }
-            if (wide) LocateButton(locationGranted, onRequestLocation, onRecenter)
-        },
-    ) {
+    MapPanel(wide = wide, peekHeight = ExplorePeekHeight) {
+        // Search and locate sit on the sheet, in reach of the thumb. They stay in place while the list scrolls.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(start = 16.dp, top = if (wide) 8.dp else 0.dp, end = 16.dp, bottom = 8.dp),
+        ) {
+            SearchBar(
+                state = searchBarState,
+                inputField = { LocationInputField(textState, searchBarState, placeholder, onBack = null) },
+                modifier = Modifier.weight(1f),
+            )
+            LocateButton(locationGranted, onRequestLocation, onRecenter)
+        }
         LazyColumn(contentPadding = PaddingValues(bottom = 8.dp)) {
             if (locationGranted) {
                 nearbyDepartures(nearby, now, onRetryNearby)

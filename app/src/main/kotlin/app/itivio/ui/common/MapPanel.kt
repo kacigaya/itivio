@@ -44,14 +44,15 @@ fun panelInsets(wide: Boolean, peekHeight: Dp): PaddingValues =
 
 /**
  * Screen content over the map. Compact windows get a bottom sheet that peeks at [peekHeight];
- * wider windows get a side pane so the map stays visible. [header] floats above the map in both.
+ * wider windows get a side pane so the map stays visible. [header] floats above the map in both;
+ * the home screen has none, because its search bar sits on the panel.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapPanel(
     wide: Boolean,
     peekHeight: Dp,
-    header: @Composable ColumnScope.() -> Unit,
+    header: @Composable ColumnScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (wide) {

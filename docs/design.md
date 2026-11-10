@@ -5,7 +5,7 @@ Material 3 Expressive on Jetpack Compose. The map is the canvas. The UI floats o
 ## Principles
 
 1. Map first. Search, results, and itineraries sit on a bottom sheet over the map. The map always shows the context.
-2. One primary action per screen. The search bar on home. The route cards on results. The itinerary steps on detail.
+2. One primary action per screen. The search bar on home, at the top of the sheet in reach of the thumb. The route cards on results. The itinerary steps on detail.
 3. Live data must be clear. Live times use the `tertiary` role and a live icon. Scheduled times use `onSurfaceVariant`. A delay shows the struck-through scheduled time beside the live time.
 4. Line colors come from the agency. Line badges use the agency color and text color. When the feed has no color, badges use `secondaryContainer`.
 
@@ -32,7 +32,7 @@ Default Material type scale (Roboto). Times and durations use `titleLarge` / `ti
 
 | Screen | Compact | Medium and up |
 |---|---|---|
-| Home | Map, floating search bar at top, "locate me" FAB, bottom sheet with nearby departures | Map with sheet content in a 400dp side pane |
+| Home | Map, bottom sheet with the search bar and the "locate me" button at its top, then nearby departures | Map with sheet content in a 400dp side pane |
 | Search | Full-screen search view: origin and destination fields, swap button, suggestions list | Same, in the side pane |
 | Results | Sheet with a travel time chip, sort chips, and route cards. Map shows the selected route | Side pane with route cards |
 | Itinerary | Sheet with leg timeline. Map fits the route | Side pane timeline |
