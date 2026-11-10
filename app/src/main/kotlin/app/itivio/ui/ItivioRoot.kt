@@ -56,6 +56,12 @@ import org.maplibre.compose.location.rememberLocationState
 fun ItivioRoot(planner: PlannerViewModel = koinViewModel(), nearby: NearbyViewModel = koinViewModel()) {
     val backStack = rememberNavBackStack(ExploreRoute)
     val state by planner.state.collectAsStateWithLifecycle()
+    // Navigation survives process death; the in-memory planning session does not.
+    LaunchedEffect(Unit) {
+        if (state.destination == null) {
+            while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
+        }
+    }
     val wide = isWideLayout()
     val userLocation = koinInject<UserLocation>()
 

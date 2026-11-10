@@ -14,6 +14,8 @@ data/      Transitous client, DTOs, mappers, caches, local storage, location
 - `data` implements `domain` interfaces. Koin binds them in `data/DataModule.kt`.
 - ViewModels are bound in `UiModule.kt`.
 
+Planning sessions stay in memory. After process death, the app returns to home. Save the minimal planning request if session recovery becomes a requirement.
+
 ## Routing provider
 
 `domain.RoutingRepository` is the only routing entry point. The Transitous implementation calls the MOTIS 2 API at `https://api.transitous.org/api/`:

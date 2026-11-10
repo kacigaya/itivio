@@ -1,6 +1,19 @@
 package app.itivio.ui.common
 
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
+import android.text.format.DateFormat
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import app.itivio.R
 import java.text.DecimalFormat
@@ -8,15 +21,38 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-private val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
+internal val LocalTimeFormatter = staticCompositionLocalOf<DateTimeFormatter?> { null }
+
+@Composable
+internal fun rememberTimeFormatter(): DateTimeFormatter {
+    val context = LocalContext.current
+    val locale = LocalConfiguration.current.locales[0]
+    var use24Hour by remember(context, locale) { mutableStateOf(DateFormat.is24HourFormat(context)) }
+    DisposableEffect(context, locale) {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                use24Hour = DateFormat.is24HourFormat(context)
+            }
+        }
+        val resolver = context.contentResolver
+        resolver.registerContentObserver(Settings.System.getUriFor(Settings.System.TIME_12_24), false, observer)
+        use24Hour = DateFormat.is24HourFormat(context)
+        onDispose { resolver.unregisterContentObserver(observer) }
+    }
+    return remember(locale, use24Hour) {
+        DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, if (use24Hour) "Hm" else "hm"), locale)
+    }
+}
 
 /** Times show in the stop's own zone, so a trip abroad reads like the local timetable. */
-fun formatTime(instant: Instant, zone: ZoneId?): String =
-    timeFormatter.withZone(zone ?: ZoneId.systemDefault()).format(instant)
+@Composable
+fun formatTime(instant: Instant, zone: ZoneId?): String {
+    val formatter = LocalTimeFormatter.current ?: rememberTimeFormatter()
+    return formatter.withZone(zone ?: ZoneId.systemDefault()).format(instant)
+}
 
 /** Rounds to whole minutes; a journey under one minute still shows as 1 min. */
 @Composable
