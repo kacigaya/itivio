@@ -33,7 +33,7 @@ To use a self-hosted MOTIS instance, change the base URL. To use another provide
 ## Transitous usage policy
 
 - Every request sends `User-Agent: itivio/<version> (+<contact>)`. Set the contact with the `itivio.contact` Gradle property.
-- The UI shows a link to `https://transitous.org/sources/` and the OpenStreetMap attribution.
+- The UI shows a link to `https://transitous.org/sources/`. The info button on the map opens the OpenStreetMap, OpenMapTiles, and OpenFreeMap credits. The credits start closed, the same as the default MapLibre Android control.
 - Autocomplete waits for typing to pause, needs 2 or more characters, and cancels stale requests.
 - `/plan` runs only on explicit user action. No background polling.
 - `/stoptimes` refreshes once a minute, only while the nearby list is on screen and the app is in the foreground. A move of less than 150 m does not send a new request.
