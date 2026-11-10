@@ -6,14 +6,17 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
@@ -86,11 +89,18 @@ fun ExploreScreen(
     )
 }
 
+/** A round button with the height and the container color of the search bar, so the two read as one row. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LocateButton(locationGranted: Boolean, onRequestLocation: () -> Unit, onRecenter: () -> Unit) {
-    SmallFloatingActionButton(
+    FilledIconButton(
         onClick = if (locationGranted) onRecenter else onRequestLocation,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = CircleShape,
+        colors = IconButtonDefaults.filledIconButtonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+        modifier = Modifier.size(SearchBarDefaults.InputFieldHeight),
     ) {
         Icon(painterResource(R.drawable.ic_my_location), contentDescription = stringResource(R.string.locate_me))
     }

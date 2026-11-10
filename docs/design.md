@@ -21,7 +21,7 @@ Default Material type scale (Roboto). Times and durations use `titleLarge` / `ti
 
 ## Shape and spacing
 
-- Search bar: full. Route cards: `large` (16dp). Bottom sheet: `extraLarge` top corners. Line badges: `small` (8dp).
+- Search bar: full. "Locate me" button: a circle with the height of the search bar (56dp). Route cards: `large` (16dp). Bottom sheet: `extraLarge` top corners. Line badges: `small` (8dp).
 - 4dp grid. Screen margin 16dp (compact), 24dp (medium and up). Card padding 16dp.
 
 ## Motion
