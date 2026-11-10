@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A city map in the brand teal. The launcher moves this layer under the route, which gives parallax. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Land -->
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="22"
+                android:startY="16"
+                android:endX="86"
+                android:endY="92">
+                <item android:offset="0" android:color="#FF2A8F78" />
+                <item android:offset="0.55" android:color="#FF1B6B5A" />
+                <item android:offset="1" android:color="#FF0D4439" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:rotation="-18"
+        android:translateX="3"
+        android:translateY="3">
+        <!-- Parks -->
+        <path
+            android:fillColor="#7352C98A"
+            android:pathData="M40.5,19.7h10a2,2 0,0 1,2 2v9a2,2 0,0 1,-2 2h-10a2,2 0,0 1,-2 -2v-9a2,2 0,0 1,2 -2z M24.6,49h5a1.5,1.5 0,0 1,1.5 1.5v7a1.5,1.5 0,0 1,-1.5 1.5h-5a1.5,1.5 0,0 1,-1.5 -1.5v-7a1.5,1.5 0,0 1,1.5 -1.5z" />
+        <!-- Side streets. Some stop at a junction, as in a real street plan. -->
+        <path
+            android:pathData="M-30,4H138 M-30,34H138 M-30,47H37 M68,47H138 M-30,66H21 M55,66H138 M-30,97H138 M5,-30V138 M37,-30V66 M55,-30V47 M55,66V138 M68,-30V34 M68,47V80 M102,-30V138 M21,97L37,80 M87,34L102,18"
+            android:strokeWidth="1.2"
+            android:strokeColor="#21FFFFFF" />
+        <!-- Main roads -->
+        <path
+            android:pathData="M-30,18H138 M-30,80H138 M21,-30V138 M87,-30V138 M-30,58L21,34"
+            android:strokeWidth="2.8"
+            android:strokeColor="#38FFFFFF" />
+    </group>
+    <!-- Light from the top left -->
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="36"
+                android:centerY="28"
+                android:gradientRadius="58">
+                <item android:offset="0" android:color="#26FFFFFF" />
+                <item android:offset="1" android:color="#00FFFFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

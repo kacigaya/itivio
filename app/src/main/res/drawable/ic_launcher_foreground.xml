@@ -1,20 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  The mark is the letter "i" of Itivio, read from the bottom as one trip:
+  a transit line between two stations, a walk (the dots), then the destination pin.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Vector drawables have no blur. Two stacked offset copies make the soft shadow. -->
+    <group android:translateY="2.6">
+        <path
+            android:fillColor="#17000000"
+            android:pathData="M47.75,62a6.25,6.25 0,0 1,12.5 0V79.25a6.25,6.25 0,0 1,-12.5 0z M51,45.85a3,3 0,1 0,6 0a3,3 0,1 0,-6 0z M51,52.05a3,3 0,1 0,6 0a3,3 0,1 0,-6 0z" />
+    </group>
+    <group android:translateY="1.4">
+        <path
+            android:fillColor="#2B000000"
+            android:fillType="evenOdd"
+            android:pathData="M49.25,62a4.75,4.75 0,0 1,9.5 0V79.25a4.75,4.75 0,0 1,-9.5 0z M51.5,62a2.5,2.5 0,1 0,5 0a2.5,2.5 0,1 0,-5 0z M51.5,79.25a2.5,2.5 0,1 0,5 0a2.5,2.5 0,1 0,-5 0z M51.8,45.85a2.2,2.2 0,1 0,4.4 0a2.2,2.2 0,1 0,-4.4 0z M51.8,52.05a2.2,2.2 0,1 0,4.4 0a2.2,2.2 0,1 0,-4.4 0z" />
+    </group>
+    <!-- Transit line. The two holes are the stations. -->
     <path
-        android:pathData="M40,38 L62,38 A8,8 0 0 1 62,54 L46,54 A8,8 0 0 0 46,70 L68,70"
-        android:strokeWidth="6"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round" />
-    <path
-        android:fillColor="#FFFFFFFF"
         android:fillType="evenOdd"
-        android:pathData="M40,30a8,8 0,1 1,0 16a8,8 0,1 1,0 -16z M40,34.5a3.5,3.5 0,1 0,0 7a3.5,3.5 0,1 0,0 -7z" />
+        android:pathData="M49.25,62a4.75,4.75 0,0 1,9.5 0V79.25a4.75,4.75 0,0 1,-9.5 0z M51.5,62a2.5,2.5 0,1 0,5 0a2.5,2.5 0,1 0,-5 0z M51.5,79.25a2.5,2.5 0,1 0,5 0a2.5,2.5 0,1 0,-5 0z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="54"
+                android:startY="57"
+                android:endX="54"
+                android:endY="84">
+                <item android:offset="0" android:color="#FFFFFFFF" />
+                <item android:offset="1" android:color="#FFD9F1E9" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Walk -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M68,62a8,8 0,1 1,0 16a8,8 0,1 1,0 -16z" />
+        android:pathData="M51.8,45.85a2.2,2.2 0,1 0,4.4 0a2.2,2.2 0,1 0,-4.4 0z M51.8,52.05a2.2,2.2 0,1 0,4.4 0a2.2,2.2 0,1 0,-4.4 0z" />
+    <!-- Destination pin. It is the dot of the "i". -->
+    <path android:pathData="M54,40.64 C52.03,37.31 48,34.64 48,30 A6,6 0 1 1 60,30 C60,34.64 55.97,37.31 54,40.64 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="54"
+                android:startY="24"
+                android:endX="54"
+                android:endY="40.64">
+                <item android:offset="0" android:color="#FFFFD057" />
+                <item android:offset="1" android:color="#FFFF8A1F" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:fillColor="#1A000000"
+        android:pathData="M54,40.64 C55.97,37.31 60,34.64 60,30 A6,6 0 0 0 54,24 Z" />
+    <path
+        android:pathData="M49.97,28.53 A4.25,4.25 0 0 1 53.01,25.9"
+        android:strokeWidth="1.2"
+        android:strokeColor="#99FFFFFF"
+        android:strokeLineCap="round" />
+    <path
+        android:fillColor="#FF0D4439"
+        android:pathData="M51.7,30a2.3,2.3 0,1 0,4.6 0a2.3,2.3 0,1 0,-4.6 0z" />
 </vector>
