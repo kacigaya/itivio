@@ -5,10 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +14,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -27,6 +24,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.domain.Departure
+import app.itivio.ui.common.CountdownText
 import app.itivio.ui.common.FailureState
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.LoadingState
@@ -130,10 +128,7 @@ private fun DepartureRow(departure: Departure, now: Instant) {
     }
 }
 
-/**
- * Minutes until departure over the clock time. Live countdowns use the same tertiary role and
- * icon as [TimeText], so riders can tell live data from the timetable.
- */
+/** Minutes until departure over the clock time. */
 @Composable
 private fun Countdown(departure: Departure, minutes: Long) {
     val live = departure.time.isRealtime
@@ -146,21 +141,7 @@ private fun Countdown(departure: Departure, minutes: Long) {
         stringResource(if (live) R.string.live else R.string.scheduled),
     )
     Column(horizontalAlignment = Alignment.End, modifier = Modifier.clearAndSetSemantics { contentDescription = description }) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            if (live) {
-                Icon(
-                    painterResource(R.drawable.ic_sensors),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.size(16.dp),
-                )
-            }
-            Text(
-                countdown,
-                style = MaterialTheme.typography.titleMedium,
-                color = if (live) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface,
-            )
-        }
+        CountdownText(minutes, live)
         Text(clock, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

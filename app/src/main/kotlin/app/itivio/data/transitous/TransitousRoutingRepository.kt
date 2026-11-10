@@ -5,6 +5,7 @@ import app.itivio.domain.Departure
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.JourneyPage
 import app.itivio.domain.JourneyRequest
+import app.itivio.domain.Line
 import app.itivio.domain.Location
 import app.itivio.domain.RoutingException
 import app.itivio.domain.RoutingRepository
@@ -19,6 +20,7 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import java.io.IOException
+import java.time.Instant
 import java.util.Locale
 
 class TransitousRoutingRepository(
@@ -79,6 +81,25 @@ class TransitousRoutingRepository(
         }.stopTimes.map { it.toDomain() }.sortedBy { it.time.best }
     }
 
+    override suspend fun lineDepartures(
+        stopId: String,
+        line: Line,
+        directionId: String?,
+        from: Instant,
+        limit: Int,
+    ): List<Departure> = mapped {
+        get<StoptimesResponse>("v6/stoptimes") {
+            parameter("stopId", stopId)
+            parameter("time", from.toString())
+            parameter("n", LINE_SCAN)
+            parameter("withAlerts", false)
+            parameter("language", language)
+        }.stopTimes.map { it.toDomain() }
+            .filter { it.line.sameAs(line) && (directionId == null || it.directionId == directionId) }
+            .sortedBy { it.time.best }
+            .take(limit)
+    }
+
     override suspend fun stopsIn(box: BoundingBox): List<Location> = mapped {
         get<List<Place>>("v6/map/stops") {
             // The spec uses lower right / upper left, confirmed by the fixture request:
@@ -112,6 +133,14 @@ class TransitousRoutingRepository(
         throw RoutingException.Unexpected(e)
     }
 }
+
+/**
+ * The API has no line filter, so a line's departures come from a scan of the stop's next
+ * departures. A stop with many lines can give fewer than the requested number.
+ */
+private const val LINE_SCAN = 40
+
+private fun Line.sameAs(other: Line) = if (id != null && other.id != null) id == other.id else name == other.name
 
 private fun GeoPoint.coordinates() = "$latitude,$longitude"
 private fun GeoPoint.rounded(decimals: Int) = String.format(Locale.ROOT, "%.${decimals}f,%.${decimals}f", latitude, longitude)

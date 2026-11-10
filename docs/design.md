@@ -45,6 +45,10 @@ Departures within 400 m, grouped by stop name. Groups are in order of their firs
 
 A filter chip before the sort chips opens a time picker dialog. The dialog has a segmented button (Leave at, Arrive by), day chips for the next 7 days, and the M3 time picker with a keyboard input toggle. "Leave now" resets to the current time. Times use the device time zone. The chip shows as selected when the time is not "now".
 
+## Itinerary
+
+The itinerary is a trip tracker. A status line above the summary shows "Leave in 4 min" before the departure and "Arrive in 12 min" during the journey. The step in progress has a `primary` outline. Each transit leg shows the next 4 departures of its line at the boarding stop on a `surfaceContainerHigh` card. The planned trip is in medium weight. A live departure in the next hour shows as a countdown with the live icon. Other departures show the clock time. The line times refresh once a minute while the itinerary is visible.
+
 ## Route card
 
 ```

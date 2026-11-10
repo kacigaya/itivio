@@ -1,5 +1,7 @@
 package app.itivio.domain
 
+import java.time.Instant
+
 /**
  * Provider-neutral access to search, routing, and departures. The app ships with a Transitous
  * (MOTIS 2) implementation; a self-hosted MOTIS instance or another provider can replace it
@@ -19,6 +21,18 @@ interface RoutingRepository {
 
     /** Upcoming departures around [point], sorted by time. */
     suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int = 400, limit: Int = 20): List<Departure>
+
+    /**
+     * Upcoming departures of [line] from the stop [stopId], at or after [from], sorted by time.
+     * A non-null [directionId] keeps one direction of travel.
+     */
+    suspend fun lineDepartures(
+        stopId: String,
+        line: Line,
+        directionId: String?,
+        from: Instant,
+        limit: Int = 4,
+    ): List<Departure>
 
     /** Transit stops inside [box], for map display. */
     suspend fun stopsIn(box: BoundingBox): List<Location>

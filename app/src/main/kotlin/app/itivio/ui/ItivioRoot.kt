@@ -30,6 +30,7 @@ import app.itivio.ui.explore.ExplorePeekHeight
 import app.itivio.ui.explore.ExploreScreen
 import app.itivio.ui.itinerary.ItineraryPeekHeight
 import app.itivio.ui.itinerary.ItineraryScreen
+import app.itivio.ui.itinerary.LineTimesViewModel
 import app.itivio.ui.map.TransitMap
 import app.itivio.ui.nearby.NearbyViewModel
 import app.itivio.ui.nearby.rememberNow
@@ -158,7 +159,16 @@ fun ItivioRoot(planner: PlannerViewModel = koinViewModel(), nearby: NearbyViewMo
                         // The session was reset (e.g. process death); fall back to the start.
                         LaunchedEffect(Unit) { backStack.pop(planner) }
                     } else {
-                        ItineraryScreen(wide = wide, journey = journey, onBack = { backStack.pop(planner) })
+                        // Scoped to this entry, so the times refresh only while the itinerary is open.
+                        val lineTimes: LineTimesViewModel = koinViewModel()
+                        LaunchedEffect(journey) { lineTimes.show(journey) }
+                        ItineraryScreen(
+                            wide = wide,
+                            journey = journey,
+                            now = now,
+                            lineTimes = lineTimes.times.collectAsStateWithLifecycle().value,
+                            onBack = { backStack.pop(planner) },
+                        )
                     }
                 }
             },

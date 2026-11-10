@@ -83,6 +83,37 @@ class TransitousRoutingRepositoryTest {
         engine.close()
     }
 
+    @Test fun lineDeparturesKeepOneLineAndDirection() = runTest {
+        var params = Parameters.Empty
+        val engine = MockEngine { request ->
+            params = request.url.parameters
+            respond(fixture("stoptimes"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        createHttpClient(engine, "test", "").use { client ->
+            val repo = TransitousRoutingRepository(client, "de-DE")
+            val time = Instant.parse("2026-11-09T01:05:00Z")
+            val m5 = Line("M5", id = "de-VBB_17459_900")
+            val n65 = Line("N65", id = "de-VBB_17497_700")
+
+            val departures = repo.lineDepartures("stop:a", m5, "0", time)
+            assertEquals("stop:a", params["stopId"])
+            assertEquals("2026-11-09T01:05:00Z", params["time"])
+            assertNull(params["radius"])
+            assertEquals(2, departures.size)
+            assertTrue(departures.all { it.line.id == m5.id && it.directionId == "0" })
+            assertEquals(departures.sortedBy { it.time.best }, departures)
+
+            assertEquals(1, repo.lineDepartures("stop:a", m5, "0", time, limit = 1).size)
+            // N65 runs in both directions at this stop group.
+            assertEquals(listOf("0"), repo.lineDepartures("stop:a", n65, "0", time).map { it.directionId })
+            assertEquals(2, repo.lineDepartures("stop:a", n65, null, time).size)
+            // Without a route ID the short name identifies the line.
+            assertEquals(2, repo.lineDepartures("stop:a", Line("M5"), "0", time).size)
+            assertTrue(repo.lineDepartures("stop:a", Line("M5", id = "other"), "0", time).isEmpty())
+        }
+        engine.close()
+    }
+
     @Test fun blankAndCacheAndBiasKeys() = runTest {
         var count = 0
         val engine = MockEngine {

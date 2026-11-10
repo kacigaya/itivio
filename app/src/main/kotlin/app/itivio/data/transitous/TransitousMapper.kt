@@ -39,9 +39,9 @@ internal fun parseColor(hex: String?): Int? = hex
     ?.takeIf { it.length == 6 && it.all { c -> c in '0'..'9' || c in 'a'..'f' || c in 'A'..'F' } }
     ?.toInt(16)?.or(0xFF000000.toInt())
 
-private fun line(short: String?, display: String?, trip: String?, long: String?, color: String?, text: String?, agency: String?) =
+private fun line(short: String?, display: String?, trip: String?, long: String?, color: String?, text: String?, agency: String?, id: String?) =
     Line(listOfNotNull(short, display, trip, long).firstOrNull { it.isNotBlank() } ?: "",
-        long?.takeIf { it.isNotBlank() }, parseColor(color), parseColor(text), agency)
+        long?.takeIf { it.isNotBlank() }, parseColor(color), parseColor(text), agency, id)
 
 internal fun Match.toDomain(): Location {
     val default = areas.firstOrNull { it.default && it.name != name }?.name
@@ -76,9 +76,9 @@ internal fun Leg.toDomain(): DomainLeg {
     val geometry = legGeometry?.let { decodePolyline(it.points, it.precision) } ?: emptyList()
     return if (!mode.isTransit) DomainLeg.Street(mode, from.toDomain(), to.toDomain(), start, end, geometry, distance ?: 0.0)
     else DomainLeg.Transit(mode, from.toDomain(), to.toDomain(), start, end, geometry,
-        line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName),
+        line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName, routeId),
         headsign, tripId, intermediateStops.map { it.toDomain() }, cancelled,
-        alerts.map { app.itivio.domain.Alert(it.headerText, it.descriptionText, it.url) })
+        alerts.map { app.itivio.domain.Alert(it.headerText, it.descriptionText, it.url) }, directionId)
 }
 
 internal fun Itinerary.toDomain(): Journey {
@@ -94,12 +94,12 @@ internal fun PlanResponse.toDomain() = JourneyPage(
 )
 
 internal fun StopTime.toDomain(): Departure = Departure(
-    place.toDomain(), line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName),
+    place.toDomain(), line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName, routeId),
     // A trip's last stop has only an arrival; fall back to it instead of failing the whole list.
     transitMode(mode), headsign,
     requireNotNull(
         time(place.scheduledDeparture, place.departure, realTime)
             ?: time(place.scheduledArrival, place.arrival, realTime),
     ),
-    cancelled || tripCancelled || place.cancelled, tripId,
+    cancelled || tripCancelled || place.cancelled, tripId, directionId,
 )
