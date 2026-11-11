@@ -78,6 +78,11 @@
     <string name="itinerary_show_stops">Show stops</string>
     <string name="itinerary_hide_stops">Hide stops</string>
     <string name="itinerary_arrive">Arrive</string>
+    <string name="itinerary_next_departures">Next departures</string>
+    <string name="itinerary_leave_in">Leave in %1$s</string>
+    <string name="itinerary_leave_now">Leave now</string>
+    <string name="itinerary_arrive_in">Arrive in %1$s</string>
+    <string name="itinerary_current_step">Current step</string>
     <string name="itinerary_operated_by">Operated by %1$s</string>
 
     <!-- Units -->

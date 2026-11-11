@@ -116,6 +116,35 @@ fun TimeText(time: StopTime, zone: ZoneId?, modifier: Modifier = Modifier, empha
     }
 }
 
+/**
+ * Minutes until a departure. Live countdowns use the same tertiary role and icon as [TimeText],
+ * so riders can tell live data from the timetable.
+ */
+@Composable
+fun CountdownText(minutes: Long, live: Boolean, modifier: Modifier = Modifier) {
+    val countdown = if (minutes <= 0) stringResource(R.string.nearby_now) else stringResource(R.string.duration_min, minutes.toInt())
+    val status = stringResource(if (live) R.string.live else R.string.scheduled)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = modifier.clearAndSetSemantics { contentDescription = "$countdown, $status" },
+    ) {
+        if (live) {
+            Icon(
+                painterResource(R.drawable.ic_sensors),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        Text(
+            countdown,
+            style = MaterialTheme.typography.titleMedium,
+            color = if (live) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LoadingState(modifier: Modifier = Modifier) {

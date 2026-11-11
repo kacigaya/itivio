@@ -1,12 +1,29 @@
 package app.itivio.ui.map
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -24,11 +41,15 @@ import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.layers.LineLayer
 import org.maplibre.compose.layers.LocationIndicatorLayer
 import org.maplibre.compose.location.LocationState
+import org.maplibre.compose.map.MapStyleState
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.rememberMapState
-import org.maplibre.compose.material3.Material3AttributionOnly
+import org.maplibre.compose.material3.AttributionButtonDefaults
+import org.maplibre.compose.material3.AttributionLinks
+import org.maplibre.compose.overlay.LocalViewportInsets
 import org.maplibre.compose.overlay.MapOverlay
-import org.maplibre.compose.overlay.include
+import org.maplibre.compose.overlay.MaplibreLogo
+import org.maplibre.compose.overlay.attributions
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
@@ -44,7 +65,9 @@ import kotlinx.serialization.json.JsonObject
 
 // OpenFreeMap: free OpenStreetMap vector tiles, no API key, no tracking.
 private const val LIGHT_STYLE = "https://tiles.openfreemap.org/styles/liberty"
-private const val DARK_STYLE = "https://tiles.openfreemap.org/styles/dark"
+// The Liberty layers with dark colors, built by tools/dark-map-style.py. The OpenFreeMap dark
+// style has too little contrast and no stop or place labels.
+private const val DARK_STYLE = "asset://map/dark.json"
 
 /** Europe-wide view until the first location fix or route arrives. */
 private val InitialCamera = CameraPosition(center = Position(longitude = 10.0, latitude = 50.0), zoom = 3.5)
@@ -77,7 +100,7 @@ fun TransitMap(
         modifier = modifier,
         state = mapState,
         viewportInsets = insets,
-        overlay = { include(MapOverlay.Material3AttributionOnly) },
+        overlay = { MapCredits(mapState.style) },
     )
 
     LaunchedEffect(journey?.id) {
@@ -94,6 +117,44 @@ fun TransitMap(
     LaunchedEffect(firstFix) {
         val here = locationState.lastLocation?.position ?: return@LaunchedEffect
         if (journey == null) mapState.animateCamera(CameraUpdate(center = here, zoom = 15.0))
+    }
+}
+
+/**
+ * The MapLibre logo and the map credits. The credits stay behind the info button until the user
+ * opens them. The library button starts open on each launch and covers the map above the sheet.
+ */
+@Composable
+private fun MapCredits(style: MapStyleState) {
+    val credits by remember(style) { derivedStateOf { style.attributions() } }
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    val insets = LocalViewportInsets.current
+    Box(
+        Modifier
+            .fillMaxSize()
+            .padding(insets)
+            .consumeWindowInsets(insets)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(MapOverlay.Spacing),
+    ) {
+        MaplibreLogo(Modifier.align(Alignment.BottomStart))
+        if (credits.isEmpty()) return@Box
+        Surface(
+            color = if (expanded) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
+            shape = CircleShape,
+            modifier = Modifier.align(Alignment.BottomEnd),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (expanded) {
+                    AttributionLinks(
+                        credits,
+                        textStyle = MaterialTheme.typography.bodySmall.copy(color = LocalContentColor.current),
+                        modifier = Modifier.weight(1f, fill = false).padding(start = 16.dp),
+                    )
+                }
+                AttributionButtonDefaults.button { expanded = !expanded }
+            }
+        }
     }
 }
 

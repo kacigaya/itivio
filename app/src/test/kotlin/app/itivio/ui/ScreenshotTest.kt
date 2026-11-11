@@ -155,8 +155,25 @@ class ScreenshotTest {
     }
 
     @Test
-    fun itinerary() = capture("itinerary") {
-        ItineraryScreen(wide = false, journey = sampleJourneys.first(), onBack = {})
+    fun itinerary() = capture("itinerary") { Itinerary(wide = false) }
+
+    // The pane shows the steps below the sheet fold: the line times and the later legs.
+    @Test
+    fun itineraryWide() = capture("itinerary_wide") { Itinerary(wide = true) }
+
+    @Composable
+    private fun Itinerary(wide: Boolean) {
+        val line = Line("U2", color = 0xFFDA421E.toInt(), textColor = 0xFFFFFFFF.toInt())
+        fun u2(min: Long, liveDelay: Long?, trip: String) =
+            Departure(stop("S+U Alexanderplatz", "2"), line, TransitMode.SUBWAY, "Ruhleben", at(min, liveDelay), false, trip)
+        ItineraryScreen(
+            wide = wide,
+            journey = sampleJourneys.first(),
+            // Two minutes after the departure: the walk is the step in progress.
+            now = t0.plusSeconds(120),
+            lineTimes = mapOf(1 to listOf(u2(6, 2, "t1"), u2(11, null, "t4"), u2(16, null, "t5"))),
+            onBack = {},
+        )
     }
 
     @Test

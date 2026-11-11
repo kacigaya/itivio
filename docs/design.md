@@ -5,14 +5,14 @@ Material 3 Expressive on Jetpack Compose. The map is the canvas. The UI floats o
 ## Principles
 
 1. Map first. Search, results, and itineraries sit on a bottom sheet over the map. The map always shows the context.
-2. One primary action per screen. The search bar on home. The route cards on results. The itinerary steps on detail.
+2. One primary action per screen. The search bar on home, at the top of the sheet in reach of the thumb. The route cards on results. The itinerary steps on detail.
 3. Live data must be clear. Live times use the `tertiary` role and a live icon. Scheduled times use `onSurfaceVariant`. A delay shows the struck-through scheduled time beside the live time.
 4. Line colors come from the agency. Line badges use the agency color and text color. When the feed has no color, badges use `secondaryContainer`.
 
 ## Color
 
 - Dynamic color on Android 12+. Fallback scheme: tonal spot from seed `#1B6B5A`.
-- Map style: OpenFreeMap Liberty (light) and Dark (dark theme).
+- Map style: OpenFreeMap Liberty in the light theme. The dark theme uses `assets/map/dark.json`: the Liberty layers with dark colors, so both themes show the same roads, stops, and places. `tools/dark-map-style.py` builds this file.
 - Route lines on the map: transit legs in the line color with a `surface` casing. Walking legs are dotted in `onSurfaceVariant`.
 
 ## Type
@@ -21,7 +21,7 @@ Default Material type scale (Roboto). Times and durations use `titleLarge` / `ti
 
 ## Shape and spacing
 
-- Search bar: full. Route cards: `large` (16dp). Bottom sheet: `extraLarge` top corners. Line badges: `small` (8dp).
+- Search bar: full. "Locate me" button: a circle with the height of the search bar (56dp). Route cards: `large` (16dp). Bottom sheet: `extraLarge` top corners. Line badges: `small` (8dp).
 - 4dp grid. Screen margin 16dp (compact), 24dp (medium and up). Card padding 16dp.
 
 ## Motion
@@ -32,7 +32,7 @@ Default Material type scale (Roboto). Times and durations use `titleLarge` / `ti
 
 | Screen | Compact | Medium and up |
 |---|---|---|
-| Home | Map, floating search bar at top, "locate me" FAB, bottom sheet with nearby departures | Map with sheet content in a 400dp side pane |
+| Home | Map, bottom sheet with the search bar and the "locate me" button at its top, then nearby departures | Map with sheet content in a 400dp side pane |
 | Search | Full-screen search view: origin and destination fields, swap button, suggestions list | Same, in the side pane |
 | Results | Sheet with a travel time chip, sort chips, and route cards. Map shows the selected route | Side pane with route cards |
 | Itinerary | Sheet with leg timeline. Map fits the route | Side pane timeline |
@@ -44,6 +44,10 @@ Departures within 400 m, grouped by stop name. Groups are in order of their firs
 ## Travel time
 
 A filter chip before the sort chips opens a time picker dialog. The dialog has a segmented button (Leave at, Arrive by), day chips for the next 7 days, and the M3 time picker with a keyboard input toggle. "Leave now" resets to the current time. Times use the device time zone. The chip shows as selected when the time is not "now".
+
+## Itinerary
+
+The itinerary is a trip tracker. A status line above the summary shows "Leave in 4 min" before the departure and "Arrive in 12 min" during the journey. The step in progress has a `primary` outline. Each transit leg shows the next 4 departures of its line at the boarding stop on a `surfaceContainerHigh` card. The planned trip is in medium weight. A live departure in the next hour shows as a countdown with the live icon. Other departures show the clock time. The line times refresh once a minute while the itinerary is visible.
 
 ## Route card
 

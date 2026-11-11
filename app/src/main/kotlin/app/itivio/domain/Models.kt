@@ -61,6 +61,8 @@ data class Line(
     val color: Int? = null,
     val textColor: Int? = null,
     val agency: String? = null,
+    /** Provider route ID. Null when the provider gives none; lines then match by [name]. */
+    val id: String? = null,
 )
 
 data class Alert(val header: String, val description: String, val url: String? = null)
@@ -99,6 +101,8 @@ sealed interface Leg {
         val intermediateStops: List<Stop>,
         val cancelled: Boolean = false,
         val alerts: List<Alert> = emptyList(),
+        /** Direction of travel on the line, as the provider names it. */
+        val directionId: String? = null,
     ) : Leg
 }
 
@@ -114,6 +118,13 @@ data class Journey(
         get() = legs.filterIsInstance<Leg.Street>().filter { it.mode == TransitMode.WALK }.sumOf { it.distanceMeters }
     val hasRealtime: Boolean get() = legs.any { it is Leg.Transit && (it.start.isRealtime || it.end.isRealtime) }
     val isCancelled: Boolean get() = legs.any { it is Leg.Transit && it.cancelled }
+
+    /**
+     * Index of the leg in progress at [now], by the leg times. A wait between two legs counts for
+     * the next leg. Null before the departure and from the arrival on.
+     */
+    fun currentLegIndex(now: Instant): Int? =
+        if (now < departure.best || now >= arrival.best) null else legs.indexOfFirst { it.end.best > now }.takeIf { it >= 0 }
 }
 
 data class JourneyRequest(
@@ -139,4 +150,5 @@ data class Departure(
     val time: StopTime,
     val cancelled: Boolean,
     val tripId: String?,
+    val directionId: String? = null,
 )

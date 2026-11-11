@@ -19,6 +19,8 @@ import java.time.Instant
 class FakeRoutingRepository : RoutingRepository {
     val nearbyCalls = mutableListOf<GeoPoint>()
     var nearbyResult: suspend (GeoPoint) -> List<Departure> = { emptyList() }
+    val lineCalls = mutableListOf<Pair<String, Instant>>()
+    var lineResult: suspend (String) -> List<Departure> = { emptyList() }
     val searches = mutableListOf<Pair<String, GeoPoint?>>()
     val plans = mutableListOf<Pair<JourneyRequest, String?>>()
     var searchResult: suspend (String) -> List<Location> = { listOf(location(it)) }
@@ -41,6 +43,17 @@ class FakeRoutingRepository : RoutingRepository {
     override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int): List<Departure> {
         nearbyCalls += point
         return nearbyResult(point)
+    }
+
+    override suspend fun lineDepartures(
+        stopId: String,
+        line: Line,
+        directionId: String?,
+        from: Instant,
+        limit: Int,
+    ): List<Departure> {
+        lineCalls += stopId to from
+        return lineResult(stopId)
     }
 
     override suspend fun stopsIn(box: BoundingBox): List<Location> = emptyList()

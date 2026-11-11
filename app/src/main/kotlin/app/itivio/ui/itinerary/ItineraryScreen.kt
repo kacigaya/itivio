@@ -2,6 +2,7 @@ package app.itivio.ui.itinerary
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,14 +37,19 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.itivio.R
+import app.itivio.domain.Departure
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
 import app.itivio.domain.Stop
 import app.itivio.ui.common.AttributionFooter
+import app.itivio.ui.common.CountdownText
 import app.itivio.ui.common.LineBadge
 import app.itivio.ui.common.MapPanel
 import app.itivio.ui.common.TimeText
@@ -52,12 +59,25 @@ import app.itivio.ui.common.formatTime
 import app.itivio.ui.common.icon
 import app.itivio.ui.common.label
 import app.itivio.ui.common.lineColors
+import java.time.Duration
+import java.time.Instant
 
 val ItineraryPeekHeight = 320.dp
 private val RailWidth = 40.dp
 
+/**
+ * The steps of [journey]. [now] drives the tracker: the status line and the outline around the
+ * step in progress. [lineTimes] gives the next departures of each transit leg's line, by leg index.
+ */
 @Composable
-fun ItineraryScreen(wide: Boolean, journey: Journey, onBack: () -> Unit) {
+fun ItineraryScreen(
+    wide: Boolean,
+    journey: Journey,
+    now: Instant,
+    lineTimes: Map<Int, List<Departure>>,
+    onBack: () -> Unit,
+) {
+    val currentLeg = journey.currentLegIndex(now)
     MapPanel(
         wide = wide,
         peekHeight = ItineraryPeekHeight,
@@ -67,33 +87,69 @@ fun ItineraryScreen(wide: Boolean, journey: Journey, onBack: () -> Unit) {
             }
         },
     ) {
-        LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
-            item(key = "summary") { Summary(journey) }
-            itemsIndexed(journey.legs, key = { index, _ -> index }) { _, leg ->
-                when (leg) {
-                    is Leg.Transit -> TransitLegItem(leg)
-                    is Leg.Street -> StreetLegItem(leg)
+        LazyColumn(contentPadding = PaddingValues(start = 8.dp, end = 8.dp, bottom = 16.dp)) {
+            item(key = "summary") { Summary(journey, now) }
+            itemsIndexed(journey.legs, key = { index, _ -> index }) { index, leg ->
+                Step(current = index == currentLeg) {
+                    when (leg) {
+                        is Leg.Transit -> TransitLegItem(leg, lineTimes[index].orEmpty(), now)
+                        is Leg.Street -> StreetLegItem(leg)
+                    }
                 }
             }
             item(key = "arrive") {
                 val last = journey.legs.last()
-                StopRow(
-                    stop = last.to,
-                    time = { TimeText(last.end, last.to.zone, emphasized = true) },
-                    rail = { RailDot(MaterialTheme.colorScheme.primary, top = true, bottom = false) },
-                    caption = stringResource(R.string.itinerary_arrive),
-                )
+                Step(current = false) {
+                    StopRow(
+                        stop = last.to,
+                        time = { TimeText(last.end, last.to.zone, emphasized = true) },
+                        rail = { RailDot(MaterialTheme.colorScheme.primary, top = true, bottom = false) },
+                        caption = stringResource(R.string.itinerary_arrive),
+                    )
+                }
             }
             item(key = "attribution") { AttributionFooter() }
         }
     }
 }
 
+/**
+ * One step of the journey. The step in progress has an outline, like the active card of a trip
+ * tracker. Its semantics state the same, so the outline is not the only signal.
+ */
 @Composable
-private fun Summary(journey: Journey) {
+private fun Step(current: Boolean, content: @Composable () -> Unit) {
+    val label = stringResource(R.string.itinerary_current_step)
+    val outline = if (current) {
+        Modifier
+            .border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.large)
+            .semantics { stateDescription = label }
+    } else {
+        Modifier
+    }
+    Box(Modifier.fillMaxWidth().then(outline).padding(start = 8.dp, end = 12.dp)) { content() }
+}
+
+/** Time to the departure before the journey starts, then time to the arrival. Null after the arrival. */
+@Composable
+private fun trackerStatus(journey: Journey, now: Instant): String? = when {
+    now < journey.departure.best -> {
+        val wait = Duration.between(now, journey.departure.best)
+        if (wait < Duration.ofMinutes(1)) stringResource(R.string.itinerary_leave_now)
+        else stringResource(R.string.itinerary_leave_in, formatDuration(wait))
+    }
+    now < journey.arrival.best -> stringResource(R.string.itinerary_arrive_in, formatDuration(Duration.between(now, journey.arrival.best)))
+    else -> null
+}
+
+@Composable
+private fun Summary(journey: Journey, now: Instant) {
     val start = journey.legs.first().from.zone
     val end = journey.legs.last().to.zone
-    Column(Modifier.padding(horizontal = 8.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        trackerStatus(journey, now)?.let {
+            Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        }
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 formatDuration(journey.duration),
@@ -118,7 +174,7 @@ private fun Summary(journey: Journey) {
 }
 
 @Composable
-private fun TransitLegItem(leg: Leg.Transit) {
+private fun TransitLegItem(leg: Leg.Transit, departures: List<Departure>, now: Instant) {
     val (lineColor, _) = lineColors(leg.line)
     var expanded by rememberSaveable { mutableStateOf(false) }
     Column {
@@ -144,6 +200,7 @@ private fun TransitLegItem(leg: Leg.Transit) {
                 if (leg.cancelled) {
                     Text(stringResource(R.string.cancelled), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
                 }
+                if (departures.isNotEmpty()) LineTimes(departures, leg.tripId, now)
                 leg.alerts.forEach { alert ->
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Icon(painterResource(R.drawable.ic_warning), contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
@@ -190,6 +247,52 @@ private fun TransitLegItem(leg: Leg.Transit) {
             caption = leg.to.track?.let { stringResource(R.string.itinerary_track, it) },
             emphasized = false,
         )
+    }
+}
+
+/**
+ * The next departures of the leg's line at the boarding stop. The planned trip stands out. A live
+ * departure in the next hour shows as a countdown; other departures show the clock time.
+ */
+@Composable
+private fun LineTimes(departures: List<Departure>, plannedTripId: String?, now: Instant) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                stringResource(R.string.itinerary_next_departures),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            departures.forEach { departure ->
+                val planned = plannedTripId != null && departure.tripId == plannedTripId
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.semantics(mergeDescendants = true) {},
+                ) {
+                    Text(
+                        departure.headsign ?: departure.line.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = if (planned) FontWeight.Medium else FontWeight.Normal,
+                        color = if (planned) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                        textDecoration = if (departure.cancelled) TextDecoration.LineThrough else null,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    val minutes = Duration.between(now, departure.time.best).toMinutes()
+                    if (departure.time.isRealtime && minutes < 60) {
+                        CountdownText(minutes, live = true)
+                    } else {
+                        TimeText(departure.time, departure.stop.zone, emphasized = true)
+                    }
+                }
+            }
+        }
     }
 }
 
