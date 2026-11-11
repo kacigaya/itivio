@@ -10,6 +10,9 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import app.itivio.ui.common.LocalTimeFormatter
+import app.itivio.ui.common.rememberTimeFormatter
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
@@ -110,6 +113,6 @@ fun ItivioTheme(
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
         motionScheme = MotionScheme.expressive(),
-        content = content,
+        content = { CompositionLocalProvider(LocalTimeFormatter provides rememberTimeFormatter(), content = content) },
     )
 }

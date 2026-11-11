@@ -6,16 +6,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -38,8 +38,9 @@ fun isWideLayout(): Boolean =
     currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)
 
 /** The map area a [MapPanel] covers, so the camera can keep routes visible. */
+@Composable
 fun panelInsets(wide: Boolean, peekHeight: Dp): PaddingValues =
-    if (wide) PaddingValues(start = PaneWidth + PaneMargin * 2) else PaddingValues(bottom = peekHeight)
+    if (wide) PaddingValues(start = PaneWidth + PaneMargin * 2) else PaddingValues(bottom = peekHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
 
 /**
  * Screen content over the map. Compact windows get a bottom sheet that peeks at [peekHeight];
@@ -69,12 +70,12 @@ fun MapPanel(
         }
     } else {
         BottomSheetScaffold(
+            modifier = Modifier.navigationBarsPadding(),
             sheetPeekHeight = peekHeight,
             sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             containerColor = Color.Transparent,
             sheetContent = {
                 content()
-                Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
             },
             content = {
                 Box(Modifier.fillMaxSize()) {
