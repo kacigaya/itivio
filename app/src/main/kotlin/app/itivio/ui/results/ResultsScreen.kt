@@ -21,7 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +45,7 @@ import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.planner.PlannerState
 import app.itivio.ui.planner.RouteSort
 import app.itivio.ui.search.LocationSearchView
+import app.itivio.ui.search.rememberLocationSearchBarState
 import app.itivio.ui.search.rememberLocationTextState
 import java.time.Instant
 import kotlinx.coroutines.launch
@@ -70,8 +70,8 @@ fun ResultsScreen(
 ) {
     var pickingTime by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val originSearch = rememberSearchBarState()
-    val destinationSearch = rememberSearchBarState()
+    val originSearch = rememberLocationSearchBarState()
+    val destinationSearch = rememberLocationSearchBarState()
     val originText = rememberLocationTextState()
     val destinationText = rememberLocationTextState()
 

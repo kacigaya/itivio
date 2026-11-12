@@ -22,6 +22,7 @@ import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SearchBarState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -207,3 +208,14 @@ private fun Location.kindLabel(): Int = when (kind) {
 
 @Composable
 fun rememberLocationTextState(): TextFieldState = rememberTextFieldState()
+
+/**
+ * The theme default spring for both directions. The library opens with the slow spring, which is
+ * too soft in the expressive scheme for a bar that travels from the sheet to the top of the screen.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun rememberLocationSearchBarState(): SearchBarState {
+    val spring = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+    return rememberSearchBarState(animationSpecForExpand = spring, animationSpecForCollapse = spring)
+}

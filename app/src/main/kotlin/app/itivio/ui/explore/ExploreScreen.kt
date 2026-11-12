@@ -18,7 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +33,7 @@ import app.itivio.ui.nearby.nearbyDepartures
 import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.search.LocationInputField
 import app.itivio.ui.search.LocationSearchView
+import app.itivio.ui.search.rememberLocationSearchBarState
 import app.itivio.ui.search.rememberLocationTextState
 import java.time.Instant
 
@@ -52,7 +52,7 @@ fun ExploreScreen(
     onRetryNearby: () -> Unit,
     onDestination: (Endpoint) -> Unit,
 ) {
-    val searchBarState = rememberSearchBarState()
+    val searchBarState = rememberLocationSearchBarState()
     val textState = rememberLocationTextState()
     val placeholder = stringResource(R.string.search_where_to)
 

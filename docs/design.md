@@ -26,7 +26,7 @@ Default Material type scale (Roboto). Times and durations use `titleLarge` / `ti
 
 ## Motion
 
-`MotionScheme.expressive()`. Sheet and card changes use the theme springs. Screen changes use shared-axis fades. Loading uses the Expressive `LoadingIndicator`.
+`MotionScheme.expressive()`. Sheet and card changes use the theme springs. The search view opens and closes with the default spatial spring, not the slow one. Screen changes use shared-axis fades. Loading uses the Expressive `LoadingIndicator`.
 
 ## Screens
 
