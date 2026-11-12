@@ -68,7 +68,18 @@ internal fun Place.toDomain(coordinateName: String? = null): DomainStop = Domain
     time(scheduledArrival, arrival, realtime(arrivalTimestampReason)),
     time(scheduledDeparture, departure, realtime(departureTimestampReason)), cancelled,
     tz?.let { try { ZoneId.of(it) } catch (_: DateTimeException) { null } },
+    stationId = parentId,
 )
+
+/**
+ * Some feeds, such as the RER in Île-de-France, put the mission code in the headsign: "QOKA" for
+ * trip "QOKA52". The headsign then names no place, so the trip's final stop replaces it.
+ */
+private class Heading(headsign: String?, tripShortName: String?, tripTo: Place?) {
+    private val code = !headsign.isNullOrBlank() && !tripShortName.isNullOrBlank() && tripShortName.startsWith(headsign)
+    val headsign: String? = if (code) tripTo?.name ?: headsign else headsign?.takeIf { it.isNotBlank() } ?: tripTo?.name
+    val tripCode: String? = tripShortName.takeIf { code }
+}
 
 internal fun Leg.toDomain(fromName: String? = null, toName: String? = null): DomainLeg {
     val mode = transitMode(mode)
@@ -77,11 +88,12 @@ internal fun Leg.toDomain(fromName: String? = null, toName: String? = null): Dom
     val geometry = legGeometry?.let { decodePolyline(it.points, it.precision) } ?: emptyList()
     val from = from.toDomain(fromName)
     val to = to.toDomain(toName)
-    return if (!mode.isTransit) DomainLeg.Street(mode, from, to, start, end, geometry, distance ?: 0.0)
-    else DomainLeg.Transit(mode, from, to, start, end, geometry,
+    if (!mode.isTransit) return DomainLeg.Street(mode, from, to, start, end, geometry, distance ?: 0.0)
+    val heading = Heading(headsign, tripShortName, tripTo)
+    return DomainLeg.Transit(mode, from, to, start, end, geometry,
         line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName, routeId),
-        headsign, tripId, intermediateStops.map { it.toDomain() }, cancelled,
-        alerts.map { app.itivio.domain.Alert(it.headerText, it.descriptionText, it.url) }, directionId)
+        heading.headsign, tripId, intermediateStops.map { it.toDomain() }, cancelled,
+        alerts.map { app.itivio.domain.Alert(it.headerText, it.descriptionText, it.url) }, directionId, heading.tripCode)
 }
 
 /** [fromName] and [toName] name the requested endpoints; see [Place.toDomain]. */
@@ -99,13 +111,16 @@ internal fun PlanResponse.toDomain(fromName: String? = null, toName: String? = n
     itineraries.filter { it.legs.isNotEmpty() }.map { it.toDomain(fromName, toName) }, previousPageCursor, nextPageCursor,
 )
 
-internal fun StopTime.toDomain(): Departure = Departure(
-    place.toDomain(), line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName, routeId),
-    // A trip's last stop has only an arrival; fall back to it instead of failing the whole list.
-    transitMode(mode), headsign,
-    requireNotNull(
-        time(place.scheduledDeparture, place.departure, realTime)
-            ?: time(place.scheduledArrival, place.arrival, realTime),
-    ),
-    cancelled || tripCancelled || place.cancelled, tripId, directionId,
-)
+internal fun StopTime.toDomain(): Departure {
+    val heading = Heading(headsign, tripShortName, tripTo)
+    return Departure(
+        place.toDomain(), line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName, routeId),
+        // A trip's last stop has only an arrival; fall back to it instead of failing the whole list.
+        transitMode(mode), heading.headsign,
+        requireNotNull(
+            time(place.scheduledDeparture, place.departure, realTime)
+                ?: time(place.scheduledArrival, place.arrival, realTime),
+        ),
+        cancelled || tripCancelled || place.cancelled, tripId, directionId, heading.tripCode,
+    )
+}

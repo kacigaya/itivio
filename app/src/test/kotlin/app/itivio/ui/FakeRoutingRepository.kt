@@ -51,6 +51,7 @@ class FakeRoutingRepository : RoutingRepository {
         directionId: String?,
         from: Instant,
         limit: Int,
+        alightAt: Stop?,
     ): List<Departure> {
         lineCalls += stopId to from
         return lineResult(stopId)

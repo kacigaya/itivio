@@ -27,6 +27,7 @@ internal data class Place(
     val lat: Double,
     val lon: Double,
     val stopId: String? = null,
+    val parentId: String? = null,
     val track: String? = null,
     val scheduledTrack: String? = null,
     val tz: String? = null,
@@ -65,6 +66,7 @@ internal data class Leg(
     val directionId: String? = null,
     val tripId: String? = null,
     val headsign: String? = null,
+    val tripTo: Place? = null,
     val cancelled: Boolean = false,
 )
 
@@ -98,6 +100,9 @@ internal data class StopTime(
     val directionId: String? = null,
     val tripId: String? = null,
     val headsign: String? = null,
+    val tripTo: Place? = null,
+    /** Stops after this one on the trip. Set only when the request asks for them with `fetchStops`. */
+    val nextStops: List<Place>? = null,
     val cancelled: Boolean = false,
 )
 

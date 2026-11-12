@@ -24,7 +24,8 @@ interface RoutingRepository {
 
     /**
      * Upcoming departures of [line] from the stop [stopId], at or after [from], sorted by time.
-     * A non-null [directionId] keeps one direction of travel.
+     * A non-null [alightAt] keeps the trips that stop there. Without it, or when the provider
+     * cannot tell, a non-null [directionId] keeps one direction of travel.
      */
     suspend fun lineDepartures(
         stopId: String,
@@ -32,6 +33,7 @@ interface RoutingRepository {
         directionId: String?,
         from: Instant,
         limit: Int = 4,
+        alightAt: Stop? = null,
     ): List<Departure>
 
     /** Transit stops inside [box], for map display. */

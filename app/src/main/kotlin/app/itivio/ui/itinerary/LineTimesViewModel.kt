@@ -58,7 +58,7 @@ class LineTimesViewModel(
 
     /** The list starts at the planned departure, or at [now] when that time has passed. */
     private suspend fun load(leg: Leg.Transit, now: Instant): List<Departure>? = try {
-        leg.from.stopId?.let { repository.lineDepartures(it, leg.line, leg.directionId, maxOf(now, leg.start.scheduled)) }
+        leg.from.stopId?.let { repository.lineDepartures(it, leg.line, leg.directionId, maxOf(now, leg.start.scheduled), alightAt = leg.to) }
     } catch (_: RoutingException) {
         null
     }

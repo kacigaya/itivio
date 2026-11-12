@@ -107,6 +107,25 @@ class TransitousMapperTest {
         assertTrue(dto.copy(tripCancelled = true).toDomain().cancelled)
     }
 
+    @Test fun missionCodeHeadsignBecomesFinalStop() {
+        val idfm = fixture<StoptimesResponse>("stoptimes-idfm").stopTimes
+        val (westbound, eastbound) = idfm.take(2).map { it.toDomain() }
+        assertEquals("Cergy le Haut", westbound.headsign)
+        assertEquals("Marne-la-Vallée - Chessy", eastbound.headsign)
+        assertEquals("QOKA52", eastbound.tripCode)
+        assertEquals("fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71517", eastbound.stop.stationId)
+        // Berlin headsigns name places and stay as they are. The final stop has a city suffix.
+        val berlin = fixture<StoptimesResponse>("stoptimes").stopTimes.first()
+        assertEquals("U Turmstr.", berlin.toDomain().headsign)
+        assertNull(berlin.toDomain().tripCode)
+        assertEquals("U Turmstr. (Berlin)", berlin.copy(headsign = " ").toDomain().headsign)
+        assertNull(berlin.copy(headsign = null, tripTo = null).toDomain().headsign)
+        val leg = fixture<PlanResponse>("plan").itineraries.first().legs[1]
+            .copy(headsign = "QOKA", tripShortName = "QOKA52", tripTo = idfm[1].tripTo).toDomain() as DomainLeg.Transit
+        assertEquals("Marne-la-Vallée - Chessy", leg.headsign)
+        assertEquals("QOKA52", leg.tripCode)
+    }
+
     @Test fun colorsAndLineFallback() {
         assertEquals(0xFF00AAFF.toInt(), parseColor("00aAff"))
         listOf(null, "", "#00AAFF", "GG0000", "12345", "FFFFFFFF").forEach { assertNull(parseColor(it)) }

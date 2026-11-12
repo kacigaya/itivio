@@ -9,6 +9,7 @@ import app.itivio.domain.Line
 import app.itivio.domain.Location
 import app.itivio.domain.RoutingException
 import app.itivio.domain.RoutingRepository
+import app.itivio.domain.Stop
 import app.itivio.data.ign.IgnAddressSearch
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -110,15 +111,27 @@ class TransitousRoutingRepository(
         directionId: String?,
         from: Instant,
         limit: Int,
+        alightAt: Stop?,
     ): List<Departure> = mapped {
-        get<StoptimesResponse>("v6/stoptimes") {
+        val target = alightAt?.takeIf { it.stopId != null || it.stationId != null }
+        val stopTimes = get<StoptimesResponse>("v6/stoptimes") {
             parameter("stopId", stopId)
             parameter("time", from.toString())
             parameter("n", LINE_SCAN)
             parameter("withAlerts", false)
             parameter("language", language)
-        }.stopTimes.map { it.toDomain() }
-            .filter { it.line.sameAs(line) && (directionId == null || it.directionId == directionId) }
+            if (target != null) parameter("fetchStops", true)
+        }.stopTimes.map { it to it.toDomain() }.filter { (_, departure) -> departure.line.sameAs(line) }
+        // Some feeds give one direction ID to both directions of a line, such as the RER A. The
+        // next stops are exact. They are experimental in MOTIS, so fall back when they are absent.
+        // A cancelled trip stays and shows as cancelled; a trip that only skips the stop goes.
+        val byStops = target?.takeIf { stopTimes.any { (dto, _) -> dto.nextStops != null } }
+        stopTimes
+            .filter { (dto, departure) ->
+                if (byStops != null) dto.nextStops.orEmpty().any { it.isAt(byStops) && (!it.cancelled || departure.cancelled) }
+                else directionId == null || departure.directionId == directionId
+            }
+            .map { it.second }
             .sortedBy { it.time.best }
             .take(limit)
     }
@@ -162,6 +175,10 @@ class TransitousRoutingRepository(
  * departures. A stop with many lines can give fewer than the requested number.
  */
 private const val LINE_SCAN = 40
+
+/** A trip can stop at another platform of the same station as the planned one. */
+private fun Place.isAt(stop: Stop) =
+    (stop.stopId != null && stopId == stop.stopId) || (stop.stationId != null && parentId == stop.stationId)
 
 private fun Line.sameAs(other: Line) = if (id != null && other.id != null) id == other.id else name == other.name
 

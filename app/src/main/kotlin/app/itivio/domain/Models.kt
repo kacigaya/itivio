@@ -51,6 +51,8 @@ data class Stop(
     val departure: StopTime? = null,
     val cancelled: Boolean = false,
     val zone: ZoneId? = null,
+    /** Parent station of [stopId], when the provider gives one. */
+    val stationId: String? = null,
 )
 
 data class Line(
@@ -103,6 +105,8 @@ sealed interface Leg {
         val alerts: List<Alert> = emptyList(),
         /** Direction of travel on the line, as the provider names it. */
         val directionId: String? = null,
+        /** See [Departure.tripCode]. */
+        val tripCode: String? = null,
     ) : Leg
 }
 
@@ -151,4 +155,9 @@ data class Departure(
     val cancelled: Boolean,
     val tripId: String?,
     val directionId: String? = null,
+    /**
+     * Trip code that riders see on platform boards, such as the RER mission "QOKA52". Set only
+     * when the feed put the code in place of the headsign.
+     */
+    val tripCode: String? = null,
 )

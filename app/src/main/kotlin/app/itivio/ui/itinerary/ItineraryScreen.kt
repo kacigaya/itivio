@@ -278,8 +278,9 @@ private fun LineTimes(departures: List<Departure>, plannedTripId: String?, now: 
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.semantics(mergeDescendants = true) {},
                 ) {
+                    val name = departure.headsign ?: departure.line.name
                     Text(
-                        departure.headsign ?: departure.line.name,
+                        departure.tripCode?.let { stringResource(R.string.itinerary_trip_code, it, name) } ?: name,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = if (planned) FontWeight.Medium else FontWeight.Normal,
                         color = if (planned) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,

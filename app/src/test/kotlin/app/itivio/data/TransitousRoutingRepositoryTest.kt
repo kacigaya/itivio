@@ -114,6 +114,46 @@ class TransitousRoutingRepositoryTest {
         engine.close()
     }
 
+    @Test fun lineDeparturesKeepTripsThatStopAtTheAlightingStop() = runTest {
+        var params = Parameters.Empty
+        var name = "stoptimes-idfm"
+        val engine = MockEngine { request ->
+            params = request.url.parameters
+            respond(fixture(name), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        createHttpClient(engine, "test", "").use { client ->
+            val repo = TransitousRoutingRepository(client, "fr")
+            val time = Instant.parse("2026-11-12T17:35:00Z")
+            val idfm = "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM"
+            val rerA = Line("A", id = "$idfm:C01742")
+            val nation = Stop("Nation", GeoPoint(48.848, 2.396), stopId = "$idfm:473920")
+
+            // IDFM gives direction 0 to westbound UZEL and eastbound QOKA, and 1 to eastbound NOTE.
+            val departures = repo.lineDepartures("$idfm:473935", rerA, "0", time, alightAt = nation)
+            assertEquals("true", params["fetchStops"])
+            assertEquals(listOf("QOKA52", "NOTE54", "ORKA54"), departures.map { it.tripCode })
+            // Another platform of the same station also matches.
+            val station = nation.copy(stopId = "$idfm:other", stationId = "$idfm:71673")
+            assertEquals(3, repo.lineDepartures("$idfm:473935", rerA, "0", time, alightAt = station).size)
+            assertTrue(repo.lineDepartures("$idfm:473935", rerA, "0", time, alightAt = nation.copy(stopId = "$idfm:other")).isEmpty())
+
+            // QOKA52 skips Nation and leaves the list. NOTE54 is cancelled and stays as cancelled.
+            name = "stoptimes-idfm-cancelled"
+            val changed = repo.lineDepartures("$idfm:473935", rerA, "0", time, alightAt = nation)
+            assertEquals(listOf("NOTE54" to true, "ORKA54" to false), changed.map { it.tripCode to it.cancelled })
+            name = "stoptimes-idfm"
+
+            repo.lineDepartures("$idfm:473935", rerA, "0", time)
+            assertNull(params["fetchStops"])
+            // Without next stops in the response, the direction ID decides.
+            name = "stoptimes"
+            val m5 = Line("M5", id = "de-VBB_17459_900")
+            assertEquals(2, repo.lineDepartures("stop:a", m5, "0", time, alightAt = nation).size)
+            assertTrue(repo.lineDepartures("stop:a", m5, "1", time, alightAt = nation).isEmpty())
+        }
+        engine.close()
+    }
+
     @Test fun blankAndCacheAndBiasKeys() = runTest {
         var count = 0
         val engine = MockEngine {
