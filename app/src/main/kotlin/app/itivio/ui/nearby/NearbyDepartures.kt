@@ -31,8 +31,8 @@ import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.LineBadge
 import app.itivio.ui.common.MessageState
 import app.itivio.ui.common.TimeText
+import app.itivio.ui.common.clockMinutesUntil
 import app.itivio.ui.common.formatTime
-import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.delay
 
@@ -119,7 +119,7 @@ private fun DepartureRow(departure: Departure, now: Instant) {
                 )
             }
         }
-        val minutes = Duration.between(now, departure.time.best).toMinutes()
+        val minutes = clockMinutesUntil(now, departure.time.best)
         if (minutes < 60) {
             Countdown(departure, minutes)
         } else {

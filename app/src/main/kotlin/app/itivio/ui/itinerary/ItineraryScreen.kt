@@ -53,6 +53,7 @@ import app.itivio.ui.common.CountdownText
 import app.itivio.ui.common.LineBadge
 import app.itivio.ui.common.MapPanel
 import app.itivio.ui.common.TimeText
+import app.itivio.ui.common.clockMinutesUntil
 import app.itivio.ui.common.formatDistance
 import app.itivio.ui.common.formatDuration
 import app.itivio.ui.common.formatTime
@@ -134,11 +135,12 @@ private fun Step(current: Boolean, content: @Composable () -> Unit) {
 @Composable
 private fun trackerStatus(journey: Journey, now: Instant): String? = when {
     now < journey.departure.best -> {
-        val wait = Duration.between(now, journey.departure.best)
-        if (wait < Duration.ofMinutes(1)) stringResource(R.string.itinerary_leave_now)
-        else stringResource(R.string.itinerary_leave_in, formatDuration(wait))
+        val wait = clockMinutesUntil(now, journey.departure.best)
+        if (wait < 1) stringResource(R.string.itinerary_leave_now)
+        else stringResource(R.string.itinerary_leave_in, formatDuration(Duration.ofMinutes(wait)))
     }
-    now < journey.arrival.best -> stringResource(R.string.itinerary_arrive_in, formatDuration(Duration.between(now, journey.arrival.best)))
+    now < journey.arrival.best ->
+        stringResource(R.string.itinerary_arrive_in, formatDuration(Duration.ofMinutes(clockMinutesUntil(now, journey.arrival.best))))
     else -> null
 }
 
@@ -284,7 +286,7 @@ private fun LineTimes(departures: List<Departure>, plannedTripId: String?, now: 
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
-                    val minutes = Duration.between(now, departure.time.best).toMinutes()
+                    val minutes = clockMinutesUntil(now, departure.time.best)
                     if (departure.time.isRealtime && minutes < 60) {
                         CountdownText(minutes, live = true)
                     } else {

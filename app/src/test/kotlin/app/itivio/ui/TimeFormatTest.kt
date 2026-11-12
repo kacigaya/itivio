@@ -7,10 +7,12 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import app.itivio.ui.common.clockMinutesUntil
 import app.itivio.ui.common.formatTime
 import app.itivio.ui.theme.ItivioTheme
 import java.time.Instant
 import java.time.ZoneId
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.Rule
 import org.junit.runner.RunWith
@@ -23,6 +25,14 @@ import org.robolectric.annotation.Config
 @Config(sdk = [35], qualifiers = "en-rUS", application = Application::class)
 class TimeFormatTest {
     @get:Rule val compose = createComposeRule()
+
+    @Test
+    fun `countdown counts clock minutes`() {
+        val now = Instant.parse("2026-11-10T12:13:40Z")
+        assertEquals(2, clockMinutesUntil(now, Instant.parse("2026-11-10T12:15:00Z")))
+        assertEquals(0, clockMinutesUntil(now, Instant.parse("2026-11-10T12:13:05Z")))
+        assertEquals(-1, clockMinutesUntil(now, Instant.parse("2026-11-10T12:12:59Z")))
+    }
 
     @Test
     fun `clock follows setting changes and preserves stop time zone`() {

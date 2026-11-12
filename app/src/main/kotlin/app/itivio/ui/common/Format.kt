@@ -21,6 +21,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -55,6 +56,13 @@ fun formatTime(instant: Instant, zone: ZoneId?): String {
 }
 
 /** Rounds to whole minutes; a journey under one minute still shows as 1 min. */
+/**
+ * Minutes from [now] to [time] on the clock, seconds ignored, so a countdown agrees with the clock
+ * time beside it. At 12:13:40 a 12:15 departure is 2 minutes away, not the 1 whole minute left.
+ */
+fun clockMinutesUntil(now: Instant, time: Instant): Long =
+    Duration.between(now.truncatedTo(ChronoUnit.MINUTES), time.truncatedTo(ChronoUnit.MINUTES)).toMinutes()
+
 @Composable
 fun formatDuration(duration: Duration): String {
     val totalMinutes = ((duration.seconds + 30) / 60).toInt().coerceAtLeast(1)
