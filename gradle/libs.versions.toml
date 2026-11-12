@@ -1,6 +1,7 @@
 [versions]
 agp = "9.5.1"
 kotlin = "2.4.21"
+ksp = "2.3.13"
 composeBom = "2026.09.00"
 # Pinned above the BOM (1.4.0): Expressive APIs (MaterialExpressiveTheme, LoadingIndicator,
 # FloatingToolbar, ButtonGroup) ship in 1.5. Drop the pin when the BOM has 1.5 stable.
@@ -14,6 +15,7 @@ kotlinxSerialization = "1.12.0"
 ktor = "3.6.1"
 koin = "4.2.2"
 maplibreCompose = "0.20.0"
+room = "2.8.5"
 junit = "4.13.2"
 robolectric = "4.18-beta-1"
 roborazzi = "1.78.0"
@@ -50,6 +52,9 @@ koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose" }
 
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+
 maplibre-compose = { module = "org.maplibre.compose:maplibre-compose", version.ref = "maplibreCompose" }
 maplibre-compose-material3 = { module = "org.maplibre.compose:maplibre-compose-material3", version.ref = "maplibreCompose" }
 # OpenGL renders on every supported device and emulator; Vulkan coverage is still uneven.
@@ -64,3 +69,5 @@ roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose"
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+room = { id = "androidx.room", version.ref = "room" }

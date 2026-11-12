@@ -32,10 +32,16 @@ Default Material type scale (Roboto). Times and durations use `titleLarge` / `ti
 
 | Screen | Compact | Medium and up |
 |---|---|---|
-| Home | Map, bottom sheet with the search bar and the "locate me" button at its top, then nearby departures | Map with sheet content in a 400dp side pane |
-| Search | Full-screen search view: origin and destination fields, swap button, suggestions list | Same, in the side pane |
+| Home | Map, bottom sheet with the search bar and the "locate me" button at its top, the saved place chips, then nearby departures | Map with sheet content in a 400dp side pane |
+| Search | Full-screen search view: origin and destination fields, swap button, saved places or suggestions list | Same, in the side pane |
 | Results | Sheet with a travel time chip, sort chips, and route cards. Map shows the selected route | Side pane with route cards |
 | Itinerary | Sheet with leg timeline. Map fits the route | Side pane timeline |
+
+## Saved places
+
+A row of assist chips sits below the search bar on home: Home, Work, then the favorites in the order the user added them. A tap on a chip plans a journey to the place. When Home or Work is empty, the chip reads "Set home" or "Set work". A tap opens the search view, and the picked place becomes the shortcut. The row keeps its height while storage loads.
+
+With an empty query, the search view shows Home and Work, then "Favorites", then "Recent searches" with a "Clear" button. With a query, it shows the suggestions. Each place row has a menu button with three actions: add to or remove from favorites, set or remove as home, and set or remove as work. Clear needs no confirmation, because it removes only search history.
 
 ## Nearby departures
 

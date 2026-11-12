@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 val releaseKeystore = providers.environmentVariable("ITIVIO_KEYSTORE")
@@ -81,6 +83,11 @@ android {
     }
 }
 
+// Exported schemas are committed, so a later version can write and test its migrations.
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
 androidComponents {
     val baseVersionCode = requireNotNull(android.defaultConfig.versionCode)
     val abiVersionCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
@@ -119,6 +126,9 @@ dependencies {
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
+
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
 
     implementation(libs.maplibre.compose)
     implementation(libs.maplibre.compose.material3)

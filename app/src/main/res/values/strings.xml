@@ -15,6 +15,24 @@
     <string name="search_kind_address">Address</string>
     <string name="search_kind_place">Place</string>
 
+    <!-- Saved places -->
+    <string name="shortcut_home">Home</string>
+    <string name="shortcut_work">Work</string>
+    <string name="shortcut_set_home">Set home</string>
+    <string name="shortcut_set_work">Set work</string>
+    <string name="shortcut_search_home">Search for your home</string>
+    <string name="shortcut_search_work">Search for your work</string>
+    <string name="saved_favorites">Favorites</string>
+    <string name="saved_recents">Recent searches</string>
+    <string name="saved_clear_recents">Clear recent searches</string>
+    <string name="place_options">More options for %1$s</string>
+    <string name="place_add_favorite">Add to favorites</string>
+    <string name="place_remove_favorite">Remove from favorites</string>
+    <string name="place_set_home">Set as home</string>
+    <string name="place_remove_home">Remove as home</string>
+    <string name="place_set_work">Set as work</string>
+    <string name="place_remove_work">Remove as work</string>
+
     <!-- Navigation -->
     <string name="back">Back</string>
     <string name="locate_me">Show my location</string>

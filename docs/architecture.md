@@ -12,6 +12,7 @@ data/      Transitous client, DTOs, mappers, caches, local storage, location
 
 - `ui` depends on `domain`. It never imports `data` types.
 - `data` implements `domain` interfaces. Koin binds them in `data/DataModule.kt`.
+- `domain.PlacesRepository` holds saved places. `data/places` implements it with Room.
 - ViewModels are bound in `UiModule.kt`.
 
 Planning sessions stay in memory. After process death, the app returns to home. Save the minimal planning request if session recovery becomes a requirement.
@@ -39,6 +40,18 @@ A query goes to IGN only when it looks like an address and the first Transitous 
 IGN receives the query text, with no location bias or contact details. It returns up to five address matches. Results below score 0.5 are omitted. IGN addresses lead the merged list. Nearby address duplicates are removed; transit stops remain separate. The list keeps at most ten results. IGN has a five-second request timeout. A failure keeps the Transitous results and is not cached, so a later search can retry. Cancellation still propagates. Successful merged results use the existing memory cache.
 
 The app footer links to IGN and credits BAN. No new library is needed.
+
+## Saved places
+
+Favorites, Home and Work, and recent searches are in one Room table, `saved_place`, in `places.db`. Each row has a role (`HOME`, `WORK`, `FAVORITE`, or `RECENT`) and a key. A place can have more than one role.
+
+- The key is the stop ID for stops. For other places, the key is the kind, the provider ID, the name, and the point rounded to about 1 m. Geocoding IDs can be blank or repeated.
+- Each row keeps a full copy of the place. A saved place needs no network request.
+- Home and Work hold one place each.
+- Recent searches keep the 10 newest places. A place picked from the suggestions or from the recent searches goes first. A pick of Home, Work, or a favorite does not change the recent searches.
+- Schemas are exported to `app/schemas/`. A schema change needs a new version and a migration.
+
+DataStore is not added yet. It comes with the journey options in v0.5.0, which are its first use.
 
 ## Transitous usage policy
 
@@ -70,4 +83,4 @@ The itinerary tracker uses the clock and the leg times from the plan request. It
 
 ## Stack
 
-Kotlin, Jetpack Compose, Material 3 Expressive, Navigation 3, MapLibre Compose with OpenFreeMap tiles, Ktor (OkHttp engine) with kotlinx.serialization, Koin, coroutines with StateFlow. Room and DataStore come with the favorites milestone.
+Kotlin, Jetpack Compose, Material 3 Expressive, Navigation 3, MapLibre Compose with OpenFreeMap tiles, Ktor (OkHttp engine) with kotlinx.serialization, Koin, coroutines with StateFlow. Room stores saved places. DataStore comes with the journey options.

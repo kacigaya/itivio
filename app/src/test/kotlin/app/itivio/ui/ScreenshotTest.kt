@@ -18,6 +18,8 @@ import app.itivio.domain.GeoPoint
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
 import app.itivio.domain.Line
+import app.itivio.domain.PlacesRepository
+import app.itivio.domain.SavedPlaces
 import app.itivio.domain.Stop
 import app.itivio.domain.StopTime
 import app.itivio.domain.TransitMode
@@ -31,6 +33,7 @@ import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.planner.PlannerState
 import app.itivio.ui.results.ResultsScreen
 import app.itivio.ui.results.TravelTimeDialog
+import app.itivio.ui.search.SavedPlacesViewModel
 import app.itivio.ui.search.SearchViewModel
 import app.itivio.ui.theme.ItivioTheme
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -59,13 +62,17 @@ import org.robolectric.annotation.GraphicsMode
 class ScreenshotTest {
     @get:Rule val compose = createComposeRule()
 
+    private val places = FakePlacesRepository()
+
     @Before
     fun koin() {
         startKoin {
             modules(module {
                 single { UserLocation() }
                 single<app.itivio.domain.RoutingRepository> { FakeRoutingRepository() }
+                single<PlacesRepository> { places }
                 viewModelOf(::SearchViewModel)
+                viewModelOf(::SavedPlacesViewModel)
             })
         }
     }
@@ -96,6 +103,20 @@ class ScreenshotTest {
             wide = false, locationGranted = false, nearby = LoadState.Idle, now = t0,
             onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {},
         )
+    }
+
+    @Test
+    fun exploreSaved() {
+        places.saved.value = SavedPlaces(
+            home = FakeRoutingRepository.location("Rue de Rivoli 12"),
+            favorites = listOf(FakeRoutingRepository.location("S+U Alexanderplatz"), FakeRoutingRepository.location("Tempelhofer Feld")),
+        )
+        capture("explore_saved") {
+            ExploreScreen(
+                wide = false, locationGranted = true, nearby = LoadState.Ready(sampleDepartures), now = t0,
+                onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {},
+            )
+        }
     }
 
     @Test

@@ -21,6 +21,7 @@
 
 - Map with your current location.
 - Place and stop search with suggestions.
+- Favorite places and stops, Home and Work shortcuts, and recent searches. They stay on your device.
 - Departures from stops near you, with live countdowns.
 - Journey planning with all public transport modes. Leave now, leave at a time, or arrive by a time.
 - Sort routes by duration, transfers, or walking distance.
@@ -35,6 +36,7 @@
 - The app does not log your journeys or your location.
 - The app rounds the location it sends for search suggestions to about 1 km.
 - Your location does not need Google Play services.
+- Favorites, Home and Work, and recent searches stay on your device. The app sends them to no service.
 - The app turns off Android backup and device transfer for its data.
 
 The app sends requests to these services:
