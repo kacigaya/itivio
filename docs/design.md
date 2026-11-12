@@ -53,7 +53,7 @@ A filter chip before the sort chips opens a time picker dialog. The dialog has a
 
 ## Itinerary
 
-The itinerary is a trip tracker. A status line above the summary shows "Leave in 4 min" before the departure and "Arrive in 12 min" during the journey. The step in progress has a `primary` outline. Each transit leg shows the next 4 departures of its line at the boarding stop on a `surfaceContainerHigh` card. The planned trip is in medium weight. A live departure in the next hour shows as a countdown with the live icon. Other departures show the clock time. The line times refresh once a minute while the itinerary is visible.
+The itinerary is a trip tracker. A status line above the summary shows "Leave in 4 min" before the departure and "Arrive in 12 min" during the journey. The step in progress has a `primary` outline. Each transit leg shows the next 4 departures of its line at the boarding stop on a `surfaceContainerHigh` card. The list has only trips that stop at the alighting stop. Each row shows the trip code when the feed has one, then the destination: "QOKA52 · Marne-la-Vallée - Chessy". The planned trip is in medium weight. A live departure in the next hour shows as a countdown with the live icon. Other departures show the clock time. The line times refresh once a minute while the itinerary is visible.
 
 ## Route card
 

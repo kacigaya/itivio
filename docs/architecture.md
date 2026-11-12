@@ -79,7 +79,11 @@ DataStore is not added yet. It comes with the journey options in v0.5.0, which a
 
 The itinerary tracker uses the clock and the leg times from the plan request. It does not use the device position. Only the line times refresh after planning. Refresh the legs with `/v6/trip` if the tracker must follow new delays.
 
-`/stoptimes` has no line filter. The line times come from the next 40 departures of the boarding stop, filtered by route ID and direction. A stop with many lines can show fewer than 4 times.
+`/stoptimes` has no line filter. The line times come from the next 40 departures of the boarding stop, filtered by route ID. A stop with many lines can show fewer than 4 times.
+
+The line times keep only trips that stop at the alighting stop, or at another platform of its station. The request sets `fetchStops` to get the next stops of each trip. The direction ID is not enough: IDFM gives direction 0 to RER A trains in both directions. `fetchStops` is experimental in MOTIS. If the response has no next stops, the direction ID filters the list. The next stops make each refresh about 5 times larger (about 40 kB compressed at La Défense).
+
+Some feeds put a mission code in the headsign, such as "QOKA" for trip "QOKA52" on the RER. When the trip short name starts with the headsign, the mapper shows the final stop of the trip (`tripTo`) and keeps the trip short name as `tripCode`. Other headsigns stay as they are, because `tripTo` names can have a city suffix, such as "U Turmstr. (Berlin)".
 
 ## Stack
 

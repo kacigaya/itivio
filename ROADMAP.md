@@ -69,9 +69,31 @@ Limits for this release:
 - The device position stays on the device during the walking view. Only the "plan a new route" button sends it.
 - The walking view works only while the app is on screen. The app does not ask for background location.
 
-## v0.7.0: Languages and settings
+## v0.7.0: Disruptions, languages, and settings
 
 This is the last alpha release.
+
+### Disruptions tab
+
+A tab that lists the service disruptions ("Perturbations" in French) that affect the user's stops.
+
+- [ ] Add top-level navigation with two destinations: Map and Disruptions. The app has no tabs today. Use a navigation bar on phones and a navigation rail on wide screens.
+- [ ] Ask for alerts with the stop times. Today the app sets `withAlerts=false` on `/v6/stoptimes`.
+- [ ] Read the severity, effect, cause, and impact period of an alert. Today the app reads only the header, the description, and the link.
+- [ ] Show the disruptions in two groups: favorite stops, then stops near the user.
+- [ ] Put the most severe disruptions first in each group.
+- [ ] Show each disruption with its stop, its effect, its time period, and its link.
+- [ ] Show an alert only one time when it applies to more than one stop.
+- [ ] Add an empty state. Tell the user that some regions publish no alerts.
+- [ ] Add a test fixture with alerts. The current fixtures have none.
+- [ ] Add the new data to the README privacy table: the tab sends the IDs of the favorite stops to Transitous.
+
+Limits for this release:
+
+- The provider has no endpoint that lists all disruptions of a network or a line. The tab shows only the disruptions on the stops it asks about.
+- The tab loads disruptions only while it is on screen. The app sends no background requests and no notifications.
+
+### Languages and settings
 
 - [ ] Add a French translation. English is the only language today.
 - [ ] Add each new language to `locales_config.xml`, so Android shows the per-app language setting.
@@ -120,6 +142,8 @@ These items are not planned before v1.0.0:
 
 - Home screen widget for departures.
 - Departure reminders.
+- Disruption notifications.
+- Disruptions by line, and a list for the full network. This needs a provider endpoint that does not exist today.
 - Voice instructions in the walking view.
 - Alternative walking routes on the map.
 - Walking view with the screen off.
