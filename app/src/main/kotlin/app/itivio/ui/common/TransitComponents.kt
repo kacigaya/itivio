@@ -172,7 +172,13 @@ fun MessageState(
         modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 32.dp),
     ) {
         Icon(painterResource(icon), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        // Explicit color: some hosts, such as the full-screen search bar, do not set a content color.
+        Text(
+            title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+        )
         Text(
             body,
             style = MaterialTheme.typography.bodyMedium,
