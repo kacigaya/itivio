@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
@@ -85,7 +86,11 @@ fun ExploreScreen(
         textFieldState = textState,
         placeholder = placeholder,
         offerMyLocation = false,
-        onPick = onDestination,
+        onPick = { endpoint ->
+            // The bar shows no destination, so a query left in it would read as a stale search.
+            textState.clearText()
+            onDestination(endpoint)
+        },
     )
 }
 
