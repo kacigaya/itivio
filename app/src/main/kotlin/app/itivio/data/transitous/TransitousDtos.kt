@@ -11,6 +11,7 @@ internal data class Match(
     val lon: Double,
     val areas: List<Area> = emptyList(),
     val modes: List<String> = emptyList(),
+    val country: String? = null,
 )
 
 @Serializable

@@ -1,0 +1,23 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [2.416942, 48.852355]},
+      "properties": {
+        "id": "93048_8181_00071", "name": "71 Rue de la République",
+        "postcode": "93100", "city": "Montreuil", "type": "housenumber",
+        "score": 0.8421210489510488
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {"type": "Point", "coordinates": [2.424022, 48.85372]},
+      "properties": {
+        "id": "93048_8180", "name": "Place de la Republique",
+        "postcode": "93100", "city": "Montreuil", "type": "street",
+        "score": 0.6676294926004228
+      }
+    }
+  ]
+}

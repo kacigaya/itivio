@@ -31,6 +31,15 @@ Planning sessions stay in memory. After process death, the app returns to home. 
 
 To use a self-hosted MOTIS instance, change the base URL. To use another provider, add a new `RoutingRepository` implementation and bind it in `DataModule`.
 
+## French address search
+
+`IgnAddressSearch` supplements Transitous autocomplete with IGN Géoplateforme (BAN).
+A query goes to IGN only when it looks like an address and the first Transitous match has country `FR`. This does not use the device language or a coordinate boundary to guess the country. If Transitous cannot identify France, search stays on Transitous. Add explicit country selection if this becomes a coverage problem.
+
+IGN receives the query text, with no location bias or contact details. It returns up to five address matches. Results below score 0.5 are omitted. IGN addresses lead the merged list. Nearby address duplicates are removed; transit stops remain separate. The list keeps at most ten results. IGN has a five-second request timeout. A failure keeps the Transitous results and is not cached, so a later search can retry. Cancellation still propagates. Successful merged results use the existing memory cache.
+
+The app footer links to IGN and credits BAN. No new library is needed.
+
 ## Transitous usage policy
 
 - Every request sends `User-Agent: itivio/<version> (+<contact>)`. Set the contact with the `itivio.contact` Gradle property.
@@ -44,6 +53,7 @@ To use a self-hosted MOTIS instance, change the base URL. To use another provide
 ## Privacy
 
 - No analytics, no crash reporting, no request logging.
+- French address queries also go to IGN. No coordinates are sent to IGN.
 - The search bias point is rounded to about 1 km before it is sent.
 - The nearby departures center is rounded to about 10 m before it is sent.
 - The origin of a journey is sent at full precision only when the user plans from their location.

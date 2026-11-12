@@ -42,11 +42,14 @@ The app sends requests to these services:
 | Service | Use | Data sent |
 |---|---|---|
 | [Transitous](https://transitous.org/) | Search, routes, departures | Search text, start and end points of a journey |
+| [IGN Géoplateforme](https://cartes.gouv.fr/) | French address search | Search text, without your location |
 | [OpenFreeMap](https://openfreemap.org/) | Map tiles | The map area you look at |
 
 ## Data sources
 
 Routing comes from [Transitous](https://transitous.org/), a community service that runs [MOTIS](https://github.com/motis-project/motis). Transitous combines timetables from many transit agencies. See the [list of data sources](https://transitous.org/sources/).
+
+French address search also uses IGN Géoplateforme and the [Base Adresse Nationale](https://adresse.data.gouv.fr/). Address-like queries go to IGN when the first Transitous match identifies France. IGN failures leave Transitous suggestions available.
 
 Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Map tiles from [OpenFreeMap](https://openfreemap.org/). The map styles derive from [OSM Liberty](https://github.com/maputnik/osm-liberty) (BSD 3-Clause code, CC BY design) with [OpenMapTiles](https://openmaptiles.org/) data.
 

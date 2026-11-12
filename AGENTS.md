@@ -28,6 +28,8 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 - `ui` must not import `app.itivio.data`. Use `domain` types.
 - Do not log request URLs, coordinates, or journeys.
 - Every Transitous request goes through the shared `HttpClient`, which sets the User-Agent.
+- French address search uses `https://data.geopf.fr/geocodage/search` only for address-like queries whose first Transitous match has country `FR`. IGN uses a separate client with no contact details and receives no location bias.
+- IGN fixtures are in `app/src/test/resources/ign/`. Tests never call the live IGN API.
 - Unit tests use the JSON fixtures in `app/src/test/resources/transitous/`. Tests never call the live API.
 - User-facing strings go in `res/values/strings.xml`.
 - Icons are Material Symbols vector drawables in `res/drawable/` (`ic_<name>.xml`).

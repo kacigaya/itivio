@@ -25,6 +25,7 @@ fun createHttpClient(
     engine: HttpClientEngine = OkHttp.create(),
     version: String = BuildConfig.VERSION_NAME,
     contact: String = BuildConfig.CONTACT,
+    baseUrl: String = "https://api.transitous.org/api/",
 ): HttpClient = HttpClient(engine) {
     expectSuccess = false
     install(ContentNegotiation) { json(transitousJson) }
@@ -33,7 +34,7 @@ fun createHttpClient(
         requestTimeoutMillis = 30_000
     }
     defaultRequest {
-        url("https://api.transitous.org/api/")
+        url(baseUrl)
         header(HttpHeaders.UserAgent, userAgent(version, contact))
     }
 }

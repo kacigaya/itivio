@@ -9,6 +9,7 @@ import app.itivio.domain.Line
 import app.itivio.domain.Location
 import app.itivio.domain.RoutingException
 import app.itivio.domain.RoutingRepository
+import app.itivio.data.ign.IgnAddressSearch
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpRequestTimeoutException
@@ -26,6 +27,7 @@ import java.util.Locale
 class TransitousRoutingRepository(
     private val client: HttpClient,
     private val language: String = Locale.getDefault().toLanguageTag(),
+    private val frenchAddresses: IgnAddressSearch? = null,
 ) : RoutingRepository {
     private data class SearchKey(val query: String, val bias: String?, val language: String)
     private val cache = object : LinkedHashMap<SearchKey, List<Location>>(64, 0.75f, true) {
@@ -39,13 +41,34 @@ class TransitousRoutingRepository(
         val key = SearchKey(text.lowercase(Locale.ROOT), bias, language)
         synchronized(cache) { cache[key] }?.let { return it }
         return mapped {
-            val results = get<List<Match>>("v1/geocode") {
+            val matches = get<List<Match>>("v1/geocode") {
                 parameter("text", text)
                 parameter("numResults", 10)
                 parameter("language", language)
                 bias?.let { parameter("place", it) }
-            }.map { it.toDomain() }
-            synchronized(cache) { cache[key] = results }
+            }
+            var complete = true
+            val addresses = if (frenchAddresses != null && matches.firstOrNull()?.country == "FR" &&
+                IgnAddressSearch.looksLikeAddress(text)
+            ) {
+                try {
+                    frenchAddresses.search(text)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // Keep transport suggestions available and allow a later retry of IGN.
+                    complete = false
+                    emptyList()
+                }
+            } else emptyList()
+            val results = (addresses + matches.map { it.toDomain() }).fold(emptyList<Location>()) { kept, next ->
+                if (next.kind != app.itivio.domain.LocationKind.STOP && kept.any {
+                    it.kind == next.kind && it.name.equals(next.name, ignoreCase = true) &&
+                        kotlin.math.abs(it.point.latitude - next.point.latitude) < 0.0002 &&
+                        kotlin.math.abs(it.point.longitude - next.point.longitude) < 0.0002
+                }) kept else kept + next
+            }.take(10)
+            if (complete) synchronized(cache) { cache[key] = results }
             results
         }
     }
