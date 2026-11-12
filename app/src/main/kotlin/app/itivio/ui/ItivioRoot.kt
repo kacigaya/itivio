@@ -6,13 +6,17 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -24,6 +28,7 @@ import androidx.navigation3.ui.NavDisplay
 import app.itivio.domain.GeoPoint
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.UserLocation
+import app.itivio.ui.common.LocalPanelHeaderHeight
 import app.itivio.ui.common.isWideLayout
 import app.itivio.ui.common.panelInsets
 import app.itivio.ui.explore.ExplorePeekHeight
@@ -98,81 +103,86 @@ fun ItivioRoot(planner: PlannerViewModel = koinViewModel(), nearby: NearbyViewMo
         .flatMap { group -> group.departures.map { it.stop.point } }
         .distinct()
 
+    // The screen on top measures its floating header, so the camera keeps routes below it.
+    val headerHeight = remember { mutableStateOf(0.dp) }
+
     Box(Modifier.fillMaxSize()) {
         TransitMap(
             locationState = locationState,
             journey = mapJourney,
             destination = destinationPoint,
             stops = stops,
-            insets = panelInsets(wide, peek),
+            insets = panelInsets(wide, peek, headerHeight.value),
             recenterRequest = recenterRequest,
             modifier = Modifier.fillMaxSize(),
         )
-        NavDisplay(
-            backStack = backStack,
-            onBack = { backStack.pop(planner) },
-            entryDecorators = listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
-            popTransitionSpec = { fadeIn() togetherWith fadeOut() },
-            predictivePopTransitionSpec = { fadeIn() togetherWith fadeOut() },
-            entryProvider = entryProvider {
-                entry<ExploreRoute> {
-                    ExploreScreen(
-                        wide = wide,
-                        locationGranted = locationGranted,
-                        nearby = nearbyState,
-                        now = now,
-                        onRequestLocation = locationState::requestPermission,
-                        onRecenter = { recenterRequest++ },
-                        onRetryNearby = nearby::retry,
-                        onDestination = { endpoint ->
-                            planner.setDestination(endpoint)
-                            backStack.add(ResultsRoute)
-                        },
-                    )
-                }
-                entry<ResultsRoute> {
-                    ResultsScreen(
-                        wide = wide,
-                        state = state,
-                        onBack = { backStack.pop(planner) },
-                        onOrigin = { endpoint ->
-                            if (endpoint == Endpoint.MyLocation && !locationGranted) locationState.requestPermission()
-                            planner.setOrigin(endpoint)
-                        },
-                        onDestination = planner::setDestination,
-                        onSwap = planner::swap,
-                        onTime = planner::setTime,
-                        onSort = planner::setSort,
-                        onSelect = planner::select,
-                        onOpen = { id -> backStack.add(ItineraryRoute(id)) },
-                        onLater = planner::loadLater,
-                        onRetry = planner::retry,
-                    )
-                }
-                entry<ItineraryRoute> { route ->
-                    val journey = state.journey(route.journeyId)
-                    if (journey == null) {
-                        // The session was reset (e.g. process death); fall back to the start.
-                        LaunchedEffect(Unit) { backStack.pop(planner) }
-                    } else {
-                        // Scoped to this entry, so the times refresh only while the itinerary is open.
-                        val lineTimes: LineTimesViewModel = koinViewModel()
-                        LaunchedEffect(journey) { lineTimes.show(journey) }
-                        ItineraryScreen(
+        CompositionLocalProvider(LocalPanelHeaderHeight provides headerHeight) {
+            NavDisplay(
+                backStack = backStack,
+                onBack = { backStack.pop(planner) },
+                entryDecorators = listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator(),
+                ),
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                popTransitionSpec = { fadeIn() togetherWith fadeOut() },
+                predictivePopTransitionSpec = { fadeIn() togetherWith fadeOut() },
+                entryProvider = entryProvider {
+                    entry<ExploreRoute> {
+                        ExploreScreen(
                             wide = wide,
-                            journey = journey,
+                            locationGranted = locationGranted,
+                            nearby = nearbyState,
                             now = now,
-                            lineTimes = lineTimes.times.collectAsStateWithLifecycle().value,
-                            onBack = { backStack.pop(planner) },
+                            onRequestLocation = locationState::requestPermission,
+                            onRecenter = { recenterRequest++ },
+                            onRetryNearby = nearby::retry,
+                            onDestination = { endpoint ->
+                                planner.setDestination(endpoint)
+                                backStack.add(ResultsRoute)
+                            },
                         )
                     }
-                }
-            },
-        )
+                    entry<ResultsRoute> {
+                        ResultsScreen(
+                            wide = wide,
+                            state = state,
+                            onBack = { backStack.pop(planner) },
+                            onOrigin = { endpoint ->
+                                if (endpoint == Endpoint.MyLocation && !locationGranted) locationState.requestPermission()
+                                planner.setOrigin(endpoint)
+                            },
+                            onDestination = planner::setDestination,
+                            onSwap = planner::swap,
+                            onTime = planner::setTime,
+                            onSort = planner::setSort,
+                            onSelect = planner::select,
+                            onOpen = { id -> backStack.add(ItineraryRoute(id)) },
+                            onLater = planner::loadLater,
+                            onRetry = planner::retry,
+                        )
+                    }
+                    entry<ItineraryRoute> { route ->
+                        val journey = state.journey(route.journeyId)
+                        if (journey == null) {
+                            // The session was reset (e.g. process death); fall back to the start.
+                            LaunchedEffect(Unit) { backStack.pop(planner) }
+                        } else {
+                            // Scoped to this entry, so the times refresh only while the itinerary is open.
+                            val lineTimes: LineTimesViewModel = koinViewModel()
+                            LaunchedEffect(journey) { lineTimes.show(journey) }
+                            ItineraryScreen(
+                                wide = wide,
+                                journey = journey,
+                                now = now,
+                                lineTimes = lineTimes.times.collectAsStateWithLifecycle().value,
+                                onBack = { backStack.pop(planner) },
+                            )
+                        }
+                    }
+                },
+            )
+        }
     }
 }
 

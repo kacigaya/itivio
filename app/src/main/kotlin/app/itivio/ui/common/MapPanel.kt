@@ -25,9 +25,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
@@ -41,10 +45,20 @@ private val PaneMargin = 16.dp
 fun isWideLayout(): Boolean =
     currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)
 
+/**
+ * Height of the [MapPanel] header that floats over the map in compact windows, status bar included.
+ * The screen on top sets it when its header is laid out. Null outside the app root, such as in tests.
+ */
+val LocalPanelHeaderHeight = compositionLocalOf<MutableState<Dp>?> { null }
+
 /** The map area a [MapPanel] covers, so the camera can keep routes visible. */
 @Composable
-fun panelInsets(wide: Boolean, peekHeight: Dp): PaddingValues =
-    if (wide) PaddingValues(start = PaneWidth + PaneMargin * 2) else PaddingValues(bottom = peekHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
+fun panelInsets(wide: Boolean, peekHeight: Dp, headerHeight: Dp): PaddingValues =
+    if (wide) {
+        PaddingValues(start = PaneWidth + PaneMargin * 2)
+    } else {
+        PaddingValues(top = headerHeight, bottom = peekHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
+    }
 
 /**
  * Screen content over the map. Compact windows get a bottom sheet that peeks at [peekHeight];
@@ -84,10 +98,15 @@ fun MapPanel(
                     content()
                 },
                 content = {
+                    val headerHeight = LocalPanelHeaderHeight.current
+                    val density = LocalDensity.current
                     Box(Modifier.fillMaxSize()) {
                         Column(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier
+                                .onSizeChanged { headerHeight?.value = with(density) { it.height.toDp() } }
+                                .statusBarsPadding()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                         ) { header() }
                     }
                 },
