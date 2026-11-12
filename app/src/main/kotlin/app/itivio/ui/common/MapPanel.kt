@@ -1,10 +1,12 @@
 package app.itivio.ui.common
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -16,12 +18,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
@@ -70,22 +74,31 @@ fun MapPanel(
             }
         }
     } else {
-        BottomSheetScaffold(
-            modifier = Modifier.navigationBarsPadding(),
-            sheetPeekHeight = peekHeight,
-            sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            containerColor = Color.Transparent,
-            sheetContent = {
-                content()
-            },
-            content = {
-                Box(Modifier.fillMaxSize()) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp),
-                    ) { header() }
-                }
-            },
-        )
+        Box(Modifier.fillMaxSize()) {
+            BottomSheetScaffold(
+                modifier = Modifier.navigationBarsPadding(),
+                sheetPeekHeight = peekHeight,
+                sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                containerColor = Color.Transparent,
+                sheetContent = {
+                    content()
+                },
+                content = {
+                    Box(Modifier.fillMaxSize()) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.statusBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp),
+                        ) { header() }
+                    }
+                },
+            )
+            // The scaffold keeps content above the system bar; cover the map in that inset.
+            Spacer(
+                Modifier.align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .windowInsetsBottomHeight(WindowInsets.navigationBars)
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
+            )
+        }
     }
 }
