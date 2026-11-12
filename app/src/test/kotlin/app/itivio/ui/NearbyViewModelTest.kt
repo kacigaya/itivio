@@ -13,6 +13,7 @@ import app.itivio.ui.common.UserLocation
 import app.itivio.ui.nearby.NearbyViewModel
 import app.itivio.ui.nearby.NearbyViewModel.Companion.REFRESH_MILLIS
 import app.itivio.ui.nearby.StopDepartures
+import app.itivio.ui.nearby.upcoming
 import java.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -164,6 +165,18 @@ class NearbyViewModelTest {
         runCurrent()
 
         assertEquals(listOf(point), repository.nearbyCalls)
+    }
+
+    @Test
+    fun `upcoming drops departures from past minutes and empty stops`() {
+        val groups = listOf(
+            StopDepartures("Aubert", listOf(departure("Aubert", "a", 0), departure("Aubert", "a", 1))),
+            StopDepartures("Tourelle", listOf(departure("Tourelle", "t", 0))),
+        )
+        // 10:01:30: the 10:01 bus is still in the current minute and stays; the 10:00 buses are gone.
+        val upcoming = groups.upcoming(Instant.parse("2026-11-09T10:01:30Z"))
+        assertEquals(listOf("Aubert"), upcoming.map { it.name })
+        assertEquals(listOf(Instant.parse("2026-11-09T10:01:00Z")), upcoming.single().departures.map { it.time.best })
     }
 
     private fun departure(

@@ -202,7 +202,9 @@ private fun TransitLegItem(leg: Leg.Transit, departures: List<Departure>, now: I
                 if (leg.cancelled) {
                     Text(stringResource(R.string.cancelled), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
                 }
-                if (departures.isNotEmpty()) LineTimes(departures, leg.tripId, now)
+                // Line times refresh once a minute; drop the ones that left since.
+                val upcoming = departures.filter { clockMinutesUntil(now, it.time.best) >= 0 }
+                if (upcoming.isNotEmpty()) LineTimes(upcoming, leg.tripId, now)
                 leg.alerts.forEach { alert ->
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Icon(painterResource(R.drawable.ic_warning), contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))

@@ -58,23 +58,35 @@ fun LazyListScope.nearbyDepartures(state: LoadState<List<StopDepartures>>, now: 
         // Idle means the first location fix has not arrived yet.
         LoadState.Idle, LoadState.Loading -> item(key = "nearby-loading") { LoadingState() }
         is LoadState.Failed -> item(key = "nearby-error") { FailureState(state.failure, onRetry) }
-        is LoadState.Ready -> if (state.value.isEmpty()) {
-            item(key = "nearby-empty") {
-                MessageState(
-                    icon = R.drawable.ic_info,
-                    title = stringResource(R.string.nearby_empty_title),
-                    body = stringResource(R.string.nearby_empty_body),
-                )
-            }
-        } else {
-            state.value.forEach { group ->
-                item(key = "stop-${group.name}") { StopHeader(group.name) }
-                items(group.departures, key = { "${group.name}-${it.tripId}-${it.time.scheduled}" }) { departure ->
-                    DepartureRow(departure, now)
+        is LoadState.Ready -> {
+            val groups = state.value.upcoming(now)
+            if (groups.isEmpty()) {
+                item(key = "nearby-empty") {
+                    MessageState(
+                        icon = R.drawable.ic_info,
+                        title = stringResource(R.string.nearby_empty_title),
+                        body = stringResource(R.string.nearby_empty_body),
+                    )
+                }
+            } else {
+                groups.forEach { group ->
+                    item(key = "stop-${group.name}") { StopHeader(group.name) }
+                    items(group.departures, key = { "${group.name}-${it.tripId}-${it.time.scheduled}" }) { departure ->
+                        DepartureRow(departure, now)
+                    }
                 }
             }
         }
     }
+}
+
+/**
+ * Drops departures from past clock minutes, and stops left without any. The list refreshes once a
+ * minute, and the provider can return a departure that just left; neither may read "Now".
+ */
+internal fun List<StopDepartures>.upcoming(now: Instant): List<StopDepartures> = mapNotNull { group ->
+    group.copy(departures = group.departures.filter { clockMinutesUntil(now, it.time.best) >= 0 })
+        .takeIf { it.departures.isNotEmpty() }
 }
 
 @Composable
