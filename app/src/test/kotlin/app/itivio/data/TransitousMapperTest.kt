@@ -57,6 +57,11 @@ class TransitousMapperTest {
                 assertNotNull(it.end.estimated)
             }
         }
+        // The fixture plans between coordinates, so MOTIS names the ends "START" and "END".
+        val named = dto.toDomain(fromName = "Home", toName = "Work").journeys.first()
+        assertEquals("Home", named.legs.first().from.name)
+        assertEquals("Work", named.legs.last().to.name)
+        assertTrue(named.legs.dropLast(1).none { it.to.name == "Work" })
         assertEquals(dto.previousPageCursor, page.earlierCursor)
         assertEquals(dto.nextPageCursor, page.laterCursor)
         assertEquals(dto.itineraries.first().id, page.journeys.first().id)

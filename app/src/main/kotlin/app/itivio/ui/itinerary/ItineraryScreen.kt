@@ -328,7 +328,8 @@ private fun StopRow(
         Box(Modifier.width(RailWidth).fillMaxHeight(), contentAlignment = Alignment.Center) { rail() }
         Column(Modifier.weight(1f).padding(vertical = 8.dp)) {
             Text(
-                stop.name,
+                // "My location" has no name.
+                stop.name.ifBlank { stringResource(R.string.search_my_location) },
                 style = if (emphasized) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
                 fontWeight = if (emphasized) FontWeight.Medium else FontWeight.Normal,
             )

@@ -90,7 +90,7 @@ class TransitousRoutingRepository(
             parameter("detailedLegs", true)
             parameter("detailedTransfers", false)
             parameter("language", language)
-        }.toDomain()
+        }.toDomain(request.from.name, request.to.name)
     }
 
     override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int): List<Departure> = mapped {

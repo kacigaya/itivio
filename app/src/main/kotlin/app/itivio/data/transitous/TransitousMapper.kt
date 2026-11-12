@@ -62,35 +62,41 @@ private fun time(scheduled: String?, current: String?, live: Boolean): DomainTim
     return DomainTime(Instant.parse(baseline), current?.takeIf { live }?.let(Instant::parse))
 }
 
-internal fun Place.toDomain(): DomainStop = DomainStop(
-    name, GeoPoint(lat, lon), stopId, track ?: scheduledTrack,
+/** [coordinateName] replaces the name MOTIS gives a coordinate endpoint, such as "START" or "END". */
+internal fun Place.toDomain(coordinateName: String? = null): DomainStop = DomainStop(
+    coordinateName?.takeIf { stopId == null } ?: name, GeoPoint(lat, lon), stopId, track ?: scheduledTrack,
     time(scheduledArrival, arrival, realtime(arrivalTimestampReason)),
     time(scheduledDeparture, departure, realtime(departureTimestampReason)), cancelled,
     tz?.let { try { ZoneId.of(it) } catch (_: DateTimeException) { null } },
 )
 
-internal fun Leg.toDomain(): DomainLeg {
+internal fun Leg.toDomain(fromName: String? = null, toName: String? = null): DomainLeg {
     val mode = transitMode(mode)
     val start = requireNotNull(time(scheduledStartTime, startTime, realTime))
     val end = requireNotNull(time(scheduledEndTime, endTime, realTime))
     val geometry = legGeometry?.let { decodePolyline(it.points, it.precision) } ?: emptyList()
-    return if (!mode.isTransit) DomainLeg.Street(mode, from.toDomain(), to.toDomain(), start, end, geometry, distance ?: 0.0)
-    else DomainLeg.Transit(mode, from.toDomain(), to.toDomain(), start, end, geometry,
+    val from = from.toDomain(fromName)
+    val to = to.toDomain(toName)
+    return if (!mode.isTransit) DomainLeg.Street(mode, from, to, start, end, geometry, distance ?: 0.0)
+    else DomainLeg.Transit(mode, from, to, start, end, geometry,
         line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName, routeId),
         headsign, tripId, intermediateStops.map { it.toDomain() }, cancelled,
         alerts.map { app.itivio.domain.Alert(it.headerText, it.descriptionText, it.url) }, directionId)
 }
 
-internal fun Itinerary.toDomain(): Journey {
-    val mapped = legs.map { it.toDomain() }
+/** [fromName] and [toName] name the requested endpoints; see [Place.toDomain]. */
+internal fun Itinerary.toDomain(fromName: String? = null, toName: String? = null): Journey {
+    val mapped = legs.mapIndexed { index, leg ->
+        leg.toDomain(fromName.takeIf { index == 0 }, toName.takeIf { index == legs.lastIndex })
+    }
     val stableId = id ?: MessageDigest.getInstance("SHA-256").digest(
         legs.joinToString("|") { "${it.tripId}:${it.startTime}:${it.endTime}" }.toByteArray(Charsets.UTF_8)
     ).joinToString("") { "%02x".format(it) }
     return Journey(stableId, mapped, mapped.first().start, mapped.last().end, transfers)
 }
 
-internal fun PlanResponse.toDomain() = JourneyPage(
-    itineraries.filter { it.legs.isNotEmpty() }.map { it.toDomain() }, previousPageCursor, nextPageCursor,
+internal fun PlanResponse.toDomain(fromName: String? = null, toName: String? = null) = JourneyPage(
+    itineraries.filter { it.legs.isNotEmpty() }.map { it.toDomain(fromName, toName) }, previousPageCursor, nextPageCursor,
 )
 
 internal fun StopTime.toDomain(): Departure = Departure(
