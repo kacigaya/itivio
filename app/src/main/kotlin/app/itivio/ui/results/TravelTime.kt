@@ -2,11 +2,6 @@ package app.itivio.ui.results
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,9 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.TimePicker
-import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.TimePickerLayoutType
 import androidx.compose.material3.TimePickerDialogDefaults
 import androidx.compose.material3.TimePickerDisplayMode
@@ -114,34 +106,25 @@ fun TravelTimeDialog(
         is24Hour = DateFormat.is24HourFormat(LocalContext.current),
     )
 
-    BasicAlertDialog(onDismissRequest = onDismiss) {
-        Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
-            Column(
-                modifier = Modifier.heightIn(max = (LocalConfiguration.current.screenHeightDp - 48).dp).padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Text(stringResource(R.string.travel_title), style = MaterialTheme.typography.headlineSmall)
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-                ) { TravelTimeFields(arrive, { arrive = it }, day, { day = it }, displayMode, clock) }
-                FlowRow(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
-                    TimePickerDialogDefaults.DisplayModeToggle(
-                        onDisplayModeChange = {
-                            displayMode = if (displayMode == TimePickerDisplayMode.Picker) TimePickerDisplayMode.Input else TimePickerDisplayMode.Picker
-                        },
-                        displayMode = displayMode,
-                    )
-                    TextButton(onClick = { onConfirm(null, false) }) { Text(stringResource(R.string.travel_now)) }
-                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
-                    TextButton(onClick = {
-                        val picked = today.plusDays(day.toLong()).atTime(clock.hour, clock.minute).atZone(zone).toInstant()
-                        onConfirm(picked, arrive)
-                    }) { Text(stringResource(R.string.done)) }
-                }
-            }
-        }
-    }
+    PickerDialog(
+        title = stringResource(R.string.travel_title),
+        onDismiss = onDismiss,
+        buttons = {
+            TimePickerDialogDefaults.DisplayModeToggle(
+                onDisplayModeChange = {
+                    displayMode = if (displayMode == TimePickerDisplayMode.Picker) TimePickerDisplayMode.Input else TimePickerDisplayMode.Picker
+                },
+                displayMode = displayMode,
+            )
+            TextButton(onClick = { onConfirm(null, false) }) { Text(stringResource(R.string.travel_now)) }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = {
+                val picked = today.plusDays(day.toLong()).atTime(clock.hour, clock.minute).atZone(zone).toInstant()
+                onConfirm(picked, arrive)
+            }) { Text(stringResource(R.string.done)) }
+        },
+        fieldsAlignment = Alignment.CenterHorizontally,
+    ) { TravelTimeFields(arrive, { arrive = it }, day, { day = it }, displayMode, clock) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

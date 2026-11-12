@@ -24,6 +24,8 @@
 - Favorite places and stops, Home and Work shortcuts, and recent searches. They stay on your device.
 - Departures from stops near you, with live countdowns.
 - Journey planning with all public transport modes. Leave now, leave at a time, or arrive by a time.
+- Journey options: transport modes, a transfer limit, wheelchair-accessible routing, and walking speed. The app keeps them between starts.
+- Earlier and later departures for each search.
 - Sort routes by duration, transfers, or walking distance.
 - Journey details: stops, platforms, times, and the route on the map.
 - Live times where the transit agency publishes them. Scheduled times have no live marker.
@@ -37,13 +39,14 @@
 - The app rounds the location it sends for search suggestions to about 1 km.
 - Your location does not need Google Play services.
 - Favorites, Home and Work, and recent searches stay on your device. The app sends them to no service.
+- Journey options stay on your device. They go to Transitous only as part of a journey request. This includes the wheelchair option.
 - The app turns off Android backup and device transfer for its data.
 
 The app sends requests to these services:
 
 | Service | Use | Data sent |
 |---|---|---|
-| [Transitous](https://transitous.org/) | Search, routes, departures | Search text, start and end points of a journey |
+| [Transitous](https://transitous.org/) | Search, routes, departures | Search text, start and end points of a journey, journey options |
 | [IGN Géoplateforme](https://cartes.gouv.fr/) | French address search | Search text, without your location |
 | [OpenFreeMap](https://openfreemap.org/) | Map tiles | The map area you look at |
 

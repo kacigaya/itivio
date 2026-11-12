@@ -20,7 +20,7 @@ All 0.x releases are pre-releases. Each release must pass tests, lint, and the d
 
 ## v0.4.0: Saved places
 
-This release adds local storage. All items are done. The release is not tagged yet.
+This release adds local storage. All items are done.
 
 - [x] Add favorites for places and stops.
 - [x] Add Home and Work shortcuts.
@@ -32,12 +32,16 @@ DataStore is not in this release. Saved places are list data, so Room stores all
 
 ## v0.5.0: Journey options
 
-- [ ] Add an "Earlier" button to the results. The provider already returns the cursor.
-- [ ] Let the user select transport modes.
-- [ ] Add a limit for transfers.
-- [ ] Add wheelchair-accessible routing.
-- [ ] Add a walking speed option.
-- [ ] Keep the selected options between app starts. Add DataStore for this.
+All items are done.
+
+- [x] Add an "Earlier" button to the results. The provider already returns the cursor.
+- [x] Let the user select transport modes.
+- [x] Add a limit for transfers.
+- [x] Add wheelchair-accessible routing.
+- [x] Add a walking speed option.
+- [x] Keep the selected options between app starts. Add DataStore for this.
+
+The wheelchair option changes walks and transfers only. The provider does not check vehicles.
 
 ## v0.6.0: Stops, live tracking, and walking view
 

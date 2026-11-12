@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onRoot
 import app.itivio.domain.Departure
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.Journey
+import app.itivio.domain.JourneyOptions
 import app.itivio.domain.Leg
 import app.itivio.domain.Line
 import app.itivio.domain.PlacesRepository
@@ -31,6 +32,7 @@ import app.itivio.ui.nearby.NearbyViewModel
 import app.itivio.ui.nearby.StopDepartures
 import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.planner.PlannerState
+import app.itivio.ui.results.JourneyOptionsDialog
 import app.itivio.ui.results.ResultsScreen
 import app.itivio.ui.results.TravelTimeDialog
 import app.itivio.ui.search.SavedPlacesViewModel
@@ -132,13 +134,14 @@ class ScreenshotTest {
         ResultsScreen(
             wide = false,
             state = PlannerState(
+                optionsLoaded = true,
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
                 time = t0.plusSeconds(26 * 3600),
                 arriveBy = true,
                 results = LoadState.Ready(sampleJourneys),
             ),
-            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onSort = {}, onSelect = {},
-            onOpen = {}, onLater = {}, onRetry = {},
+            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
+            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
         )
     }
 
@@ -148,17 +151,29 @@ class ScreenshotTest {
     }
 
     @Test
+    fun journeyOptionsDialog() = capture("journey_options") {
+        JourneyOptionsDialog(
+            options = JourneyOptions(excludedModes = setOf(TransitMode.COACH, TransitMode.AIRPLANE), maxTransfers = 1),
+            onDismiss = {},
+            onConfirm = {},
+        )
+    }
+
+    @Test
     fun results() = capture("results") {
         ResultsScreen(
             wide = false,
             state = PlannerState(
+                optionsLoaded = true,
                 origin = Endpoint.MyLocation,
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
+                options = JourneyOptions(maxTransfers = 1),
                 results = LoadState.Ready(sampleJourneys),
+                canLoadEarlier = true,
                 canLoadLater = true,
             ),
-            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onSort = {}, onSelect = {},
-            onOpen = {}, onLater = {}, onRetry = {},
+            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
+            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
         )
     }
 
@@ -167,11 +182,12 @@ class ScreenshotTest {
         ResultsScreen(
             wide = false,
             state = PlannerState(
+                optionsLoaded = true,
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
                 results = LoadState.Failed(app.itivio.ui.common.Failure.OFFLINE),
             ),
-            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onSort = {}, onSelect = {},
-            onOpen = {}, onLater = {}, onRetry = {},
+            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
+            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
         )
     }
 
@@ -202,11 +218,12 @@ class ScreenshotTest {
         ResultsScreen(
             wide = true,
             state = PlannerState(
+                optionsLoaded = true,
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
                 results = LoadState.Ready(sampleJourneys),
             ),
-            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onSort = {}, onSelect = {},
-            onOpen = {}, onLater = {}, onRetry = {},
+            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
+            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
         )
     }
 

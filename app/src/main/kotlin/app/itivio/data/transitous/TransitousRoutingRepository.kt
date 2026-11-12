@@ -3,6 +3,7 @@ package app.itivio.data.transitous
 import app.itivio.domain.BoundingBox
 import app.itivio.domain.Departure
 import app.itivio.domain.GeoPoint
+import app.itivio.domain.JourneyOptions
 import app.itivio.domain.JourneyPage
 import app.itivio.domain.JourneyRequest
 import app.itivio.domain.Line
@@ -10,6 +11,8 @@ import app.itivio.domain.Location
 import app.itivio.domain.RoutingException
 import app.itivio.domain.RoutingRepository
 import app.itivio.domain.Stop
+import app.itivio.domain.TransitMode
+import app.itivio.domain.WalkingSpeed
 import app.itivio.data.ign.IgnAddressSearch
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -88,6 +91,16 @@ class TransitousRoutingRepository(
             request.time?.let { parameter("time", it.toString()) }
             parameter("arriveBy", request.arriveBy)
             cursor?.let { parameter("pageCursor", it) }
+            val options = request.options
+            if (options.excludedModes.isNotEmpty()) parameter("transitModes", options.transitModes())
+            options.maxTransfers?.let { parameter("maxTransfers", it) }
+            if (options.wheelchair) {
+                parameter("pedestrianProfile", "WHEELCHAIR")
+                // Without routed transfers, MOTIS applies the profile only to the first and last walk.
+                parameter("useRoutedTransfers", true)
+            } else {
+                options.walkingSpeed.metersPerSecond()?.let { parameter("pedestrianSpeed", it) }
+            }
             parameter("detailedLegs", true)
             parameter("detailedTransfers", false)
             parameter("language", language)
@@ -179,6 +192,27 @@ private const val LINE_SCAN = 40
 /** A trip can stop at another platform of the same station as the planned one. */
 private fun Place.isAt(stop: Stop) =
     (stop.stopId != null && stopId == stop.stopId) || (stop.stationId != null && parentId == stop.stationId)
+
+/** The MOTIS modes that stay allowed. MOTIS has no parameter that excludes a mode. */
+private fun JourneyOptions.transitModes() = TransitMode.entries
+    .filter { it.isTransit && it !in excludedModes }
+    .flatMap { it.motisModes() }
+    .joinToString(",")
+
+/** The reverse of [transitMode], without the deprecated MOTIS names. */
+private fun TransitMode.motisModes(): List<String> = when (this) {
+    TransitMode.WALK, TransitMode.BIKE, TransitMode.CAR -> emptyList()
+    TransitMode.RAIL -> listOf("REGIONAL_RAIL", "LONG_DISTANCE", "NIGHT_RAIL")
+    TransitMode.ON_DEMAND -> listOf("ODM", "RIDE_SHARING")
+    else -> listOf(name)
+}
+
+/** Null leaves the MOTIS default of 1.2 m/s. MOTIS accepts speeds between 0.3 and 10 m/s. */
+private fun WalkingSpeed.metersPerSecond(): Double? = when (this) {
+    WalkingSpeed.SLOW -> 0.9
+    WalkingSpeed.NORMAL -> null
+    WalkingSpeed.FAST -> 1.5
+}
 
 private fun Line.sameAs(other: Line) = if (id != null && other.id != null) id == other.id else name == other.name
 

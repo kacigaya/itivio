@@ -67,6 +67,9 @@ class TransitousRoutingRepositoryTest {
             repo.planJourneys(JourneyRequest(to, from))
             assertNull(seen.last().url.parameters["time"])
             assertNull(seen.last().url.parameters["pageCursor"])
+            for (name in listOf("transitModes", "maxTransfers", "pedestrianProfile", "useRoutedTransfers", "pedestrianSpeed")) {
+                assertNull(name, seen.last().url.parameters[name])
+            }
             val departures = repo.nearbyDepartures(point, 700, 12)
             assertEquals(departures.sortedBy { it.time.best }, departures)
             params = seen.last().url.parameters
@@ -79,6 +82,42 @@ class TransitousRoutingRepositoryTest {
             params = seen.last().url.parameters
             assertEquals("52.518,13.418", params["min"])
             assertEquals("52.525,13.408", params["max"])
+        }
+        engine.close()
+    }
+
+    @Test fun journeyOptionsBecomePlanParameters() = runTest {
+        var params = Parameters.Empty
+        val engine = MockEngine { request ->
+            params = request.url.parameters
+            respond(fixture("plan"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        createHttpClient(engine, "test", "").use { client ->
+            val repo = TransitousRoutingRepository(client, "de-DE")
+            suspend fun plan(options: JourneyOptions) = repo.planJourneys(JourneyRequest(from, to, options = options))
+
+            // MOTIS has no parameter that excludes a mode, so the request lists the modes that stay.
+            plan(JourneyOptions(excludedModes = setOf(TransitMode.BUS, TransitMode.RAIL), maxTransfers = 0, walkingSpeed = WalkingSpeed.SLOW))
+            assertEquals(
+                "COACH,TRAM,SUBWAY,SUBURBAN,HIGHSPEED_RAIL,FERRY,AIRPLANE,AERIAL_LIFT,FUNICULAR,ODM,RIDE_SHARING,OTHER",
+                params["transitModes"],
+            )
+            assertEquals("0", params["maxTransfers"])
+            assertEquals("0.9", params["pedestrianSpeed"])
+            assertNull(params["pedestrianProfile"])
+
+            plan(JourneyOptions(excludedModes = setOf(TransitMode.SUBWAY)))
+            assertTrue(params["transitModes"].orEmpty().contains("REGIONAL_RAIL,LONG_DISTANCE,NIGHT_RAIL"))
+
+            // The wheelchair profile needs routed transfers, and it has its own speed.
+            plan(JourneyOptions(wheelchair = true, walkingSpeed = WalkingSpeed.FAST))
+            assertEquals("WHEELCHAIR", params["pedestrianProfile"])
+            assertEquals("true", params["useRoutedTransfers"])
+            assertNull(params["pedestrianSpeed"])
+            assertNull(params["transitModes"])
+
+            plan(JourneyOptions(walkingSpeed = WalkingSpeed.FAST))
+            assertEquals("1.5", params["pedestrianSpeed"])
         }
         engine.close()
     }

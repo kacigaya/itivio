@@ -35,6 +35,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
 import app.itivio.R
+import app.itivio.domain.JourneyOptions
 import app.itivio.ui.common.AttributionFooter
 import app.itivio.ui.common.FailureState
 import app.itivio.ui.common.LoadState
@@ -62,13 +63,16 @@ fun ResultsScreen(
     onDestination: (Endpoint) -> Unit,
     onSwap: () -> Unit,
     onTime: (Instant?, Boolean) -> Unit,
+    onOptions: (JourneyOptions) -> Unit,
     onSort: (RouteSort) -> Unit,
     onSelect: (String) -> Unit,
     onOpen: (String) -> Unit,
+    onEarlier: () -> Unit,
     onLater: () -> Unit,
     onRetry: () -> Unit,
 ) {
     var pickingTime by rememberSaveable { mutableStateOf(false) }
+    var pickingOptions by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val originSearch = rememberLocationSearchBarState()
     val destinationSearch = rememberLocationSearchBarState()
@@ -89,7 +93,12 @@ fun ResultsScreen(
             )
         },
     ) {
-        ResultsList(state, onPickTime = { pickingTime = true }, onSort, onSelect, onOpen, onLater, onRetry)
+        ResultsList(
+            state,
+            onPickTime = { pickingTime = true },
+            onPickOptions = { pickingOptions = true },
+            onSort, onSelect, onOpen, onEarlier, onLater, onRetry,
+        )
     }
 
     if (pickingTime) {
@@ -100,6 +109,17 @@ fun ResultsScreen(
             onConfirm = { time, arriveBy ->
                 pickingTime = false
                 onTime(time, arriveBy)
+            },
+        )
+    }
+
+    if (pickingOptions) {
+        JourneyOptionsDialog(
+            options = state.options,
+            onDismiss = { pickingOptions = false },
+            onConfirm = { options ->
+                pickingOptions = false
+                onOptions(options)
             },
         )
     }
@@ -167,9 +187,11 @@ private fun EndpointField(label: String, value: String, icon: Int, onClick: () -
 private fun ResultsList(
     state: PlannerState,
     onPickTime: () -> Unit,
+    onPickOptions: () -> Unit,
     onSort: (RouteSort) -> Unit,
     onSelect: (String) -> Unit,
     onOpen: (String) -> Unit,
+    onEarlier: () -> Unit,
     onLater: () -> Unit,
     onRetry: () -> Unit,
 ) {
@@ -178,7 +200,7 @@ private fun ResultsList(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        item(key = "filters") { FilterChips(state, onPickTime, onSort) }
+        item(key = "filters") { FilterChips(state, onPickTime, onPickOptions, onSort) }
         when (val results = state.results) {
             LoadState.Idle, LoadState.Loading -> item(key = "loading") { LoadingState() }
             is LoadState.Failed -> item(key = "error") { FailureState(results.failure, onRetry) }
@@ -193,6 +215,15 @@ private fun ResultsList(
                     )
                 }
             } else {
+                if (state.canLoadEarlier) {
+                    item(key = "earlier") {
+                        OutlinedButton(
+                            onClick = onEarlier,
+                            enabled = state.loadingPage == null,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text(stringResource(R.string.results_earlier)) }
+                    }
+                }
                 items(state.sortedJourneys, key = { it.id }) { journey ->
                     RouteCard(
                         journey = journey,
@@ -208,7 +239,7 @@ private fun ResultsList(
                     item(key = "later") {
                         OutlinedButton(
                             onClick = onLater,
-                            enabled = !state.loadingLater,
+                            enabled = state.loadingPage == null,
                             modifier = Modifier.fillMaxWidth(),
                         ) { Text(stringResource(R.string.results_later)) }
                     }
@@ -219,11 +250,12 @@ private fun ResultsList(
     }
 }
 
-/** The travel time comes first: it changes the results, while sorting only reorders them. */
+/** The travel time and the options come first: they change the results, while sorting only reorders them. */
 @Composable
-private fun FilterChips(state: PlannerState, onPickTime: () -> Unit, onSort: (RouteSort) -> Unit) {
+private fun FilterChips(state: PlannerState, onPickTime: () -> Unit, onPickOptions: () -> Unit, onSort: (RouteSort) -> Unit) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         item(key = "time") { TravelTimeChip(state.time, state.arriveBy, onPickTime) }
+        item(key = "options") { JourneyOptionsChip(state.options, onPickOptions, enabled = state.optionsLoaded) }
         item(key = "divider") { VerticalDivider(Modifier.height(24.dp), color = MaterialTheme.colorScheme.outlineVariant) }
         items(RouteSort.entries) { sort ->
             FilterChip(

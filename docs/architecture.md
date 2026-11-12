@@ -13,6 +13,7 @@ data/      Transitous client, DTOs, mappers, caches, local storage, location
 - `ui` depends on `domain`. It never imports `data` types.
 - `data` implements `domain` interfaces. Koin binds them in `data/DataModule.kt`.
 - `domain.PlacesRepository` holds saved places. `data/places` implements it with Room.
+- `domain.JourneyOptionsRepository` holds the journey options. `data/options` implements it with DataStore.
 - ViewModels are bound in `UiModule.kt`.
 
 Planning sessions stay in memory. After process death, the app returns to home. Save the minimal planning request if session recovery becomes a requirement.
@@ -51,14 +52,37 @@ Favorites, Home and Work, and recent searches are in one Room table, `saved_plac
 - Recent searches keep the 10 newest places. A place picked from the suggestions or from the recent searches goes first. A pick of Home, Work, or a favorite does not change the recent searches.
 - Schemas are exported to `app/schemas/`. A schema change needs a new version and a migration.
 
-DataStore is not added yet. It comes with the journey options in v0.5.0, which are its first use.
+## Journey options
+
+`domain.JourneyOptions` holds four options. Each `/v6/plan` request sends them as MOTIS parameters. An option at its default sends no parameter.
+
+| Option | Parameter | Notes |
+|---|---|---|
+| Transport modes | `transitModes` | MOTIS cannot exclude a mode. The request lists all modes that stay on. |
+| Transfer limit | `maxTransfers` | 0 to 3. `0` gives direct journeys only. |
+| Wheelchair | `pedestrianProfile=WHEELCHAIR` and `useRoutedTransfers=true` | Without routed transfers, MOTIS applies the profile only to the first and last walk. |
+| Walking speed | `pedestrianSpeed` | Slow is 0.9 m/s. Fast is 1.5 m/s. Normal sends nothing, so MOTIS uses 1.2 m/s. |
+
+- The user can turn off nine modes: bus, coach, tram, metro, suburban train, train, high-speed train, ferry, and flight. One of them always stays on. Cable car, funicular, on-demand, and other modes have no switch and stay on.
+- The walking speed is not sent with the wheelchair option. MOTIS then uses its wheelchair speed of 0.8 m/s.
+- The wheelchair option changes walks and transfers only. MOTIS does not check if a vehicle is accessible. A region without routed transfer data uses the timetable transfers.
+- The walking speed changes the first walk, the last walk, and walk-only routes. Transfer times between stops come from the timetable.
+
+The options are in a Preferences DataStore file, `settings`. A value that the app does not know reads as its default. A damaged file is replaced with an empty one. The planner reads the options one time, before the first search. The options chip stays disabled until this read ends. A storage failure does not stop planning: the search uses the defaults, or the options of the current session.
+
+"Earlier departures" and "Later departures" use the page cursors of the plan response. The request of a page is the same as the first request, with `pageCursor` added. Each direction continues from the cursor of its last page. Only one page loads at a time.
+
+Limits:
+
+- The options have one editor, the dialog on the results. The planner does not observe the store after the first read. Observe it when a second editor exists, such as the settings screen.
+- The rare modes have no switch. Add one if users must exclude them.
 
 ## Transitous usage policy
 
 - Every request sends `User-Agent: itivio/<version> (+<contact>)`. Set the contact with the `itivio.contact` Gradle property.
 - The UI shows a link to `https://transitous.org/sources/`. The info button on the map opens the OpenStreetMap, OpenMapTiles, and OpenFreeMap credits. The credits start closed, the same as the default MapLibre Android control.
 - Autocomplete waits for typing to pause, needs 2 or more characters, and cancels stale requests.
-- `/plan` runs only on explicit user action. No background polling.
+- `/plan` runs only on explicit user action. No background polling. The journey options dialog sends one request when the user confirms, not one for each change.
 - `/stoptimes` refreshes once a minute, only while the nearby list is on screen and the app is in the foreground. A move of less than 150 m does not send a new request.
 - The itinerary sends one `/stoptimes` request for each transit leg, once a minute, only while the itinerary is on screen and the app is in the foreground.
 - Geocode results are cached in memory.
@@ -71,6 +95,7 @@ DataStore is not added yet. It comes with the journey options in v0.5.0, which a
 - The nearby departures center is rounded to about 10 m before it is sent.
 - The origin of a journey is sent at full precision only when the user plans from their location.
 - Favorites and recent searches stay on the device. Backup and device transfer are off.
+- Journey options stay on the device. Transitous gets them only as parameters of a journey request.
 - Location comes from the Android framework provider. Google Play services is not required.
 
 ## Real-time data
@@ -87,4 +112,4 @@ Some feeds put a mission code in the headsign, such as "QOKA" for trip "QOKA52" 
 
 ## Stack
 
-Kotlin, Jetpack Compose, Material 3 Expressive, Navigation 3, MapLibre Compose with OpenFreeMap tiles, Ktor (OkHttp engine) with kotlinx.serialization, Koin, coroutines with StateFlow. Room stores saved places. DataStore comes with the journey options.
+Kotlin, Jetpack Compose, Material 3 Expressive, Navigation 3, MapLibre Compose with OpenFreeMap tiles, Ktor (OkHttp engine) with kotlinx.serialization, Koin, coroutines with StateFlow. Room stores saved places. DataStore stores the journey options.

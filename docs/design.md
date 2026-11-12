@@ -34,7 +34,7 @@ Default Material type scale (Roboto). Times and durations use `titleLarge` / `ti
 |---|---|---|
 | Home | Map, bottom sheet with the search bar and the "locate me" button at its top, the saved place chips, then nearby departures | Map with sheet content in a 400dp side pane |
 | Search | Full-screen search view: origin and destination fields, swap button, saved places or suggestions list | Same, in the side pane |
-| Results | Sheet with a travel time chip, sort chips, and route cards. Map shows the selected route | Side pane with route cards |
+| Results | Sheet with a travel time chip, an options chip, sort chips, and route cards. "Earlier departures" is above the cards and "Later departures" is below them. Map shows the selected route | Side pane with route cards |
 | Itinerary | Sheet with leg timeline. Map fits the route | Side pane timeline |
 
 ## Saved places
@@ -50,6 +50,20 @@ Departures within 400 m, grouped by stop name. Groups are in order of their firs
 ## Travel time
 
 A filter chip before the sort chips opens a time picker dialog. The dialog has a segmented button (Leave at, Arrive by), day chips for the next 7 days, and the M3 time picker with a keyboard input toggle. "Leave now" resets to the current time. Times use the device time zone. The chip shows as selected when the time is not "now".
+
+## Journey options
+
+A filter chip after the travel time chip opens a dialog with the same layout as the travel time dialog. The chip shows as selected when an option is not at its default.
+
+- Transport modes: one filter chip for each mode, with the mode icon. A tap on the last selected mode changes nothing, and a line of text says why.
+- Maximum transfers: single-choice chips (No limit, Direct, 1 to 3 transfers).
+- Walking: a "Wheelchair accessible" switch with a text that gives its limits, then a segmented button for the walking speed (Slow, Normal, Fast). The wheelchair switch disables the walking speed, and a line of text says why.
+
+The dialog edits a copy. "Done" applies all changes with one new search. "Reset" puts the copy back to the defaults. "Cancel" drops the changes.
+
+## Earlier and later departures
+
+"Earlier departures" and "Later departures" are outlined buttons at the two ends of the route cards. Each one shows only when the provider gives a cursor for that direction. Both are disabled while a page loads. The map keeps its route when a new page arrives.
 
 ## Itinerary
 

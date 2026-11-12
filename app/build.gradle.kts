@@ -25,8 +25,8 @@ android {
         applicationId = "app.itivio"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.4.0"
+        versionCode = 6
+        versionName = "0.5.0"
         // MapLibre Native ships these ABIs; 32-bit x86 is not supported by the runtime.
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
 
@@ -129,6 +129,7 @@ dependencies {
 
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.maplibre.compose)
     implementation(libs.maplibre.compose.material3)

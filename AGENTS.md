@@ -32,5 +32,6 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 - IGN fixtures are in `app/src/test/resources/ign/`. Tests never call the live IGN API.
 - Unit tests use the JSON fixtures in `app/src/test/resources/transitous/`. Tests never call the live API.
 - Saved places use Room through KSP. Commit the exported schemas in `app/schemas/`. A schema change needs a new database version and a migration.
+- Journey options use Preferences DataStore, in the `settings` file. Read each value with a fallback to its default.
 - User-facing strings go in `res/values/strings.xml`.
 - Icons are Material Symbols vector drawables in `res/drawable/` (`ic_<name>.xml`).

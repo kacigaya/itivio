@@ -131,12 +131,49 @@ data class Journey(
         if (now < departure.best || now >= arrival.best) null else legs.indexOfFirst { it.end.best > now }.takeIf { it >= 0 }
 }
 
+enum class WalkingSpeed { SLOW, NORMAL, FAST }
+
+/** How the user wants to travel. The defaults put no limit on the routing. */
+data class JourneyOptions(
+    /** Transit modes the user turned off. An empty set allows all modes. */
+    val excludedModes: Set<TransitMode> = emptySet(),
+    /** The most transfers a journey can have. Null means no limit. */
+    val maxTransfers: Int? = null,
+    /** Keeps walks and transfers on step-free paths, where the provider has the data. */
+    val wheelchair: Boolean = false,
+    /** Not used with [wheelchair]: the provider then applies its wheelchair speed. */
+    val walkingSpeed: WalkingSpeed = WalkingSpeed.NORMAL,
+) {
+    val isDefault: Boolean get() = this == JourneyOptions()
+
+    /** Turns [mode] on or off. The last selectable mode stays on, so a journey can always use transit. */
+    fun withMode(mode: TransitMode, allowed: Boolean): JourneyOptions {
+        val excluded = if (allowed) excludedModes - mode else excludedModes + mode
+        return if (excluded.containsAll(SELECTABLE_MODES)) this else copy(excludedModes = excluded)
+    }
+
+    companion object {
+        /**
+         * The modes the user can turn off. The rare modes (cable car, funicular, on-demand, and
+         * other) have no switch and stay on.
+         */
+        val SELECTABLE_MODES: List<TransitMode> = listOf(
+            TransitMode.BUS, TransitMode.COACH, TransitMode.TRAM, TransitMode.SUBWAY, TransitMode.SUBURBAN,
+            TransitMode.RAIL, TransitMode.HIGHSPEED_RAIL, TransitMode.FERRY, TransitMode.AIRPLANE,
+        )
+
+        /** The highest transfer limit the user can set. */
+        const val MAX_TRANSFER_LIMIT = 3
+    }
+}
+
 data class JourneyRequest(
     val from: Location,
     val to: Location,
     /** Null means "now". */
     val time: Instant? = null,
     val arriveBy: Boolean = false,
+    val options: JourneyOptions = JourneyOptions(),
 )
 
 data class JourneyPage(

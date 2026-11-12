@@ -155,9 +155,11 @@ fun ItivioRoot(planner: PlannerViewModel = koinViewModel(), nearby: NearbyViewMo
                             onDestination = planner::setDestination,
                             onSwap = planner::swap,
                             onTime = planner::setTime,
+                            onOptions = planner::setOptions,
                             onSort = planner::setSort,
                             onSelect = planner::select,
                             onOpen = { id -> backStack.add(ItineraryRoute(id)) },
+                            onEarlier = planner::loadEarlier,
                             onLater = planner::loadLater,
                             onRetry = planner::retry,
                         )

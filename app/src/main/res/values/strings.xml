@@ -59,9 +59,27 @@
     <string name="travel_today">Today</string>
     <string name="travel_tomorrow">Tomorrow</string>
 
+    <!-- Journey options -->
+    <string name="options_chip">Options</string>
+    <string name="options_title">Journey options</string>
+    <string name="options_modes">Transport modes</string>
+    <string name="options_modes_last">One mode must stay selected.</string>
+    <string name="options_transfers">Maximum transfers</string>
+    <string name="options_no_limit">No limit</string>
+    <string name="options_walking">Walking</string>
+    <string name="options_wheelchair">Wheelchair accessible</string>
+    <string name="options_wheelchair_body">Walks and transfers use step-free paths where the map has the data. Vehicles are not checked.</string>
+    <string name="options_walking_speed">Walking speed</string>
+    <string name="options_walking_speed_unused">Not used for wheelchair-accessible routes.</string>
+    <string name="options_speed_slow">Slow</string>
+    <string name="options_speed_normal">Normal</string>
+    <string name="options_speed_fast">Fast</string>
+    <string name="options_reset">Reset</string>
+
     <!-- Results -->
     <string name="results_empty_title">No routes found</string>
-    <string name="results_empty_body">Try another time, or a nearby stop. Transit data may not cover this area.</string>
+    <string name="results_empty_body">Try another time, a nearby stop, or other journey options. Transit data may not cover this area.</string>
+    <string name="results_earlier">Earlier departures</string>
     <string name="results_later">Later departures</string>
     <string name="results_walk_only">Walk the whole way</string>
     <plurals name="transfers">
