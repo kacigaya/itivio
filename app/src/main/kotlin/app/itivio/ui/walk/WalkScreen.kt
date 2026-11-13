@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -173,8 +174,7 @@ private fun InstructionCard(instruction: WalkInstruction, meters: Double, destin
                             instructionText(then, destination),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
                         )
                     }
                 }
@@ -222,7 +222,7 @@ private fun Summary(left: Duration, meters: Double, arrival: Instant, leg: Leg.S
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.semantics { heading() },
                 )
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     val muted = MaterialTheme.colorScheme.onSurfaceVariant
                     Icon(painterResource(R.drawable.ic_directions_walk), contentDescription = null, tint = muted, modifier = Modifier.size(16.dp))
                     Text(formatDistance(meters), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
