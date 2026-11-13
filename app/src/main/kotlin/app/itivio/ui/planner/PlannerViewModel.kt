@@ -1,5 +1,6 @@
 package app.itivio.ui.planner
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.itivio.domain.GeoPoint
@@ -10,6 +11,7 @@ import app.itivio.domain.JourneyRequest
 import app.itivio.domain.Location
 import app.itivio.domain.LocationKind
 import app.itivio.domain.RoutingRepository
+import app.itivio.domain.TransitMode
 import app.itivio.ui.common.Failure
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.UserLocation
@@ -20,9 +22,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
 
 /** A journey end: the device position, resolved when planning, or a picked place. */
 sealed interface Endpoint {
@@ -70,11 +77,15 @@ data class PlannerState(
 /**
  * Holds one planning session: endpoints, results, and selection. Shared by the search, results,
  * and itinerary screens so the map always shows the same journey the sheet describes.
+ *
+ * [savedState] keeps only the request: the endpoints and the travel time. After process death,
+ * the session plans again from it. The results, the sort, and the selection are not kept.
  */
 class PlannerViewModel(
     private val repository: RoutingRepository,
     private val userLocation: UserLocation,
     private val optionsRepository: JourneyOptionsRepository,
+    private val savedState: SavedStateHandle,
 ) : ViewModel() {
     private val _state = MutableStateFlow(PlannerState())
     val state: StateFlow<PlannerState> = _state.asStateFlow()
@@ -84,6 +95,7 @@ class PlannerViewModel(
     private var earlierCursor: String? = null
     private var laterCursor: String? = null
     private var lastRequest: JourneyRequest? = null
+    private var restoreJob: Job? = null
 
     // Stored options are optional: a storage failure, such as a full disk, must not stop routing.
     // A failed read keeps the defaults, and a failed write keeps the options for this session.
@@ -97,6 +109,49 @@ class PlannerViewModel(
             return@launch
         }
         _state.update { it.copy(options = stored, optionsLoaded = true) }
+    }
+
+    init {
+        restore()
+    }
+
+    private fun restore() {
+        val saved = savedState.get<String>(SAVED_REQUEST)?.let { text ->
+            try {
+                json.decodeFromString<SavedRequest>(text)
+            } catch (_: SerializationException) {
+                null
+            } catch (_: IllegalArgumentException) {
+                null
+            }
+        } ?: return
+        _state.update {
+            it.copy(
+                origin = saved.origin.toEndpoint(),
+                destination = saved.destination.toEndpoint(),
+                time = saved.time?.let(Instant::ofEpochMilli),
+                arriveBy = saved.arriveBy,
+                results = LoadState.Loading,
+            )
+        }
+        restoreJob = viewModelScope.launch {
+            // The first location fix comes some seconds after the app starts again.
+            if (Endpoint.MyLocation in listOf(_state.value.origin, _state.value.destination)) {
+                withTimeoutOrNull(LOCATION_WAIT_MILLIS) { userLocation.point.filterNotNull().first() }
+            }
+            restoreJob = null
+            planIfReady()
+        }
+    }
+
+    private fun save(state: PlannerState) {
+        val destination = state.destination
+        if (destination == null) {
+            savedState.remove<String>(SAVED_REQUEST)
+            return
+        }
+        val request = SavedRequest(state.origin.toSaved(), destination.toSaved(), state.time?.toEpochMilli(), state.arriveBy)
+        savedState[SAVED_REQUEST] = json.encodeToString(request)
     }
 
     fun setOrigin(endpoint: Endpoint) {
@@ -153,9 +208,21 @@ class PlannerViewModel(
     fun reset() {
         cancelRequests()
         _state.update { PlannerState(origin = it.origin, options = it.options, optionsLoaded = it.optionsLoaded) }
+        savedState.remove<String>(SAVED_REQUEST)
+    }
+
+    /**
+     * Plans again from the device position to the same destination, leaving now. This is the
+     * only action of the walking view that sends the position.
+     */
+    fun replanFromHere() {
+        _state.update { it.copy(origin = Endpoint.MyLocation, time = null, arriveBy = false) }
+        planIfReady()
     }
 
     private fun cancelRequests() {
+        restoreJob?.cancel()
+        restoreJob = null
         planJob?.cancel()
         pageJob?.cancel()
         earlierCursor = null
@@ -167,6 +234,7 @@ class PlannerViewModel(
         val current = _state.value
         val destination = current.destination ?: return
         cancelRequests()
+        save(current)
         val from = resolve(current.origin)
         val to = resolve(destination)
         if (from == null || to == null) {
@@ -244,5 +312,32 @@ class PlannerViewModel(
 
     companion object {
         const val MY_LOCATION_ID = "itivio:my-location"
+
+        private const val SAVED_REQUEST = "planner.request"
+        private const val LOCATION_WAIT_MILLIS = 10_000L
+        private val json = Json { ignoreUnknownKeys = true }
     }
 }
+
+/** The part of a session that survives process death. A null place is the device position. */
+@Serializable
+private data class SavedRequest(val origin: SavedPlace?, val destination: SavedPlace?, val time: Long?, val arriveBy: Boolean)
+
+@Serializable
+private data class SavedPlace(
+    val id: String,
+    val name: String,
+    val kind: LocationKind,
+    val latitude: Double,
+    val longitude: Double,
+    val area: String? = null,
+    val stopId: String? = null,
+    val modes: Set<TransitMode> = emptySet(),
+)
+
+private fun Endpoint.toSaved(): SavedPlace? = (this as? Endpoint.Place)?.location?.let {
+    SavedPlace(it.id, it.name, it.kind, it.point.latitude, it.point.longitude, it.area, it.stopId, it.modes)
+}
+
+private fun SavedPlace?.toEndpoint(): Endpoint =
+    this?.let { Endpoint.Place(Location(id, name, kind, GeoPoint(latitude, longitude), area, stopId, modes)) } ?: Endpoint.MyLocation

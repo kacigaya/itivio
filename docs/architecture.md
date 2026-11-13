@@ -16,7 +16,7 @@ data/      Transitous client, DTOs, mappers, caches, local storage, location
 - `domain.JourneyOptionsRepository` holds the journey options. `data/options` implements it with DataStore.
 - ViewModels are bound in `UiModule.kt`.
 
-Planning sessions stay in memory. After process death, the app returns to home. Save the minimal planning request if session recovery becomes a requirement.
+The planning session is in memory. The planner also keeps the minimal request in its `SavedStateHandle`: the origin, the destination, the travel time, and "arrive by". After process death, the planner reads the request and plans again. The results, the sort, and the selection are not saved. A request from "My location" waits up to 10 seconds for the first location fix. While the new plan loads, the itinerary and the walking view show a loading state. If the journey is not in the new results, the screen goes back to the results. Without a saved request, the screens of the session close. "Back" from the results deletes the request.
 
 ## Routing provider
 
@@ -28,7 +28,9 @@ Planning sessions stay in memory. After process death, the app returns to home. 
 | Reverse geocode | `GET /v1/reverse-geocode` |
 | Journey planning | `GET /v6/plan` |
 | Departures | `GET /v6/stoptimes` |
+| Departure board of a stop | `GET /v6/stoptimes` with `stopId` |
 | Line times of an itinerary | `GET /v6/stoptimes` with `stopId` |
+| Live times of an itinerary | `GET /v6/trip` |
 | Map stops | `GET /v6/map/stops` |
 
 To use a self-hosted MOTIS instance, change the base URL. To use another provider, add a new `RoutingRepository` implementation and bind it in `DataModule`.
@@ -77,6 +79,23 @@ Limits:
 - The options have one editor, the dialog on the results. The planner does not observe the store after the first read. Observe it when a second editor exists, such as the settings screen.
 - The rare modes have no switch. Add one if users must exclude them.
 
+## Journeys without transit
+
+MOTIS returns walk-only journeys in `direct`, apart from `itineraries`. The mapper puts them after the transit journeys, so "Best" keeps the order of the provider. Their ID is blank, so the mapper derives one from the legs.
+
+## Walking view
+
+`domain.WalkRoute` makes turn-by-turn instructions from the steps of a walk (`steps` in the plan response). It needs no network request.
+
+- Providers often give `CONTINUE` for every step and no street name. The turns come from the geometry: the bearing over 15 m before and after each step start. A change of 35° or more is a turn. One corner shows at several step starts near it, so only the sharpest start of a run on the same side counts.
+- Stairs and elevators get their own instruction. A turn that the provider gives is kept.
+- A turn less than 10 m after another turn joins it as one bend. A bend that comes out straight is dropped. A turn in the first or last 10 m is dropped.
+- The street name of an instruction is the name that covers at least a third of it. Without one, the text names only the maneuver ("Turn left"). The start names the compass direction ("Head northwest").
+- The position is projected on the nearest part of the route. More than 50 m from the route counts as off the route. The app does not plan a new route by itself.
+- The remaining time uses the speed of the walk in the plan: its distance divided by its duration.
+
+Limits: the projection picks the nearest part of the route, so a route that passes the same place twice can jump. The view keeps the screen on and works only while the app is on screen. The app asks for no background location.
+
 ## Transitous usage policy
 
 - Every request sends `User-Agent: itivio/<version> (+<contact>)`. Set the contact with the `itivio.contact` Gradle property.
@@ -85,6 +104,10 @@ Limits:
 - `/plan` runs only on explicit user action. No background polling. The journey options dialog sends one request when the user confirms, not one for each change.
 - `/stoptimes` refreshes once a minute, only while the nearby list is on screen and the app is in the foreground. A move of less than 150 m does not send a new request.
 - The itinerary sends one `/stoptimes` request for each transit leg, once a minute, only while the itinerary is on screen and the app is in the foreground.
+- The itinerary also sends one `/trip` request for each transit leg that has not ended, once a minute, under the same conditions.
+- The departure board sends one `/stoptimes` request once a minute, only while the board is on screen and the app is in the foreground.
+- `/map/stops` runs only on the home screen, at zoom 15 or closer, 0.5 seconds after the camera stops. The request asks for the view rounded out to a 0.01° grid. A view inside the area already loaded sends no request. A view wider than 0.05° sends no request.
+- The walking view sends no request. "Plan a new route" sends one `/plan` request.
 - Geocode results are cached in memory.
 
 ## Privacy
@@ -94,6 +117,8 @@ Limits:
 - The search bias point is rounded to about 1 km before it is sent.
 - The nearby departures center is rounded to about 10 m before it is sent.
 - The origin of a journey is sent at full precision only when the user plans from their location.
+- The walking view uses the device position on the device. Only "Plan a new route" sends it, as the origin of a new journey.
+- The compass runs only while the walking view is open.
 - Favorites and recent searches stay on the device. Backup and device transfer are off.
 - Journey options stay on the device. Transitous gets them only as parameters of a journey request.
 - Location comes from the Android framework provider. Google Play services is not required.
@@ -102,7 +127,7 @@ Limits:
 
 `StopTime.estimated` is set only when the provider reports live data. The UI marks live times. It shows scheduled times without a live marker. Coverage differs by region.
 
-The itinerary tracker uses the clock and the leg times from the plan request. It does not use the device position. Only the line times refresh after planning. Refresh the legs with `/v6/trip` if the tracker must follow new delays.
+The itinerary tracker uses the clock and the leg times. It does not use the device position. While the itinerary is open, `TripTrackerViewModel` asks `/v6/trip` for the trip of each transit leg once a minute. `Journey.withTrip` finds the boarding stop by stop ID and scheduled departure, so a loop trip boards at the correct visit. It then finds the alighting stop after it. It updates the times, platforms, stops, cancellation, and alerts of the leg. The walks after the leg move with its arrival. A trip that does not contain the stops of the leg changes nothing. A failed request keeps the last times. The planned journey in the results does not change.
 
 `/stoptimes` has no line filter. The line times come from the next 40 departures of the boarding stop, filtered by route ID. A stop with many lines can show fewer than 4 times.
 

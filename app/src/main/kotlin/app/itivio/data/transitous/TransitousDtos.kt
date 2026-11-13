@@ -68,6 +68,15 @@ internal data class Leg(
     val headsign: String? = null,
     val tripTo: Place? = null,
     val cancelled: Boolean = false,
+    val steps: List<StepInstruction> = emptyList(),
+)
+
+@Serializable
+internal data class StepInstruction(
+    val relativeDirection: String? = null,
+    val distance: Double = 0.0,
+    val streetName: String? = null,
+    val polyline: EncodedPolyline? = null,
 )
 
 @Serializable
@@ -116,6 +125,8 @@ internal data class Alert(
 @Serializable
 internal data class PlanResponse(
     val itineraries: List<Itinerary>,
+    /** Journeys without transit, such as a walk the whole way. */
+    val direct: List<Itinerary> = emptyList(),
     val previousPageCursor: String? = null,
     val nextPageCursor: String? = null,
 )

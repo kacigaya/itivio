@@ -14,6 +14,7 @@ import app.itivio.domain.RoutingRepository
 import app.itivio.domain.Stop
 import app.itivio.domain.StopTime
 import app.itivio.domain.TransitMode
+import app.itivio.domain.Trip
 import java.time.Instant
 
 class FakeRoutingRepository : RoutingRepository {
@@ -57,7 +58,27 @@ class FakeRoutingRepository : RoutingRepository {
         return lineResult(stopId)
     }
 
-    override suspend fun stopsIn(box: BoundingBox): List<Location> = emptyList()
+    val stopCalls = mutableListOf<String>()
+    var stopResult: suspend (String) -> List<Departure> = { emptyList() }
+    val tripCalls = mutableListOf<String>()
+    var tripResult: suspend (String) -> Trip = { Trip(emptyList()) }
+    val boxes = mutableListOf<BoundingBox>()
+    var stopsResult: suspend (BoundingBox) -> List<Location> = { emptyList() }
+
+    override suspend fun stopDepartures(stopId: String, limit: Int): List<Departure> {
+        stopCalls += stopId
+        return stopResult(stopId)
+    }
+
+    override suspend fun trip(tripId: String): Trip {
+        tripCalls += tripId
+        return tripResult(tripId)
+    }
+
+    override suspend fun stopsIn(box: BoundingBox): List<Location> {
+        boxes += box
+        return stopsResult(box)
+    }
 
     companion object {
         fun location(name: String, stopId: String? = null) =

@@ -156,4 +156,43 @@ class TransitousMapperTest {
         assertEquals(0.0, (leg.copy(distance = null).toDomain() as DomainLeg.Street).distanceMeters, 0.0)
         assertEquals(TransitMode.OTHER, leg.copy(mode = "FUTURE_MODE").toDomain().mode)
     }
+
+    @Test fun walkStepsMapWithStairsAndBlankNames() {
+        val walk = fixture<PlanResponse>("plan").toDomain().journeys.first().legs.first() as DomainLeg.Street
+        assertEquals(32, walk.steps.size)
+        // The fixture gives no street names and only "continue" and "stairs".
+        assertTrue(walk.steps.all { it.streetName == null && it.turn == null })
+        assertEquals(1, walk.steps.count { it.kind == app.itivio.domain.StepKind.STAIRS })
+        assertTrue(walk.steps.all { it.geometry.size >= 2 })
+        val route = app.itivio.domain.WalkRoute.of(walk.steps, walk.geometry)
+        assertEquals(walk.distanceMeters, route.lengthMeters, walk.distanceMeters * 0.05)
+        val maneuvers = route.instructions.map { it.maneuver }
+        assertEquals(app.itivio.domain.Maneuver.DEPART, maneuvers.first())
+        assertEquals(app.itivio.domain.Maneuver.ARRIVE, maneuvers.last())
+        assertTrue(app.itivio.domain.Maneuver.STAIRS in maneuvers)
+        assertTrue(maneuvers.any { it == app.itivio.domain.Maneuver.LEFT || it == app.itivio.domain.Maneuver.RIGHT })
+    }
+
+    @Test fun directJourneysComeAfterTransitWithStableIds() {
+        val page = fixture<PlanResponse>("plan-direct").toDomain("Hôtel de Ville", "Louvre")
+        val walk = page.journeys.single()
+        assertTrue(walk.isStreetOnly)
+        // MOTIS gives direct journeys a blank ID; the mapper derives one.
+        assertTrue(walk.id.isNotBlank())
+        assertEquals(walk.id, fixture<PlanResponse>("plan-direct").toDomain().journeys.single().id)
+        assertEquals("Louvre", walk.legs.last().to.name)
+        assertTrue((walk.legs.single() as DomainLeg.Street).steps.isNotEmpty())
+    }
+
+    @Test fun tripFixtureGivesAllStopsWithLiveTimes() {
+        val trip = fixture<Itinerary>("trip").toTrip()
+        assertEquals(13, trip.stops.size)
+        assertEquals("S+U Berlin Hauptbahnhof", trip.stops.first().name)
+        assertEquals("Jüterbog, Bahnhof", trip.stops.last().name)
+        assertTrue(trip.stops.first().departure!!.isRealtime)
+        // Woltersdorf runs a minute early.
+        val early = trip.stops.first { it.name.startsWith("Woltersdorf") }
+        assertEquals(-60, early.arrival!!.delay!!.seconds)
+        assertFalse(trip.cancelled)
+    }
 }

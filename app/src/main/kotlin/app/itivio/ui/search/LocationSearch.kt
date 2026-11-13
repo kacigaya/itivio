@@ -102,7 +102,8 @@ fun LocationInputField(
  * Full-screen place search. Shows "My location" as the first choice when [offerMyLocation] is
  * set. With an empty query it shows Home, Work, favorites, and recent searches; else autocomplete
  * results. [onPick] receives the choice; the caller collapses the bar. A pick from the results or
- * the recent searches goes first in the recent searches.
+ * the recent searches goes first in the recent searches. A non-null [onDepartures] adds a
+ * "Show departures" action to the menu of each stop.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -112,6 +113,7 @@ fun LocationSearchView(
     placeholder: String,
     offerMyLocation: Boolean,
     onPick: (Endpoint) -> Unit,
+    onDepartures: ((Location) -> Unit)? = null,
     // Screens with two search views need separate ViewModels in the same store.
     viewModel: SearchViewModel = koinViewModel(key = placeholder),
     places: SavedPlacesViewModel = koinViewModel(),
@@ -136,7 +138,17 @@ fun LocationSearchView(
 
     @Composable
     fun PlaceRow(location: Location, icon: Int, title: String, subtitle: String?, onClick: () -> Unit) {
-        SuggestionRow(icon, title, subtitle, onClick) { PlaceMenu(location, saved, places) }
+        SuggestionRow(icon, title, subtitle, onClick) {
+            PlaceMenu(
+                location, saved, places,
+                onDepartures = onDepartures?.takeIf { location.stopId != null }?.let { show ->
+                    {
+                        show(location)
+                        scope.launch { searchBarState.animateToCollapsed() }
+                    }
+                },
+            )
+        }
     }
 
     ExpandedFullScreenSearchBar(
@@ -243,7 +255,7 @@ private fun SectionHeader(title: String, action: @Composable () -> Unit = {}) {
 
 /** Favorite, Home, and Work actions for one place. Each item adds the place, or removes it when it is already there. */
 @Composable
-private fun PlaceMenu(location: Location, saved: SavedPlaces, places: SavedPlacesViewModel) {
+private fun PlaceMenu(location: Location, saved: SavedPlaces, places: SavedPlacesViewModel, onDepartures: (() -> Unit)?) {
     var open by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { open = true }) {
@@ -253,6 +265,15 @@ private fun PlaceMenu(location: Location, saved: SavedPlaces, places: SavedPlace
             )
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            if (onDepartures != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.place_show_departures)) },
+                    onClick = {
+                        open = false
+                        onDepartures()
+                    },
+                )
+            }
             val favorite = saved.isFavorite(location)
             DropdownMenuItem(
                 text = { Text(stringResource(if (favorite) R.string.place_remove_favorite else R.string.place_add_favorite)) },

@@ -32,6 +32,7 @@
     <string name="place_remove_home">Remove as home</string>
     <string name="place_set_work">Set as work</string>
     <string name="place_remove_work">Remove as work</string>
+    <string name="place_show_departures">Show departures</string>
 
     <!-- Navigation -->
     <string name="back">Back</string>
@@ -47,6 +48,12 @@
     <string name="nearby_countdown_description">In %1$s, %2$s, %3$s</string>
     <string name="nearby_empty_title">No departures nearby</string>
     <string name="nearby_empty_body">There are no stops within 400 m, or no timetable data covers this area.</string>
+
+    <!-- Stop departures -->
+    <string name="stop_directions">Directions to here</string>
+    <string name="stop_departures">Departures</string>
+    <string name="stop_empty_title">No upcoming departures</string>
+    <string name="stop_empty_body">The timetable has no departures from this stop soon, or it does not cover this stop.</string>
 
     <!-- Travel time -->
     <string name="travel_title">Travel time</string>
@@ -86,6 +93,10 @@
         <item quantity="one">%d transfer</item>
         <item quantity="other">%d transfers</item>
     </plurals>
+    <plurals name="results_more_alerts">
+        <item quantity="one">%d more alert</item>
+        <item quantity="other">%d more alerts</item>
+    </plurals>
     <string name="no_transfers">Direct</string>
     <string name="walk_distance">%1$s walk</string>
     <string name="time_range">%1$s – %2$s</string>
@@ -121,6 +132,48 @@
     <string name="itinerary_arrive_in">Arrive in %1$s</string>
     <string name="itinerary_current_step">Current step</string>
     <string name="itinerary_operated_by">Operated by %1$s</string>
+
+    <!-- Walking view -->
+    <string name="walk_open">Walking directions</string>
+    <string name="walk_close">Close walking directions</string>
+    <string name="walk_recenter">Recenter</string>
+    <string name="walk_then">Then</string>
+    <string name="walk_arrival">Arrive %1$s</string>
+    <string name="walk_destination">your destination</string>
+    <string name="walk_off_route">You are off the route.</string>
+    <string name="walk_replan">Plan a new route</string>
+    <string name="walk_no_location">Allow location to follow your walk.</string>
+    <string name="walk_depart">Start walking</string>
+    <string name="walk_depart_heading">Head %1$s</string>
+    <string name="walk_depart_street">Start walking on %1$s</string>
+    <string name="walk_depart_heading_street">Head %1$s on %2$s</string>
+    <string name="walk_continue">Continue straight</string>
+    <string name="walk_continue_street">Continue on %1$s</string>
+    <string name="walk_slight_left">Turn slightly left</string>
+    <string name="walk_slight_left_street">Turn slightly left onto %1$s</string>
+    <string name="walk_left">Turn left</string>
+    <string name="walk_left_street">Turn left onto %1$s</string>
+    <string name="walk_sharp_left">Turn sharply left</string>
+    <string name="walk_sharp_left_street">Turn sharply left onto %1$s</string>
+    <string name="walk_slight_right">Turn slightly right</string>
+    <string name="walk_slight_right_street">Turn slightly right onto %1$s</string>
+    <string name="walk_right">Turn right</string>
+    <string name="walk_right_street">Turn right onto %1$s</string>
+    <string name="walk_sharp_right">Turn sharply right</string>
+    <string name="walk_sharp_right_street">Turn sharply right onto %1$s</string>
+    <string name="walk_u_turn">Turn around</string>
+    <string name="walk_u_turn_street">Turn around onto %1$s</string>
+    <string name="walk_stairs">Take the stairs</string>
+    <string name="walk_elevator">Take the elevator</string>
+    <string name="walk_arrive">Arrive at %1$s</string>
+    <string name="walk_north">north</string>
+    <string name="walk_northeast">northeast</string>
+    <string name="walk_east">east</string>
+    <string name="walk_southeast">southeast</string>
+    <string name="walk_south">south</string>
+    <string name="walk_southwest">southwest</string>
+    <string name="walk_west">west</string>
+    <string name="walk_northwest">northwest</string>
 
     <!-- Units -->
     <string name="duration_min">%1$d min</string>

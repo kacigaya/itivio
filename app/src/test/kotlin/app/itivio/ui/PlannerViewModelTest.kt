@@ -1,5 +1,6 @@
 package app.itivio.ui
 
+import androidx.lifecycle.SavedStateHandle
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.JourneyOptions
 import app.itivio.domain.JourneyPage
@@ -18,6 +19,7 @@ import app.itivio.ui.planner.RouteSort
 import java.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -33,7 +35,7 @@ class PlannerViewModelTest {
     private val repository = FakeRoutingRepository()
     private val userLocation = UserLocation()
     private val options = FakeJourneyOptionsRepository()
-    private val viewModel by lazy { PlannerViewModel(repository, userLocation, options) }
+    private val viewModel by lazy { PlannerViewModel(repository, userLocation, options, SavedStateHandle()) }
 
     @Test
     fun `my location without a fix fails without calling the service`() = runTest(main.dispatcher) {
@@ -387,5 +389,87 @@ class PlannerViewModelTest {
         assertFalse(viewModel.state.value.arriveBy)
         assertEquals(changed, viewModel.state.value.options)
         assertEquals(1, repository.plans.size)
+    }
+
+    /** A new handle with the same values, as Android gives one after process death. */
+    private fun SavedStateHandle.afterProcessDeath() = SavedStateHandle(keys().associateWith { get<Any>(it) })
+
+    @Test
+    fun `the request survives process death and plans again`() = runTest(main.dispatcher) {
+        val handle = SavedStateHandle()
+        val time = Instant.parse("2026-11-09T18:00:00Z")
+        PlannerViewModel(repository, userLocation, options, handle).apply {
+            setOrigin(Endpoint.Place(location("Home")))
+            setTime(time, arriveBy = true)
+            setDestination(Endpoint.Place(location("Zoo", stopId = "zoo")))
+        }
+        advanceUntilIdle()
+
+        val restored = PlannerViewModel(repository, userLocation, options, handle.afterProcessDeath())
+        assertEquals(LoadState.Loading, restored.state.value.results)
+        advanceUntilIdle()
+
+        val state = restored.state.value
+        assertEquals(Endpoint.Place(location("Home")), state.origin)
+        assertEquals(Endpoint.Place(location("Zoo", stopId = "zoo")), state.destination)
+        assertEquals(time, state.time)
+        assertTrue(state.arriveBy)
+        assertEquals(2, repository.plans.size)
+        assertEquals(repository.plans[0].first, repository.plans[1].first)
+        assertEquals(1, state.journeys.size)
+    }
+
+    @Test
+    fun `a restored session from my location waits for the first fix`() = runTest(main.dispatcher) {
+        val handle = SavedStateHandle()
+        userLocation.point.value = GeoPoint(52.52, 13.405)
+        PlannerViewModel(repository, userLocation, options, handle).setDestination(Endpoint.Place(location("Zoo")))
+        advanceUntilIdle()
+
+        val fresh = UserLocation()
+        val restored = PlannerViewModel(repository, fresh, options, handle.afterProcessDeath())
+        // Less than the wait for the fix.
+        advanceTimeBy(5_000)
+        assertEquals(1, repository.plans.size)
+        assertEquals(LoadState.Loading, restored.state.value.results)
+
+        fresh.point.value = GeoPoint(52.5, 13.4)
+        advanceUntilIdle()
+        assertEquals(GeoPoint(52.5, 13.4), repository.plans.last().first.from.point)
+        assertEquals(1, restored.state.value.journeys.size)
+    }
+
+    @Test
+    fun `leaving the results forgets the request`() = runTest(main.dispatcher) {
+        val handle = SavedStateHandle()
+        PlannerViewModel(repository, userLocation, options, handle).apply {
+            setDestination(Endpoint.Place(location("Zoo")))
+            reset()
+        }
+        advanceUntilIdle()
+
+        val restored = PlannerViewModel(repository, userLocation, options, handle.afterProcessDeath())
+        advanceUntilIdle()
+        assertEquals(null, restored.state.value.destination)
+        assertEquals(LoadState.Idle, restored.state.value.results)
+    }
+
+    @Test
+    fun `a new route from here leaves now from the device position`() = runTest(main.dispatcher) {
+        viewModel.setOrigin(Endpoint.Place(location("Home")))
+        viewModel.setTime(Instant.parse("2026-11-09T18:00:00Z"), arriveBy = true)
+        viewModel.setDestination(Endpoint.Place(location("Zoo")))
+        advanceUntilIdle()
+        userLocation.point.value = GeoPoint(52.51, 13.39)
+
+        viewModel.replanFromHere()
+        advanceUntilIdle()
+
+        val request = repository.plans.last().first
+        assertEquals(GeoPoint(52.51, 13.39), request.from.point)
+        assertEquals("Zoo", request.to.name)
+        assertEquals(null, request.time)
+        assertFalse(request.arriveBy)
+        assertEquals(Endpoint.MyLocation, viewModel.state.value.origin)
     }
 }

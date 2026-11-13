@@ -45,28 +45,30 @@ The wheelchair option changes walks and transfers only. The provider does not ch
 
 ## v0.6.0: Stops, live tracking, and walking view
 
+All items are done.
+
 ### Stops and live tracking
 
-- [ ] Open a departure board when the user taps a stop on the map.
-- [ ] Open a departure board from a stop in the search results.
-- [ ] Refresh the legs of an itinerary with `/v6/trip`, so the tracker follows new delays.
-- [ ] Restore the planning session after process death. Save only the minimal request.
-- [ ] Show service alerts on route cards. Today only the itinerary shows them.
+- [x] Open a departure board when the user taps a stop on the map.
+- [x] Open a departure board from a stop in the search results.
+- [x] Refresh the legs of an itinerary with `/v6/trip`, so the tracker follows new delays.
+- [x] Restore the planning session after process death. Save only the minimal request.
+- [x] Show service alerts on route cards. Today only the itinerary shows them.
 
 ### Walking view
 
 A turn-by-turn view for the walking parts of a journey. It opens from a walking step of the itinerary and from a walk-only route.
 
-- [ ] Read the walking steps from the plan response. The response already has them, so the view needs no new network request.
-- [ ] Show the next instruction at the top: direction arrow, distance, and street name.
-- [ ] Show a preview of the instruction after the next one.
-- [ ] Calculate the turn direction from the step geometry. In the test fixture, the provider gives `CONTINUE` for almost all steps.
-- [ ] Use a fallback text when a step has no street name.
-- [ ] Draw the walking route as a dotted line and show the destination marker.
-- [ ] Make the map follow the device position and heading. Add a button that centers the map again.
-- [ ] Show the remaining time, the remaining distance, and the arrival time at the bottom.
-- [ ] Add a close button that goes back to the itinerary.
-- [ ] Tell the user when they are off the route. Give a button that plans a new route. Do not plan a new route automatically.
+- [x] Read the walking steps from the plan response. The response already has them, so the view needs no new network request.
+- [x] Show the next instruction at the top: direction arrow, distance, and street name.
+- [x] Show a preview of the instruction after the next one.
+- [x] Calculate the turn direction from the step geometry. In the test fixture, the provider gives `CONTINUE` for almost all steps.
+- [x] Use a fallback text when a step has no street name.
+- [x] Draw the walking route as a dotted line and show the destination marker.
+- [x] Make the map follow the device position and heading. Add a button that centers the map again.
+- [x] Show the remaining time, the remaining distance, and the arrival time at the bottom.
+- [x] Add a close button that goes back to the itinerary.
+- [x] Tell the user when they are off the route. Give a button that plans a new route. Do not plan a new route automatically.
 
 Limits for this release:
 

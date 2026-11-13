@@ -31,9 +31,23 @@ import app.itivio.domain.GeoPoint
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
 import app.itivio.domain.TransitMode
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import app.itivio.domain.BoundingBox as StopBox
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import org.maplibre.compose.camera.CameraFit
+import org.maplibre.compose.camera.CameraMoveReason
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.CameraUpdate
+import org.maplibre.compose.interaction.ClickResult
+import org.maplibre.compose.location.BearingUpdate
+import org.maplibre.compose.location.LocationTrackingEffect
+import org.maplibre.compose.location.updateCamera
 import org.maplibre.compose.expressions.value.LineCap
 import org.maplibre.compose.expressions.value.LineJoin
 import org.maplibre.compose.expressions.dsl.const
@@ -72,26 +86,44 @@ private const val DARK_STYLE = "asset://map/dark.json"
 /** Europe-wide view until the first location fix or route arrives. */
 private val InitialCamera = CameraPosition(center = Position(longitude = 10.0, latitude = 50.0), zoom = 3.5)
 
+/** A transit stop on the map. A tap on it opens its departures. */
+data class MapStop(val stopId: String, val name: String, val point: GeoPoint)
+
+/** Stops load only at this zoom and closer, where a screen shows a few streets. */
+const val MAP_STOPS_MIN_ZOOM = 15.0
+
 /**
- * The persistent map behind every screen. Draws the device position, nearby [stops], the
- * [journey] legs, and the [destination] marker. [insets] is the area covered by sheets or panes; the camera keeps
- * routes clear of it. Each change of [recenterRequest] moves the camera to the device position.
+ * The persistent map behind every screen. Draws the device position, nearby [stops], the stops
+ * of the area in view ([areaStops]), the [journey] legs, and the [destination] marker. [insets] is
+ * the area covered by sheets or panes; the camera keeps routes clear of it. Each change of
+ * [recenterRequest] moves the camera to the device position. A change of [focus] moves the camera
+ * to that point. While [follow] is set, the camera follows the device position and heading; a
+ * gesture on the map stops it and calls [onFollowStopped]. [onCameraIdle] gets the area in view
+ * each time the camera stops.
  */
 @Composable
 fun TransitMap(
     locationState: LocationState,
     journey: Journey?,
     destination: GeoPoint?,
-    stops: List<GeoPoint>,
+    stops: List<MapStop>,
     insets: PaddingValues,
     recenterRequest: Int,
     modifier: Modifier = Modifier,
+    areaStops: List<MapStop> = emptyList(),
+    focus: GeoPoint? = null,
+    follow: Boolean = false,
+    onStop: (MapStop) -> Unit = {},
+    onFollowStopped: () -> Unit = {},
+    onCameraIdle: (StopBox, Double) -> Unit = { _, _ -> },
 ) {
     val scheme = MaterialTheme.colorScheme
     val style = if (isSystemInDarkTheme()) DARK_STYLE else LIGHT_STYLE
+    val currentOnStop by rememberUpdatedState(onStop)
     val mapState = rememberMapState(baseStyle = BaseStyle.Uri(style), initialCameraPosition = InitialCamera) {
         // Layers declared here render above the base style and follow recomposition.
-        StopsLayer(stops, fill = scheme.surface, stroke = scheme.primary)
+        StopsLayer("area-stops", areaStops, fill = scheme.surface, stroke = scheme.outline, minZoom = MAP_STOPS_MIN_ZOOM - 0.5) { currentOnStop(it) }
+        StopsLayer("stops", stops, fill = scheme.surface, stroke = scheme.primary) { currentOnStop(it) }
         LocationIndicatorLayer(id = "user", locationState = locationState)
         if (journey != null) JourneyLayers(journey, accent = scheme.primary, casing = scheme.surface, walk = scheme.onSurfaceVariant)
         EndpointLayer(journey, destination, fill = scheme.primary, stroke = scheme.surface)
@@ -104,6 +136,8 @@ fun TransitMap(
     )
 
     LaunchedEffect(journey?.id) {
+        // While the camera follows the walker, a fit to the route would fight it.
+        if (follow) return@LaunchedEffect
         val box = journey?.bounds() ?: return@LaunchedEffect
         mapState.animateCameraToBounds(box, CameraFit(fitPadding = DpPadding(48.dp, 48.dp, 48.dp, 48.dp)))
     }
@@ -112,11 +146,45 @@ fun TransitMap(
         val here = locationState.lastLocation?.position ?: return@LaunchedEffect
         mapState.animateCamera(CameraUpdate(center = here, zoom = maxOf(mapState.cameraPosition.zoom, 15.0)))
     }
-    // First fix: move from the overview to the user once, unless a route is already shown.
-    val firstFix = locationState.lastLocation != null
-    LaunchedEffect(firstFix) {
+    LaunchedEffect(focus) {
+        val point = focus ?: return@LaunchedEffect
+        mapState.animateCamera(
+            CameraUpdate(center = Position(longitude = point.longitude, latitude = point.latitude), zoom = maxOf(mapState.cameraPosition.zoom, 16.0)),
+        )
+    }
+    // Keyed on the first fix too: after process death, the view opens before the position is known.
+    val hasFix = locationState.lastLocation != null
+    LaunchedEffect(follow, hasFix) {
+        if (!follow) return@LaunchedEffect
         val here = locationState.lastLocation?.position ?: return@LaunchedEffect
-        if (journey == null) mapState.animateCamera(CameraUpdate(center = here, zoom = 15.0))
+        mapState.animateCamera(CameraUpdate(center = here, zoom = maxOf(mapState.cameraPosition.zoom, 17.0)))
+    }
+    LocationTrackingEffect(locationState, enabled = follow, trackBearing = true) {
+        updateCamera(mapState, updateBearing = BearingUpdate.TrackAutomatic)
+    }
+    val currentOnFollowStopped by rememberUpdatedState(onFollowStopped)
+    LaunchedEffect(mapState, follow) {
+        if (!follow) return@LaunchedEffect
+        snapshotFlow { mapState.isCameraMoving && mapState.cameraMoveReason == CameraMoveReason.Gesture }
+            .filter { it }
+            .collect { currentOnFollowStopped() }
+    }
+    val currentOnCameraIdle by rememberUpdatedState(onCameraIdle)
+    LaunchedEffect(mapState) {
+        snapshotFlow { if (mapState.isCameraMoving) null else mapState.cameraPosition }
+            .distinctUntilChanged()
+            .collect { position ->
+                if (position == null) return@collect
+                // The map has no area before its first layout.
+                val bounds = runCatching { mapState.getVisibleBounds() }.getOrNull() ?: return@collect
+                currentOnCameraIdle(StopBox(bounds.south, bounds.west, bounds.north, bounds.east), position.zoom)
+            }
+    }
+    // First fix: move from the overview to the user once, unless a route is already shown or the
+    // camera follows the walker.
+    LaunchedEffect(hasFix) {
+        val here = locationState.lastLocation?.position ?: return@LaunchedEffect
+        if (journey == null && !follow) mapState.animateCamera(CameraUpdate(center = here, zoom = 15.0))
     }
 }
 
@@ -199,17 +267,41 @@ private fun JourneyLayers(journey: Journey, accent: Color, casing: Color, walk: 
 
 @Composable
 @MaplibreComposable
-private fun StopsLayer(stops: List<GeoPoint>, fill: Color, stroke: Color) {
-    val source = rememberGeoJsonSource(GeoJsonData.Features(remember(stops) { stops.toPoints() }))
+private fun StopsLayer(
+    id: String,
+    stops: List<MapStop>,
+    fill: Color,
+    stroke: Color,
+    minZoom: Double = 0.0,
+    onStop: (MapStop) -> Unit,
+) {
+    val source = rememberGeoJsonSource(GeoJsonData.Features(remember(stops) { stops.toFeatures() }))
     CircleLayer(
-        id = "stops",
+        id = id,
         source = source,
+        minZoom = minZoom.toFloat(),
         color = const(fill),
         radius = const(5.dp),
         strokeColor = const(stroke),
         strokeWidth = const(2.dp),
+        // The rings are small; the padding gives the finger a larger target.
+        hitPadding = 12.dp,
+        onClick = { features ->
+            val stopId = features.firstNotNullOfOrNull { it.properties?.get("id")?.jsonPrimitive?.contentOrNull }
+            val stop = stops.firstOrNull { it.stopId == stopId }
+            if (stop == null) ClickResult.Pass else ClickResult.Consume.also { onStop(stop) }
+        },
     )
 }
+
+private fun List<MapStop>.toFeatures() = FeatureCollection(
+    map {
+        Feature(
+            Point(Position(longitude = it.point.longitude, latitude = it.point.latitude)),
+            buildJsonObject { put("id", it.stopId) },
+        )
+    },
+)
 
 @Composable
 @MaplibreComposable

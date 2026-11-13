@@ -38,6 +38,7 @@ class TransitousRoutingRepositoryTest {
                 "/api/v6/plan" -> "plan"
                 "/api/v6/stoptimes" -> "stoptimes"
                 "/api/v6/map/stops" -> "stops"
+                "/api/v6/trip" -> "trip"
                 else -> error("Unexpected path")
             }
             respond(fixture(name), headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -78,6 +79,20 @@ class TransitousRoutingRepositoryTest {
             assertEquals("12", params["n"])
             assertEquals("true", params["exactRadius"])
             assertEquals("false", params["withAlerts"])
+            val board = repo.stopDepartures("stop:board", 25)
+            assertEquals(board.sortedBy { it.time.best }, board)
+            params = seen.last().url.parameters
+            assertEquals("stop:board", params["stopId"])
+            assertEquals("25", params["n"])
+            assertNull(params["center"])
+            assertNull(params["time"])
+            assertEquals("false", params["withAlerts"])
+            val trip = repo.trip("20261113_00:40_de-VBB_311111895")
+            assertEquals(13, trip.stops.size)
+            params = seen.last().url.parameters
+            assertEquals("20261113_00:40_de-VBB_311111895", params["tripId"])
+            assertEquals("false", params["detailedLegs"])
+            assertEquals("de-DE", params["language"])
             assertTrue(repo.stopsIn(BoundingBox(52.518, 13.408, 52.525, 13.418)).all { it.kind == LocationKind.STOP })
             params = seen.last().url.parameters
             assertEquals("52.518,13.418", params["min"])

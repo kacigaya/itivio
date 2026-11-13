@@ -21,8 +21,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.itivio.R
+import app.itivio.domain.Alert
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
 import app.itivio.domain.TransitMode
@@ -114,7 +116,31 @@ fun RouteCard(journey: Journey, selected: Boolean, onClick: () -> Unit, modifier
                 style = MaterialTheme.typography.bodySmall,
                 color = if (journey.isCancelled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            AlertLine(journey.alerts)
         }
+    }
+}
+
+/** The first service alert of the journey, and the number of the others. The itinerary shows them all. */
+@Composable
+private fun AlertLine(alerts: List<Alert>) {
+    val first = alerts.firstOrNull() ?: return
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Top) {
+        Icon(
+            painterResource(R.drawable.ic_warning),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(16.dp),
+        )
+        Text(
+            listOfNotNull(
+                first.header,
+                (alerts.size - 1).takeIf { it > 0 }?.let { pluralStringResource(R.plurals.results_more_alerts, it, it) },
+            ).joinToString(" · "),
+            style = MaterialTheme.typography.bodySmall,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

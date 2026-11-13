@@ -12,6 +12,7 @@ import app.itivio.domain.RoutingException
 import app.itivio.domain.RoutingRepository
 import app.itivio.domain.Stop
 import app.itivio.domain.TransitMode
+import app.itivio.domain.Trip
 import app.itivio.domain.WalkingSpeed
 import app.itivio.data.ign.IgnAddressSearch
 import io.ktor.client.HttpClient
@@ -116,6 +117,24 @@ class TransitousRoutingRepository(
             parameter("withAlerts", false)
             parameter("language", language)
         }.stopTimes.map { it.toDomain() }.sortedBy { it.time.best }
+    }
+
+    override suspend fun stopDepartures(stopId: String, limit: Int): List<Departure> = mapped {
+        get<StoptimesResponse>("v6/stoptimes") {
+            parameter("stopId", stopId)
+            parameter("n", limit)
+            parameter("withAlerts", false)
+            parameter("language", language)
+        }.stopTimes.map { it.toDomain() }.sortedBy { it.time.best }
+    }
+
+    override suspend fun trip(tripId: String): Trip = mapped {
+        get<Itinerary>("v6/trip") {
+            parameter("tripId", tripId)
+            // The tracker needs the times, not the shape of the route.
+            parameter("detailedLegs", false)
+            parameter("language", language)
+        }.toTrip()
     }
 
     override suspend fun lineDepartures(

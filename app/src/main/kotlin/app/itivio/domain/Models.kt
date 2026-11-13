@@ -88,6 +88,8 @@ sealed interface Leg {
         override val end: StopTime,
         override val geometry: List<GeoPoint>,
         val distanceMeters: Double,
+        /** Turn-by-turn steps of a walk. Empty when the provider gives none. */
+        val steps: List<WalkStep> = emptyList(),
     ) : Leg
 
     data class Transit(
@@ -129,7 +131,65 @@ data class Journey(
      */
     fun currentLegIndex(now: Instant): Int? =
         if (now < departure.best || now >= arrival.best) null else legs.indexOfFirst { it.end.best > now }.takeIf { it >= 0 }
+
+    /** True when the journey has no transit leg, such as a walk the whole way. */
+    val isStreetOnly: Boolean get() = legs.none { it is Leg.Transit }
+
+    /** The service alerts of all transit legs. An alert on more than one leg shows once. */
+    val alerts: List<Alert> get() = legs.filterIsInstance<Leg.Transit>().flatMap { it.alerts }.distinct()
+
+    /**
+     * Applies the current times of the trip of the transit leg at [legIndex]. The boarding and
+     * alighting stops keep their place in the trip; the walks after the leg move with its arrival.
+     * The journey stays the same when the trip does not contain the stops of the leg.
+     */
+    fun withTrip(legIndex: Int, trip: Trip): Journey {
+        val leg = legs.getOrNull(legIndex) as? Leg.Transit ?: return this
+        val board = trip.stops.indices.firstOrNull { trip.stops[it].isBoardingOf(leg) }
+            ?: trip.stops.indexOfFirst { it.stopId != null && it.stopId == leg.from.stopId }.takeIf { it >= 0 }
+            ?: return this
+        val alight = (board + 1 until trip.stops.size).firstOrNull { trip.stops[it].isAlightingOf(leg) }
+            ?: (board + 1 until trip.stops.size).firstOrNull { trip.stops[it].stopId != null && trip.stops[it].stopId == leg.to.stopId }
+            ?: return this
+        val from = trip.stops[board]
+        val to = trip.stops[alight]
+        val updated = leg.copy(
+            from = leg.from.copy(departure = from.departure ?: leg.from.departure, track = from.track ?: leg.from.track, cancelled = from.cancelled),
+            to = leg.to.copy(arrival = to.arrival ?: leg.to.arrival, track = to.track ?: leg.to.track, cancelled = to.cancelled),
+            start = from.departure ?: leg.start,
+            end = to.arrival ?: leg.end,
+            intermediateStops = trip.stops.subList(board + 1, alight),
+            cancelled = trip.cancelled || from.cancelled || to.cancelled,
+            alerts = trip.alerts,
+        )
+        val shift = Duration.between(leg.end.best, updated.end.best)
+        val next = (legIndex + 1 until legs.size).firstOrNull { legs[it] is Leg.Transit } ?: legs.size
+        val newLegs = legs.mapIndexed { index, it ->
+            when {
+                index == legIndex -> updated
+                index in legIndex + 1 until next && it is Leg.Street -> it.copy(start = it.start.shifted(shift), end = it.end.shifted(shift))
+                else -> it
+            }
+        }
+        return copy(legs = newLegs, departure = newLegs.first().start, arrival = newLegs.last().end)
+    }
 }
+
+private fun Stop.isBoardingOf(leg: Leg.Transit) =
+    stopId != null && stopId == leg.from.stopId && departure?.scheduled == leg.start.scheduled
+
+private fun Stop.isAlightingOf(leg: Leg.Transit) =
+    stopId != null && stopId == leg.to.stopId && arrival?.scheduled == leg.end.scheduled
+
+/** Moves the expected time by [shift]. The scheduled time stays. */
+private fun StopTime.shifted(shift: Duration): StopTime =
+    if (shift.isZero) this else copy(estimated = best.plus(shift))
+
+/**
+ * The current state of one trip, from its first stop to its last. [stops] carry the live times
+ * where the provider has them.
+ */
+data class Trip(val stops: List<Stop>, val cancelled: Boolean = false, val alerts: List<Alert> = emptyList())
 
 enum class WalkingSpeed { SLOW, NORMAL, FAST }
 

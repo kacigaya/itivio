@@ -13,6 +13,10 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onRoot
+import app.itivio.data.transitous.PlanResponse
+import app.itivio.data.transitous.toDomain
+import app.itivio.data.transitousJson
+import app.itivio.domain.Alert
 import app.itivio.domain.Departure
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.Journey
@@ -37,6 +41,8 @@ import app.itivio.ui.results.ResultsScreen
 import app.itivio.ui.results.TravelTimeDialog
 import app.itivio.ui.search.SavedPlacesViewModel
 import app.itivio.ui.search.SearchViewModel
+import app.itivio.ui.stop.StopScreen
+import app.itivio.ui.walk.WalkScreen
 import app.itivio.ui.theme.ItivioTheme
 import com.github.takahirom.roborazzi.captureRoboImage
 import java.time.Instant
@@ -103,7 +109,7 @@ class ScreenshotTest {
     fun explore() = capture("explore") {
         ExploreScreen(
             wide = false, locationGranted = false, nearby = LoadState.Idle, now = t0,
-            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {},
+            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {},
         )
     }
 
@@ -116,7 +122,7 @@ class ScreenshotTest {
         capture("explore_saved") {
             ExploreScreen(
                 wide = false, locationGranted = true, nearby = LoadState.Ready(sampleDepartures), now = t0,
-                onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {},
+                onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {},
             )
         }
     }
@@ -125,7 +131,7 @@ class ScreenshotTest {
     fun nearby() = capture("nearby") {
         ExploreScreen(
             wide = false, locationGranted = true, nearby = LoadState.Ready(sampleDepartures), now = t0,
-            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {},
+            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {},
         )
     }
 
@@ -210,6 +216,44 @@ class ScreenshotTest {
             now = t0.plusSeconds(120),
             lineTimes = mapOf(1 to listOf(u2(6, 2, "t1"), u2(11, null, "t4"), u2(16, null, "t5"))),
             onBack = {},
+            onWalk = {},
+        )
+    }
+
+    @Test
+    fun stopBoard() = capture("stop") {
+        StopScreen(
+            wide = false,
+            name = "S+U Alexanderplatz",
+            departures = LoadState.Ready(sampleDepartures.flatMap { it.departures }),
+            now = t0,
+            onBack = {}, onDirections = {}, onRetry = {},
+        )
+    }
+
+    @Test
+    fun walk() = capture("walk") { Walk(position = { it.points[it.points.size / 3] }) }
+
+    @Test
+    fun walkOffRoute() = capture("walk_off_route") { Walk(position = { GeoPoint(52.5275, 13.372) }) }
+
+    @Test
+    fun walkWide() = capture("walk_wide") { Walk(position = { it.points[it.points.size / 3] }, wide = true) }
+
+    /** The first walk of the Berlin fixture, from Invalidenstraße to the platforms of the main station. */
+    @Composable
+    private fun Walk(position: (app.itivio.domain.WalkRoute) -> GeoPoint, wide: Boolean = false) {
+        val leg = transitousJson.decodeFromString<PlanResponse>(
+            requireNotNull(javaClass.getResource("/transitous/plan.json")).readText(),
+        ).toDomain(toName = "Berlin Hbf").journeys.first().legs.first() as Leg.Street
+        WalkScreen(
+            wide = wide,
+            leg = leg,
+            position = position(app.itivio.domain.WalkRoute.of(leg.steps, leg.geometry)),
+            locationGranted = true,
+            following = false,
+            now = t0,
+            onClose = {}, onRecenter = {}, onRequestLocation = {}, onReplan = {},
         )
     }
 
@@ -265,6 +309,10 @@ class ScreenshotTest {
                     Leg.Transit(
                         TransitMode.BUS, stop("U Stadtmitte (U6)", "B"), stop("Potsdamer Platz"), at(19), at(26),
                         emptyList(), Line("M41", color = 0xFFA5027D.toInt(), agency = "BVG"), "Sonnenallee", "t2", emptyList(),
+                        alerts = listOf(
+                            Alert("Diversion at Potsdamer Platz because of road works", "The stop moves 50 m."),
+                            Alert("Lift out of service at U Stadtmitte", ""),
+                        ),
                     ),
                 ),
                 departure = at(0), arrival = at(26), transfers = 1,

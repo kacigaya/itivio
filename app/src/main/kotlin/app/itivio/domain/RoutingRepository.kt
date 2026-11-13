@@ -22,6 +22,12 @@ interface RoutingRepository {
     /** Upcoming departures around [point], sorted by time. */
     suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int = 400, limit: Int = 20): List<Departure>
 
+    /** Upcoming departures from the stop [stopId] and the other platforms of its station, sorted by time. */
+    suspend fun stopDepartures(stopId: String, limit: Int = 30): List<Departure>
+
+    /** The current state of the trip [tripId], with live times where the provider has them. */
+    suspend fun trip(tripId: String): Trip
+
     /**
      * Upcoming departures of [line] from the stop [stopId], at or after [from], sorted by time.
      * A non-null [alightAt] keeps the trips that stop there. Without it, or when the provider

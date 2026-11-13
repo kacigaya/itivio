@@ -23,11 +23,16 @@
 - Place and stop search with suggestions.
 - Favorite places and stops, Home and Work shortcuts, and recent searches. They stay on your device.
 - Departures from stops near you, with live countdowns.
+- A departure board for each stop. Tap a stop on the map, or select "Show departures" for a stop in the search.
 - Journey planning with all public transport modes. Leave now, leave at a time, or arrive by a time.
 - Journey options: transport modes, a transfer limit, wheelchair-accessible routing, and walking speed. The app keeps them between starts.
 - Earlier and later departures for each search.
 - Sort routes by duration, transfers, or walking distance.
-- Journey details: stops, platforms, times, and the route on the map.
+- Walk-only routes, when walking is a good choice.
+- Service alerts on the route cards and in the journey details.
+- Journey details: stops, platforms, times, and the route on the map. The trip tracker follows new delays while the details are open.
+- Walking directions: the next turn, the distance to it, the remaining time, and the arrival time. The map follows your position and heading.
+- The app keeps your search when Android stops it in the background, and plans it again.
 - Live times where the transit agency publishes them. Scheduled times have no live marker.
 - Light and dark themes with Material You colors.
 - Layout for phones, tablets, and foldables.
@@ -37,6 +42,7 @@
 - No account, no analytics, no ads.
 - The app does not log your journeys or your location.
 - The app rounds the location it sends for search suggestions to about 1 km.
+- Walking directions use your location on the device only. The app sends it only when you select "Plan a new route".
 - Your location does not need Google Play services.
 - Favorites, Home and Work, and recent searches stay on your device. The app sends them to no service.
 - Journey options stay on your device. They go to Transitous only as part of a journey request. This includes the wheelchair option.
@@ -46,7 +52,7 @@ The app sends requests to these services:
 
 | Service | Use | Data sent |
 |---|---|---|
-| [Transitous](https://transitous.org/) | Search, routes, departures | Search text, start and end points of a journey, journey options |
+| [Transitous](https://transitous.org/) | Search, routes, departures, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the map area you look at when you zoom in to street level |
 | [IGN Géoplateforme](https://cartes.gouv.fr/) | French address search | Search text, without your location |
 | [OpenFreeMap](https://openfreemap.org/) | Map tiles | The map area you look at |
 

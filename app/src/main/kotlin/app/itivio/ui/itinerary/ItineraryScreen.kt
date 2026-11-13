@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,6 +49,7 @@ import app.itivio.domain.Departure
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
 import app.itivio.domain.Stop
+import app.itivio.domain.TransitMode
 import app.itivio.ui.common.AttributionFooter
 import app.itivio.ui.common.CountdownText
 import app.itivio.ui.common.LineBadge
@@ -69,6 +71,7 @@ private val RailWidth = 40.dp
 /**
  * The steps of [journey]. [now] drives the tracker: the status line and the outline around the
  * step in progress. [lineTimes] gives the next departures of each transit leg's line, by leg index.
+ * [onWalk] opens the walking view of a walk.
  */
 @Composable
 fun ItineraryScreen(
@@ -77,6 +80,7 @@ fun ItineraryScreen(
     now: Instant,
     lineTimes: Map<Int, List<Departure>>,
     onBack: () -> Unit,
+    onWalk: (legIndex: Int) -> Unit,
 ) {
     val currentLeg = journey.currentLegIndex(now)
     MapPanel(
@@ -94,7 +98,7 @@ fun ItineraryScreen(
                 Step(current = index == currentLeg) {
                     when (leg) {
                         is Leg.Transit -> TransitLegItem(leg, lineTimes[index].orEmpty(), now)
-                        is Leg.Street -> StreetLegItem(leg)
+                        is Leg.Street -> StreetLegItem(leg, onWalk = { onWalk(index) }.takeIf { leg.hasWalkingView })
                     }
                 }
             }
@@ -301,23 +305,34 @@ private fun LineTimes(departures: List<Departure>, plannedTripId: String?, now: 
     }
 }
 
+/** A walk with a route on the map can open the walking view. */
+private val Leg.Street.hasWalkingView: Boolean get() = mode == TransitMode.WALK && geometry.size >= 2
+
 @Composable
-private fun StreetLegItem(leg: Leg.Street) {
+private fun StreetLegItem(leg: Leg.Street, onWalk: (() -> Unit)?) {
     val label = stringResource(leg.mode.label())
     Row(Modifier.height(IntrinsicSize.Min).padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(RailWidth).fillMaxHeight(), contentAlignment = Alignment.Center) {
             Icon(painterResource(leg.mode.icon()), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Text(
-            if (leg.distanceMeters > 0) {
-                stringResource(R.string.street_leg, label, formatDistance(leg.distanceMeters), formatDuration(leg.duration))
-            } else {
-                stringResource(R.string.street_leg_no_distance, label, formatDuration(leg.duration))
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(vertical = 12.dp),
-        )
+        Column(Modifier.weight(1f).padding(vertical = 4.dp)) {
+            Text(
+                if (leg.distanceMeters > 0) {
+                    stringResource(R.string.street_leg, label, formatDistance(leg.distanceMeters), formatDuration(leg.duration))
+                } else {
+                    stringResource(R.string.street_leg_no_distance, label, formatDuration(leg.duration))
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 8.dp),
+            )
+            if (onWalk != null) {
+                OutlinedButton(onClick = onWalk) {
+                    Icon(painterResource(R.drawable.ic_navigation), contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text(stringResource(R.string.walk_open), modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+        }
     }
 }
 

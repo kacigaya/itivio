@@ -100,7 +100,7 @@ private fun StopHeader(name: String) {
 }
 
 @Composable
-private fun DepartureRow(departure: Departure, now: Instant) {
+internal fun DepartureRow(departure: Departure, now: Instant) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),

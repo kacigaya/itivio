@@ -7,7 +7,11 @@ import app.itivio.domain.JourneyPage
 import app.itivio.domain.Line
 import app.itivio.domain.Location
 import app.itivio.domain.LocationKind
+import app.itivio.domain.Maneuver
+import app.itivio.domain.StepKind
 import app.itivio.domain.TransitMode
+import app.itivio.domain.Trip
+import app.itivio.domain.WalkStep
 import java.security.MessageDigest
 import java.time.DateTimeException
 import java.time.Instant
@@ -88,12 +92,51 @@ internal fun Leg.toDomain(fromName: String? = null, toName: String? = null): Dom
     val geometry = legGeometry?.let { decodePolyline(it.points, it.precision) } ?: emptyList()
     val from = from.toDomain(fromName)
     val to = to.toDomain(toName)
-    if (!mode.isTransit) return DomainLeg.Street(mode, from, to, start, end, geometry, distance ?: 0.0)
+    if (!mode.isTransit) return DomainLeg.Street(mode, from, to, start, end, geometry, distance ?: 0.0, steps.map { it.toDomain() })
     val heading = Heading(headsign, tripShortName, tripTo)
     return DomainLeg.Transit(mode, from, to, start, end, geometry,
         line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName, routeId),
         heading.headsign, tripId, intermediateStops.map { it.toDomain() }, cancelled,
-        alerts.map { app.itivio.domain.Alert(it.headerText, it.descriptionText, it.url) }, directionId, heading.tripCode)
+        alerts.map { it.toDomain() }, directionId, heading.tripCode)
+}
+
+private fun Alert.toDomain() = app.itivio.domain.Alert(headerText, descriptionText, url)
+
+internal fun StepInstruction.toDomain(): WalkStep = WalkStep(
+    distanceMeters = distance,
+    streetName = streetName?.takeIf { it.isNotBlank() },
+    geometry = polyline?.let { decodePolyline(it.points, it.precision) }.orEmpty(),
+    kind = when (relativeDirection) {
+        "STAIRS" -> StepKind.STAIRS
+        "ELEVATOR" -> StepKind.ELEVATOR
+        else -> StepKind.WALK
+    },
+    turn = when (relativeDirection) {
+        "SLIGHTLY_LEFT" -> Maneuver.SLIGHT_LEFT
+        "LEFT" -> Maneuver.LEFT
+        "HARD_LEFT" -> Maneuver.SHARP_LEFT
+        "SLIGHTLY_RIGHT" -> Maneuver.SLIGHT_RIGHT
+        "RIGHT" -> Maneuver.RIGHT
+        "HARD_RIGHT" -> Maneuver.SHARP_RIGHT
+        "UTURN_LEFT", "UTURN_RIGHT" -> Maneuver.U_TURN
+        // "Continue", "depart", and roundabouts give no turn; the geometry gives it.
+        else -> null
+    },
+)
+
+/**
+ * The stops of a trip, from the itinerary that `/v6/trip` returns. A trip with stay-seated
+ * transfers can come as more than one leg; a stop shared by two legs counts once.
+ */
+internal fun Itinerary.toTrip(): Trip {
+    val legs = legs.filter { transitMode(it.mode).isTransit }
+    val stops = legs.flatMap { leg -> listOf(leg.from) + leg.intermediateStops + leg.to }
+        .map { it.toDomain() }
+        .fold(emptyList<DomainStop>()) { kept, stop ->
+            val last = kept.lastOrNull()
+            if (last != null && last.stopId != null && last.stopId == stop.stopId) kept.dropLast(1) + last.copy(departure = stop.departure) else kept + stop
+        }
+    return Trip(stops, legs.any { it.cancelled }, legs.flatMap { leg -> leg.alerts.map { it.toDomain() } }.distinct())
 }
 
 /** [fromName] and [toName] name the requested endpoints; see [Place.toDomain]. */
@@ -101,14 +144,17 @@ internal fun Itinerary.toDomain(fromName: String? = null, toName: String? = null
     val mapped = legs.mapIndexed { index, leg ->
         leg.toDomain(fromName.takeIf { index == 0 }, toName.takeIf { index == legs.lastIndex })
     }
-    val stableId = id ?: MessageDigest.getInstance("SHA-256").digest(
+    // Journeys without transit come with a blank ID.
+    val stableId = id?.takeIf { it.isNotBlank() } ?: MessageDigest.getInstance("SHA-256").digest(
         legs.joinToString("|") { "${it.tripId}:${it.startTime}:${it.endTime}" }.toByteArray(Charsets.UTF_8)
     ).joinToString("") { "%02x".format(it) }
     return Journey(stableId, mapped, mapped.first().start, mapped.last().end, transfers)
 }
 
+/** Journeys without transit come after the others, so "Best" keeps the order of the provider. */
 internal fun PlanResponse.toDomain(fromName: String? = null, toName: String? = null) = JourneyPage(
-    itineraries.filter { it.legs.isNotEmpty() }.map { it.toDomain(fromName, toName) }, previousPageCursor, nextPageCursor,
+    (itineraries + direct).filter { it.legs.isNotEmpty() }.map { it.toDomain(fromName, toName) }.distinctBy { it.id },
+    previousPageCursor, nextPageCursor,
 )
 
 internal fun StopTime.toDomain(): Departure {

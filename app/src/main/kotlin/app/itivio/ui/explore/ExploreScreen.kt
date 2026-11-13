@@ -76,6 +76,7 @@ fun ExploreScreen(
     onRecenter: () -> Unit,
     onRetryNearby: () -> Unit,
     onDestination: (Endpoint) -> Unit,
+    onStop: (Location) -> Unit,
     places: SavedPlacesViewModel = koinViewModel(),
 ) {
     val searchBarState = rememberLocationSearchBarState()
@@ -141,6 +142,10 @@ fun ExploreScreen(
             } else {
                 onDestination(endpoint)
             }
+        },
+        onDepartures = { location ->
+            textState.clearText()
+            onStop(location)
         },
         places = places,
     )

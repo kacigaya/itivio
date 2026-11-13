@@ -36,6 +36,8 @@ Default Material type scale (Roboto). Times and durations use `titleLarge` / `ti
 | Search | Full-screen search view: origin and destination fields, swap button, saved places or suggestions list | Same, in the side pane |
 | Results | Sheet with a travel time chip, an options chip, sort chips, and route cards. "Earlier departures" is above the cards and "Later departures" is below them. Map shows the selected route | Side pane with route cards |
 | Itinerary | Sheet with leg timeline. Map fits the route | Side pane timeline |
+| Stop | Sheet with the stop name, "Directions to here", and the departures. Map centers on the stop | Side pane |
+| Walking | Instruction card at the top. Sheet with the remaining time, distance, and arrival, then all instructions. Map follows the user | Instruction card above the side pane |
 
 ## Saved places
 
@@ -69,13 +71,35 @@ The dialog edits a copy. "Done" applies all changes with one new search. "Reset"
 
 The itinerary is a trip tracker. A status line above the summary shows "Leave in 4 min" before the departure and "Arrive in 12 min" during the journey. The step in progress has a `primary` outline. Each transit leg shows the next 4 departures of its line at the boarding stop on a `surfaceContainerHigh` card. The list has only trips that stop at the alighting stop. Each row shows the trip code when the feed has one, then the destination: "QOKA52 · Marne-la-Vallée - Chessy". The planned trip is in medium weight. A live departure in the next hour shows as a countdown with the live icon. Other departures show the clock time. The line times refresh once a minute while the itinerary is visible.
 
+## Stops on the map
+
+On home, the map shows the nearby stops as rings in `primary`. At zoom 15 and closer, it also shows the other stops in view as rings in `outline`. A tap on a ring opens the stop. Each ring has a 12dp touch padding. In the search, the menu of a stop has "Show departures" first.
+
+## Stop
+
+The departure board uses the rows of the nearby departures. It refreshes once a minute while it is visible. "Directions to here" plans a journey to the stop.
+
+## Walking view
+
+"Walking directions" is an outlined button on each walk step of the itinerary. A walk-only route has one walk step.
+
+- The instruction card uses `primaryContainer`. It shows the maneuver icon, the distance to the maneuver, and the instruction. The start shows the length of the first part. A "Then" line shows the instruction after it.
+- The card is a polite live region, so TalkBack reads a new instruction.
+- Off the route, an `errorContainer` banner says so and gives "Plan a new route". Without location access, the banner gives "Allow location".
+- The map follows the position and the heading. A gesture on the map stops this, and a "Recenter" button shows.
+- The close button sits at the start of the summary row in the sheet.
+- The walk is dotted on the map, with markers at its start and its end.
+
 ## Route card
 
 ```
 [12:04 → 12:31]                       27 min
 [walk 4] › [U2] › [walk] › [M41]   ●Live
 Departs 12:08 from Alexanderplatz · 1 transfer · 450 m walk
+⚠ Diversion at Potsdamer Platz · 1 more alert
 ```
+
+The alert line shows the first alert of the journey and the number of the others. It shows only when the journey has an alert.
 
 ## States
 
