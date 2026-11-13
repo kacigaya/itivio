@@ -10,6 +10,14 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 - Include minutes in spoken walking badges.
 - Remove duplicate text from spoken walking direction buttons.
 - Say "Now" instead of "In Now" for departures due now.
+- Show departures and disruptions as two pages of the home sheet on phones, with an alert count. Remove the navigation bar. Phones now request the alerts while home is open.
+- Show the delay, the arrival time, and the time on board for each train choice. Show the destination without the trip code. Remove the radio buttons, the trip code in the leg header, and the operator name.
+- Make route cards shorter: heavy times, a compact leg chain, and one alert line with a count.
+- Let the results filter row scroll to the screen edges.
+- Add icons to the theme picker, the walking speed, and the maximum transfers.
+- Remove the flight mode. No journey uses a flight.
+- Fix the position marker in dark color schemes with a light primary color.
+- Show where to board the metro in Paris, for the next transfer or the exit. The RATP data ships with the app.
 
 ## 0.8.0
 

@@ -2,6 +2,10 @@ package app.itivio.ui
 
 import android.app.Application
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -115,7 +119,7 @@ open class ScreenshotTest {
     fun stop() = stopKoin()
 
     @OptIn(ExperimentalRoborazziApi::class)
-    private fun capture(name: String, content: @Composable () -> Unit) {
+    private fun capture(name: String, prepare: () -> Unit = {}, content: @Composable () -> Unit) {
         var dark by mutableStateOf(false)
         val fontScale = RuntimeEnvironment.getFontScale()
         compose.mainClock.autoAdvance = false
@@ -131,6 +135,7 @@ open class ScreenshotTest {
                 }
             }
         }
+        prepare()
         for (theme in listOf("light", "dark")) {
             dark = theme == "dark"
             val variant = theme + if (fontScale >= 2f) "_large" else ""
@@ -173,6 +178,32 @@ open class ScreenshotTest {
     fun explore() = capture("explore") {
         ExploreScreen(
             wide = false, locationGranted = false, nearby = LoadState.Idle, now = t0,
+            disruptions = LoadState.Ready(DisruptionGroups()),
+            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {}, onSettings = {},
+        )
+    }
+
+    /** A wide window keeps its Disruptions page, so its home has one list with a title. */
+    @Test
+    fun exploreWide() = capture("explore_wide") {
+        ExploreScreen(
+            wide = true, locationGranted = true, nearby = LoadState.Ready(sampleDepartures), now = t0,
+            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {}, onSettings = {},
+        )
+    }
+
+    @Test
+    fun homeDisruptions() = capture(
+        "home_disruptions",
+        prepare = {
+            // A semantics action leaves no touch ripple in the image.
+            compose.onNodeWithText("Disruptions").performSemanticsAction(SemanticsActions.OnClick)
+            compose.mainClock.advanceTimeBy(2_000)
+        },
+    ) {
+        ExploreScreen(
+            wide = false, locationGranted = true, nearby = LoadState.Ready(sampleDepartures), now = t0,
+            disruptions = LoadState.Ready(sampleDisruptions()),
             onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {}, onSettings = {},
         )
     }
@@ -186,6 +217,7 @@ open class ScreenshotTest {
         capture("explore_saved") {
             ExploreScreen(
                 wide = false, locationGranted = true, nearby = LoadState.Ready(sampleDepartures), now = t0,
+                disruptions = LoadState.Ready(sampleDisruptions()),
                 onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {}, onSettings = {},
             )
         }
@@ -195,6 +227,7 @@ open class ScreenshotTest {
     fun nearby() = capture("nearby") {
         ExploreScreen(
             wide = false, locationGranted = true, nearby = LoadState.Ready(sampleDepartures), now = t0,
+            disruptions = LoadState.Ready(DisruptionGroups()),
             onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {}, onSettings = {},
         )
     }
@@ -223,7 +256,7 @@ open class ScreenshotTest {
     @Test
     fun journeyOptionsDialog() = capture("journey_options") {
         JourneyOptionsDialog(
-            options = JourneyOptions(excludedModes = setOf(TransitMode.COACH, TransitMode.AIRPLANE), maxTransfers = 1),
+            options = JourneyOptions(excludedModes = setOf(TransitMode.COACH, TransitMode.FERRY), maxTransfers = 1),
             onDismiss = {},
             onConfirm = {},
         )
@@ -281,7 +314,18 @@ open class ScreenshotTest {
             lineTimes = mapOf(1 to listOf(u2(6, 2, "t1"), u2(11, null, "t4"), u2(16, null, "t5"))),
             onBack = {},
             onWalk = {},
+            boarding = mapOf(1 to app.itivio.domain.BoardingHint(app.itivio.domain.TrainPart.FRONT, sampleJourneys.first().legs[3] as Leg.Transit)),
         )
+    }
+
+    @Test
+    fun boardingPositions() = capture("boarding") {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val transfer = sampleJourneys.first().legs[3] as Leg.Transit
+            app.itivio.ui.itinerary.BoardingRow(app.itivio.domain.BoardingHint(app.itivio.domain.TrainPart.FRONT, transfer))
+            app.itivio.ui.itinerary.BoardingRow(app.itivio.domain.BoardingHint(app.itivio.domain.TrainPart.MIDDLE, null))
+            app.itivio.ui.itinerary.BoardingRow(app.itivio.domain.BoardingHint(app.itivio.domain.TrainPart.REAR, null))
+        }
     }
 
     @Test
@@ -297,15 +341,15 @@ open class ScreenshotTest {
 
     @Test
     fun disruptions() = capture("disruptions") {
+        DisruptionsScreen(state = LoadState.Ready(sampleDisruptions()), now = t0, onRetry = {})
+    }
+
+    private fun sampleDisruptions(): DisruptionGroups {
         val departures = transitousJson.decodeFromString<app.itivio.data.transitous.StoptimesResponse>(
             requireNotNull(javaClass.getResource("/transitous/stoptimes-alerts.json")).readText(),
         ).stopTimes.map { it.toDomain() }
         val saved = disruptionsOf(departures.filter { it.line.name != "57" })
-        DisruptionsScreen(
-            state = LoadState.Ready(DisruptionGroups(saved, disruptionsOf(departures, shown = saved.map { it.alert }.toSet()))),
-            now = t0,
-            onRetry = {},
-        )
+        return DisruptionGroups(saved, disruptionsOf(departures, shown = saved.map { it.alert }.toSet()))
     }
 
     @Test
@@ -316,7 +360,7 @@ open class ScreenshotTest {
     @Test
     fun trainChoices() = capture("train_choices") {
         app.itivio.ui.itinerary.TrainDepartures(
-            departures = sampleDepartures.first().departures,
+            departures = sampleTrains,
             selectedTripId = "d1", now = t0,
             loading = false, canSelect = true, changed = true, failed = false,
             onSelect = {}, onReset = {},
@@ -422,6 +466,13 @@ open class ScreenshotTest {
             ),
             from = GeoPoint(52.5013, 13.4),
         )
+
+        /** Train choices in each state: late and selected, planned, live, and cancelled. Each has its arrival. */
+        val sampleTrains: List<Departure> = sampleDepartures.first().departures.let { trains ->
+            (trains.take(1).map { it.copy(time = StopTime(it.time.scheduled, it.time.scheduled.plusSeconds(600))) } +
+                trains.drop(1) + trains[1].copy(tripId = "d7", cancelled = true, time = at(12)))
+                .map { it.copy(alightTime = StopTime(it.time.scheduled.plusSeconds(1_260), it.time.estimated?.plusSeconds(1_260))) }
+        }
 
         val sampleJourneys: List<Journey> = listOf(
             Journey(

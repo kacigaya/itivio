@@ -164,7 +164,20 @@ fun IconTile(
 /** Walks shorter than this are noise in the leg chain; the itinerary still lists them. */
 private const val MIN_SHOWN_WALK_SECONDS = 120
 
-/** The legs of [journey] in order: a line badge for each transit leg, and the minutes of each walk. */
+/** A walk between two lines is a transfer. It shows only when it is long enough to matter. */
+private const val MIN_SHOWN_TRANSFER_WALK_SECONDS = 300
+
+/** The legs that [LegChain] shows: each transit leg, and the walks that are long enough. */
+internal fun chainLegs(legs: List<Leg>): List<Leg> = legs.filterIndexed { index, leg ->
+    if (leg is Leg.Transit) return@filterIndexed true
+    val transfer = legs.getOrNull(index - 1) is Leg.Transit && legs.getOrNull(index + 1) is Leg.Transit
+    leg.duration.seconds >= if (transfer) MIN_SHOWN_TRANSFER_WALK_SECONDS else MIN_SHOWN_WALK_SECONDS
+}
+
+/**
+ * The legs of [journey] in order: a line badge for each transit leg, and an icon with the
+ * minutes for each walk. A walk has no container, so the lines stand out.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LegChain(journey: Journey, modifier: Modifier = Modifier) {
@@ -174,30 +187,39 @@ fun LegChain(journey: Journey, modifier: Modifier = Modifier) {
         itemVerticalAlignment = Alignment.CenterVertically,
         modifier = modifier,
     ) {
-        val shown = journey.legs.filter { it is Leg.Transit || it.duration.seconds >= MIN_SHOWN_WALK_SECONDS }
-        shown.forEachIndexed { index, leg ->
-            if (index > 0) {
-                Icon(
-                    painterResource(R.drawable.ic_chevron_right),
-                    contentDescription = null,
-                    tint = LocalContentColor.current.copy(alpha = 0.6f),
-                    modifier = Modifier.size(16.dp),
-                )
-            }
-            when (leg) {
-                is Leg.Transit -> LineBadge(leg.line, leg.mode)
-                is Leg.Street -> {
-                    val label = stringResource(leg.mode.label())
-                    if (leg.mode == TransitMode.WALK) {
-                        val description = "$label, ${stringResource(R.string.duration_min, ((leg.duration.seconds + 30) / 60).toInt())}"
-                        Tag(
-                            icon = leg.mode.icon(),
-                            text = ((leg.duration.seconds + 30) / 60).toString(),
-                            // The icon alone names the mode; a screen reader needs the word.
-                            modifier = Modifier.clearAndSetSemantics { contentDescription = description },
-                        )
-                    } else {
-                        Tag(icon = leg.mode.icon(), text = label)
+        chainLegs(journey.legs).forEachIndexed { index, leg ->
+            // The chevron stays with its leg, so a wrapped row does not end with a chevron.
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                if (index > 0) {
+                    Icon(
+                        painterResource(R.drawable.ic_chevron_right),
+                        contentDescription = null,
+                        tint = LocalContentColor.current.copy(alpha = 0.6f),
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+                when (leg) {
+                    is Leg.Transit -> LineBadge(leg.line, leg.mode)
+                    is Leg.Street -> {
+                        val label = stringResource(leg.mode.label())
+                        val minutes = (leg.duration.seconds + 30) / 60
+                        val walkDescription = "$label, ${stringResource(R.string.duration_min, minutes.toInt())}"
+                        if (leg.mode == TransitMode.WALK) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                // Speak the mode and the time unit hidden by the compact badge.
+                                modifier = Modifier.heightIn(min = 28.dp).clearAndSetSemantics { contentDescription = walkDescription },
+                            ) {
+                                Icon(painterResource(leg.mode.icon()), contentDescription = null, modifier = Modifier.size(18.dp))
+                                Text(
+                                    minutes.toString(),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            }
+                        } else {
+                            Tag(icon = leg.mode.icon(), text = label)
+                        }
                     }
                 }
             }

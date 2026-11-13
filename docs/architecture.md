@@ -62,12 +62,12 @@ Favorites, Home and Work, and recent searches are in one Room table, `saved_plac
 
 | Option | Parameter | Notes |
 |---|---|---|
-| Transport modes | `transitModes` | MOTIS cannot exclude a mode. The request lists all modes that stay on. |
+| Transport modes | `transitModes` | MOTIS cannot exclude a mode. The request lists all modes that stay on. Each request sends this list, because it also keeps flights out. |
 | Transfer limit | `maxTransfers` | 0 to 3. `0` gives direct journeys only. |
 | Wheelchair | `pedestrianProfile=WHEELCHAIR` and `useRoutedTransfers=true` | Without routed transfers, MOTIS applies the profile only to the first and last walk. |
 | Walking speed | `pedestrianSpeed` | Slow is 0.9 m/s. Fast is 1.5 m/s. Normal sends nothing, so MOTIS uses 1.2 m/s. |
 
-- The user can turn off nine modes: bus, coach, tram, metro, suburban train, train, high-speed train, ferry, and flight. One of them always stays on. Cable car, funicular, on-demand, and other modes have no switch and stay on.
+- The user can turn off eight modes: bus, coach, tram, metro, suburban train, train, high-speed train, and ferry. One of them always stays on. Cable car, funicular, on-demand, and other modes have no switch and stay on. Flights have no switch and stay off (`JourneyOptions.UNUSED_MODES`): no journey uses a flight.
 - The walking speed is not sent with the wheelchair option. MOTIS then uses its wheelchair speed of 0.8 m/s.
 - The wheelchair option changes walks and transfers only. MOTIS does not check if a vehicle is accessible. A region without routed transfer data uses the timetable transfers.
 - The walking speed changes the first walk, the last walk, and walk-only routes. Transfer times between stops come from the timetable.
@@ -90,7 +90,7 @@ The language uses the per-app language setting of Android (`locales_config.xml`)
 
 ## Disruptions
 
-MOTIS has no endpoint that lists the disruptions of a network or a line. Alerts come with stop times: with `withAlerts=true`, each stop time carries the alerts for its trip at that stop. The Disruptions tab sends:
+MOTIS has no endpoint that lists the disruptions of a network or a line. Alerts come with stop times: with `withAlerts=true`, each stop time carries the alerts for its trip at that stop. The disruptions list sends:
 
 - One `/v6/stoptimes` request with `stopId` and 20 departures for each saved stop: Home, Work, then the favorites. Saved places that are not stops are not sent. The tab asks for at most 10 stops.
 - One `/v6/stoptimes` request around the device position, the same as the nearby departures, when the position is known.
@@ -106,6 +106,16 @@ Limits:
 - The tab shows only the disruptions on the stops it asks about, and only for trips among the next departures. A line with no departure soon shows no alert.
 - The app does not filter on the communication period of an alert. The provider sends the alerts that are current.
 - The tab does not ask for location access. Without it, only the saved stops show.
+
+## Boarding positions
+
+The RATP publishes, for each metro platform and some RER platforms, the part of the train that stops nearest to each transfer and each exit. Île-de-France Mobilités hosts this dataset, "Positionnement dans la rame", under the Licence Ouverte 2.0. Transitous has no such data.
+
+- `tools/boarding-positions.py` downloads the dataset and writes `app/src/main/assets/boarding/idfm.tsv`: the platform, the line, the target (a transfer platform or "exit"), the part of the train, and a lift flag. Run it again when the dataset changes.
+- `IdfmBoardingRepository` reads the file one time, on the first itinerary. It sends no request.
+- Transitous stop and route IDs end with the IDFM IDs (`…_IDFM:22194`, `…_IDFM:C01384`). The repository uses this part to find the alighting platform and the line.
+- `domain.hints` picks one part of the train for each transit leg. The target is the next transit leg when only walks come between, else the exit. A hint shows only when the positions for that target agree. A transfer that the data does not list gets no hint. With wheelchair routing, the positions with a lift come first; without it, the other positions come first.
+- Limits: RER legs in Transitous end at a stop area, not a platform, so they get no hint. The dataset has no RER A or B positions at Châtelet. The exit hint does not know which exit the walk uses, so platforms whose exits are at different ends get no exit hint.
 
 ## Journeys without transit
 
@@ -134,7 +144,7 @@ Limits: the projection picks the nearest part of the route, so a route that pass
 - The itinerary scans up to eight `/stoptimes` pages for each transit leg, once a minute, only while the itinerary is on screen and the app is in the foreground. It stops when it has four matching departures.
 - The itinerary also sends one `/trip` request for each transit leg that has not ended, once a minute, under the same conditions.
 - The departure board sends one `/stoptimes` request once a minute, only while the board is on screen and the app is in the foreground.
-- The Disruptions tab sends one `/stoptimes` request for each saved stop (at most 10) and one for the device position, once every five minutes, only while the tab is on screen and the app is in the foreground.
+- The disruptions list sends one `/stoptimes` request for each saved stop (at most 10) and one for the device position, once every five minutes, only while the app is in the foreground. On a compact window, the list is a page of the home sheet, and the home title shows the number of alerts. The requests then go out while home is open, not only while the list is on screen. On a wide window, they go out only while the Disruptions page is on screen.
 - `/map/stops` runs only on the home screen, at zoom 15 or closer, 0.5 seconds after the camera stops. The request asks for the view rounded out to a 0.01° grid. A view inside the area already loaded sends no request. A view wider than 0.05° sends no request.
 - The walking view sends no request. "Plan a new route" sends one `/plan` request.
 - Geocode results are cached in memory.
@@ -144,8 +154,8 @@ Limits: the projection picks the nearest part of the route, so a route that pass
 - No analytics, no crash reporting, no request logging.
 - French address queries also go to IGN. No coordinates are sent to IGN.
 - The search bias point is rounded to about 1 km before it is sent.
-- The nearby departures center is rounded to about 10 m before it is sent. The Disruptions tab uses the same rounding.
-- The Disruptions tab sends the IDs of the saved stops. This is the only place where saved places go to a service without a journey request.
+- The nearby departures center is rounded to about 10 m before it is sent. The disruptions list uses the same rounding.
+- The disruptions list sends the IDs of the saved stops. This is the only place where saved places go to a service without a journey request.
 - The origin of a journey is sent at full precision only when the user plans from their location.
 - The walking view uses the device position on the device. Only "Plan a new route" sends it, as the origin of a new journey.
 - The compass runs only while the walking view is open.

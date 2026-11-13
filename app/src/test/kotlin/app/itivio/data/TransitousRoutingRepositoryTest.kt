@@ -69,9 +69,14 @@ class TransitousRoutingRepositoryTest {
             repo.planJourneys(JourneyRequest(to, from))
             assertNull(seen.last().url.parameters["time"])
             assertNull(seen.last().url.parameters["pageCursor"])
-            for (name in listOf("transitModes", "maxTransfers", "pedestrianProfile", "useRoutedTransfers", "pedestrianSpeed")) {
+            for (name in listOf("maxTransfers", "pedestrianProfile", "useRoutedTransfers", "pedestrianSpeed")) {
                 assertNull(name, seen.last().url.parameters[name])
             }
+            // The default options allow each mode but flights.
+            assertEquals(
+                "BUS,COACH,TRAM,SUBWAY,SUBURBAN,REGIONAL_RAIL,LONG_DISTANCE,NIGHT_RAIL,HIGHSPEED_RAIL,FERRY,AERIAL_LIFT,FUNICULAR,ODM,RIDE_SHARING,OTHER",
+                seen.last().url.parameters["transitModes"],
+            )
             val departures = repo.nearbyDepartures(point, 700, 12)
             assertEquals(departures.sortedBy { it.time.best }, departures)
             params = seen.last().url.parameters
@@ -119,7 +124,7 @@ class TransitousRoutingRepositoryTest {
             // MOTIS has no parameter that excludes a mode, so the request lists the modes that stay.
             plan(JourneyOptions(excludedModes = setOf(TransitMode.BUS, TransitMode.RAIL), maxTransfers = 0, walkingSpeed = WalkingSpeed.SLOW))
             assertEquals(
-                "COACH,TRAM,SUBWAY,SUBURBAN,HIGHSPEED_RAIL,FERRY,AIRPLANE,AERIAL_LIFT,FUNICULAR,ODM,RIDE_SHARING,OTHER",
+                "COACH,TRAM,SUBWAY,SUBURBAN,HIGHSPEED_RAIL,FERRY,AERIAL_LIFT,FUNICULAR,ODM,RIDE_SHARING,OTHER",
                 params["transitModes"],
             )
             assertEquals("0", params["maxTransfers"])
@@ -134,7 +139,7 @@ class TransitousRoutingRepositoryTest {
             assertEquals("WHEELCHAIR", params["pedestrianProfile"])
             assertEquals("true", params["useRoutedTransfers"])
             assertNull(params["pedestrianSpeed"])
-            assertNull(params["transitModes"])
+            assertFalse(params["transitModes"].orEmpty().contains("AIRPLANE"))
 
             plan(JourneyOptions(walkingSpeed = WalkingSpeed.FAST))
             assertEquals("1.5", params["pedestrianSpeed"])

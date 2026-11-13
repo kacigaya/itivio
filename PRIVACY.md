@@ -39,13 +39,15 @@ The app uses these services to provide search, transport information, and maps:
 | [IGN Géoplateforme](https://cartes.gouv.fr/) | Address search text, without location bias | French address search, only when the text looks like an address and the first Transitous match identifies France |
 | [OpenFreeMap](https://openfreemap.org/) | Requests for map styles, fonts, and tiles for the area you view | Map display |
 
-The Disruptions tab sends the IDs of up to 10 saved stops to Transitous while the tab is open. These can be Home, Work, or favorites. Saved places that are not stops are not sent for this feature. Selecting a saved place for a journey sends its stop ID or coordinates as part of the journey request.
+The disruptions list sends the IDs of up to 10 saved stops to Transitous. On a phone, the list is a page of the home screen, and the home screen shows the number of alerts. The app then sends these IDs while the home screen is open. On a tablet, it sends them only while the Disruptions page is open. These can be Home, Work, or favorites. Saved places that are not stops are not sent for this feature. Selecting a saved place for a journey sends its stop ID or coordinates as part of the journey request.
 
 Live departures, trip times, and disruptions refresh only while the relevant screen is visible and the app is in the foreground. The app sends no background notifications.
 
 Each service also receives your IP address and normal connection information. Transitous requests identify the app version and include the publisher's contact in the User-Agent. IGN uses a separate client without contact details. The app adds no account ID or advertising ID to these requests.
 
 These services process the requests under their own policies. This policy does not set their log retention periods. The app's data deletion action cannot delete records held by those services.
+
+Boarding positions in Paris come from a table that ships with the app. Showing them sends no request.
 
 Links to service alerts, data credits, and source code open outside the app. The destination site receives the connection information from your browser.
 

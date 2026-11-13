@@ -1,6 +1,23 @@
 package app.itivio.ui.explore
 
 import androidx.annotation.DrawableRes
+import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.Badge
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import app.itivio.ui.disruptions.DisruptionGroups
+import app.itivio.ui.disruptions.disruptions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -77,6 +94,9 @@ fun ExploreScreen(
     onRequestLocation: () -> Unit,
     onRecenter: () -> Unit,
     onRetryNearby: () -> Unit,
+    /** Null when the window has its own Disruptions page; the sheet then shows only the departures. */
+    disruptions: LoadState<DisruptionGroups>? = null,
+    onRetryDisruptions: () -> Unit = {},
     onDestination: (Endpoint) -> Unit,
     onStop: (Location) -> Unit,
     onSettings: () -> Unit,
@@ -127,13 +147,37 @@ fun ExploreScreen(
                 scope.launch { searchBarState.animateToExpanded() }
             },
         )
-        LazyColumn(contentPadding = PaddingValues(bottom = 8.dp)) {
-            if (locationGranted) {
-                nearbyDepartures(nearby, now, onRetryNearby)
-            } else {
-                item(key = "intro") { Intro(onRequestLocation) }
+        if (disruptions == null) {
+            LazyColumn(contentPadding = PaddingValues(bottom = 8.dp)) {
+                if (locationGranted) {
+                    nearbyDepartures(nearby, now, onRetryNearby)
+                } else {
+                    item(key = "intro") { Intro(onRequestLocation) }
+                }
+                item(key = "attribution") { AttributionFooter() }
             }
-            item(key = "attribution") { AttributionFooter() }
+        } else {
+            // Two pages in place of a navigation bar. A swipe on the list or a tap on a title changes the page.
+            val pager = rememberPagerState { HomePage.entries.size }
+            BackHandler(enabled = pager.currentPage != 0) { scope.launch { pager.animateScrollToPage(0) } }
+            HomeTitles(
+                selected = HomePage.entries[pager.currentPage],
+                alerts = (disruptions as? LoadState.Ready)?.value?.let { it.saved.size + it.nearby.size } ?: 0,
+                onSelect = { scope.launch { pager.animateScrollToPage(it.ordinal) } },
+            )
+            HorizontalPager(state = pager, verticalAlignment = Alignment.Top) { page ->
+                LazyColumn(contentPadding = PaddingValues(bottom = 8.dp), modifier = Modifier.fillMaxSize()) {
+                    when (HomePage.entries[page]) {
+                        HomePage.DEPARTURES -> if (locationGranted) {
+                            nearbyDepartures(nearby, now, onRetryNearby, title = false)
+                        } else {
+                            item(key = "intro") { Intro(onRequestLocation) }
+                        }
+                        HomePage.DISRUPTIONS -> disruptions(disruptions, now, onRetryDisruptions)
+                    }
+                    item(key = "attribution") { AttributionFooter() }
+                }
+            }
         }
     }
 
@@ -158,6 +202,52 @@ fun ExploreScreen(
         },
         places = places,
     )
+}
+
+/** The pages of the home sheet, in swipe order. */
+private enum class HomePage(@StringRes val title: Int) {
+    DEPARTURES(R.string.home_departures),
+    DISRUPTIONS(R.string.disruptions_title),
+}
+
+/**
+ * The titles of the two home pages, as tabs. The title of the page on screen has the heavy
+ * color. A badge on "Disruptions" gives the number of [alerts]. The row scrolls, so large text
+ * does not clip a title.
+ */
+@Composable
+private fun HomeTitles(selected: HomePage, alerts: Int, onSelect: (HomePage) -> Unit) {
+    val scroll = rememberScrollState()
+    // With large text the row is wider than the sheet; keep the title of the page on screen in view.
+    LaunchedEffect(selected) { scroll.animateScrollTo(if (selected == HomePage.entries.first()) 0 else scroll.maxValue) }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxWidth().horizontalScroll(scroll).padding(horizontal = 16.dp).selectableGroup(),
+    ) {
+        HomePage.entries.forEach { page ->
+            val count = if (page == HomePage.DISRUPTIONS && alerts > 0) alerts else null
+            val countLabel = count?.let { pluralStringResource(R.plurals.home_alerts, it, it) }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.medium)
+                    .selectable(selected = page == selected, role = Role.Tab, onClick = { onSelect(page) })
+                    .heightIn(min = 48.dp)
+                    .padding(horizontal = 8.dp),
+            ) {
+                Text(
+                    stringResource(page.title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = if (page == selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
+                )
+                if (count != null) {
+                    Badge(Modifier.clearAndSetSemantics { contentDescription = countLabel.orEmpty() }) { Text(count.toString()) }
+                }
+            }
+        }
+    }
 }
 
 /**

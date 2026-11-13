@@ -160,19 +160,19 @@ Limits for this release:
 
 Implementation continues in the separate UI thread. These items remain open until the changes are complete and verified. The completed accessibility fixes above stay complete. Earlier checks cover the interim UI, so the final UI needs new checks before release.
 
-- [ ] Improve train-choice contrast and readability. Show delay, arrival time, and time on board. Use the destination name in each choice row.
-- [ ] Make choice buttons use the available width. Add icons and labels to journey options and the theme picker.
-- [ ] Fix the location marker contrast in dark mode.
-- [ ] Update route cards and leg chains to the selected design. Show one alert line with a count.
-- [ ] Merge Map and Disruptions into a home panel with two titles and swipe navigation. Add the alert count badge and document its network requests.
-- [ ] Remove flight selection and exclude flights from journey searches.
-- [ ] Keep the transfer-choice and train-arrival accessibility fixes with the UI changes they depend on.
+- [x] Improve train-choice contrast and readability. Show delay, arrival time, and time on board. Use the destination name in each choice row.
+- [x] Make choice buttons use the available width. Add icons and labels to journey options and the theme picker.
+- [x] Fix the location marker contrast in dark mode.
+- [x] Update route cards and leg chains to the selected design. Show one alert line with a count.
+- [x] Merge Map and Disruptions into a home panel with two titles and swipe navigation. Add the alert count badge and document its network requests.
+- [x] Remove flight selection and exclude flights from journey searches.
+- [x] Keep the transfer-choice and train-arrival accessibility fixes with the UI changes they depend on.
 - [ ] Repeat TalkBack checks on the final screens, dialogs, and navigation. Include train choices and dynamic warnings.
 - [ ] Repeat large-text and contrast checks at 100% and 200%, in light, dark, and system dynamic colors.
-- [ ] Inspect the final screenshots, update intentional reference changes, and run tests, lint, and the debug build.
+- [x] Inspect the final screenshots, update intentional reference changes, and run tests, lint, and the debug build.
 - [ ] Complete physical touch, audible speech, and SDK 37 device checks.
 
-Tablet navigation changes remain deferred. Boarding-position hints are excluded because the checked Transitous API provides no boarding-position data.
+Tablet navigation changes remain deferred. Boarding-position hints use the RATP dataset from Île-de-France Mobilités, because Transitous has no boarding-position data. They cover the Paris metro and some RER platforms.
 
 ## v0.9.0: Release candidate
 

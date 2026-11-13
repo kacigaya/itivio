@@ -65,13 +65,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.domain.Alert
+import app.itivio.domain.BoardingHint
 import app.itivio.domain.Departure
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
 import app.itivio.domain.Stop
 import app.itivio.domain.TransitMode
 import app.itivio.ui.common.AttributionFooter
-import app.itivio.ui.common.CountdownText
 import app.itivio.ui.common.IconTile
 import app.itivio.ui.common.LegChain
 import app.itivio.ui.common.LineBadge
@@ -80,6 +80,7 @@ import app.itivio.ui.common.Tag
 import app.itivio.ui.common.TimeText
 import app.itivio.ui.common.amountText
 import app.itivio.ui.common.clockMinutesUntil
+import app.itivio.ui.common.formatDelay
 import app.itivio.ui.common.formatDistance
 import app.itivio.ui.common.formatDuration
 import app.itivio.ui.common.formatTime
@@ -97,6 +98,7 @@ private val RailStroke: Dp = 6.dp
 /**
  * The steps of [journey]. [now] drives the tracker: the status tag and the outline around the
  * step in progress. [lineTimes] gives the next departures of each transit leg's line, by leg index.
+ * [boarding] gives where to board each transit leg's train, by leg index.
  * [onWalk] opens the walking view of a walk.
  */
 @Composable
@@ -110,6 +112,7 @@ fun ItineraryScreen(
     selection: TrainSelectionState = TrainSelectionState(),
     onSelectDeparture: (Int, Departure) -> Unit = { _, _ -> },
     onResetTrain: (Int) -> Unit = {},
+    boarding: Map<Int, BoardingHint> = emptyMap(),
 ) {
     val currentLeg = journey.currentLegIndex(now)
     MapPanel(
@@ -138,7 +141,7 @@ fun ItineraryScreen(
                 Step(current = index == currentLeg, card = leg is Leg.Transit) {
                     when (leg) {
                         is Leg.Transit -> TransitLegItem(
-                            leg, lineTimes[index].orEmpty(), now,
+                            leg, lineTimes[index].orEmpty(), now, boarding[index],
                             loading = selection.loadingLeg == index,
                             canSelect = selection.loadingLeg == null,
                             changed = index in selection.changedLegs,
@@ -250,7 +253,7 @@ private fun Summary(journey: Journey, now: Instant) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TransitLegItem(
-    leg: Leg.Transit, departures: List<Departure>, now: Instant,
+    leg: Leg.Transit, departures: List<Departure>, now: Instant, boarding: BoardingHint?,
     loading: Boolean, canSelect: Boolean, changed: Boolean, platformChanged: Boolean, failed: Boolean,
     onSelect: (Departure) -> Unit, onReset: () -> Unit,
 ) {
@@ -269,7 +272,6 @@ private fun TransitLegItem(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     LineBadge(leg.line, leg.mode)
                     Column(Modifier.weight(1f)) {
-                        leg.tripCode?.let { Text(it, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
                         leg.headsign?.let {
                             Text(
                                 markedStringResource(R.string.itinerary_towards, it),
@@ -289,6 +291,7 @@ private fun TransitLegItem(
                         fontWeight = FontWeight.Bold,
                     )
                 }
+                boarding?.let { BoardingRow(it) }
                 if (leg.alerts.isNotEmpty()) AlertBanner(leg.alerts)
                 if (platformChanged) {
                     Text(stringResource(R.string.itinerary_platform_changed), style = MaterialTheme.typography.bodyMedium,
@@ -318,14 +321,6 @@ private fun TransitLegItem(
                             }
                         }
                     }
-                }
-                leg.line.agency?.let {
-                    Text(
-                        stringResource(R.string.itinerary_operated_by, it),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Light,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
             }
         }
@@ -419,9 +414,9 @@ internal fun AlertBanner(alerts: List<Alert>) {
 }
 
 /**
- * The next departures of the leg's line at the boarding stop. The planned trip is on a tertiary
- * container. A live departure in the next hour shows as a countdown; other departures show the
- * clock time.
+ * The next departures of the leg's line at the boarding stop, as a list of connected rows. A
+ * tap on a row selects that train. The selected row has the secondary color, a round shape, and
+ * a "Your train" label, so it needs no radio button.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -431,51 +426,119 @@ internal fun TrainDepartures(
     onSelect: (Departure) -> Unit, onReset: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    Surface(color = scheme.surfaceContainerHighest, shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(8.dp).selectableGroup()) {
-            Row(Modifier.fillMaxWidth().padding(start = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(R.string.itinerary_next_departures), style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                if (loading) LoadingIndicator(Modifier.size(32.dp).clearAndSetSemantics {})
-                if (changed) TextButton(onClick = onReset, enabled = canSelect) { Text(stringResource(R.string.itinerary_reset_train)) }
+    Column(Modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.itinerary_next_departures), style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f).padding(vertical = 6.dp))
+            if (loading) LoadingIndicator(Modifier.size(32.dp).clearAndSetSemantics {})
+            if (changed) TextButton(onClick = onReset, enabled = canSelect) { Text(stringResource(R.string.itinerary_reset_train)) }
+        }
+        if (loading || failed) {
+            Text(stringResource(if (failed) R.string.itinerary_change_train_failed else R.string.itinerary_changing_train),
+                style = MaterialTheme.typography.bodySmall, color = if (failed) scheme.error else scheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, bottom = 6.dp).semantics { liveRegion = LiveRegionMode.Polite })
+        }
+        // The first and the last row have the round corners of the list. The selected row is round on all sides.
+        val outer = MaterialTheme.shapes.large.topStart
+        val inner = MaterialTheme.shapes.extraSmall.topStart
+        departures.forEachIndexed { index, departure ->
+            val selected = selectedTripId != null && departure.tripId == selectedTripId
+            val top = if (selected || index == 0) outer else inner
+            val bottom = if (selected || index == departures.lastIndex) outer else inner
+            Surface(
+                selected = selected,
+                onClick = { onSelect(departure) },
+                enabled = canSelect && !departure.cancelled && !departure.tripId.isNullOrBlank(),
+                modifier = Modifier.fillMaxWidth().semantics { role = Role.RadioButton },
+                color = if (selected) scheme.secondary else scheme.surfaceContainerHighest,
+                contentColor = if (selected) scheme.onSecondary else scheme.onSurface,
+                shape = MaterialTheme.shapes.large.copy(topStart = top, topEnd = top, bottomEnd = bottom, bottomStart = bottom),
+            ) { TrainRow(departure, selected, now) }
+        }
+    }
+}
+
+/**
+ * One train: the destination, the platform, the arrival at the alighting stop with the time on
+ * board, and the delay in words. The clock time is the heavy number; a live departure in the
+ * next hour also shows its countdown.
+ */
+@Composable
+private fun TrainRow(departure: Departure, selected: Boolean, now: Instant) {
+    val scheme = MaterialTheme.colorScheme
+    val zone = departure.stop.zone
+    // On the selected row, each text uses the content color: the accent colors have too little contrast there.
+    val secondary = if (selected) scheme.onSecondary else scheme.onSurfaceVariant
+    val best = formatTime(departure.time.best, zone)
+    val scheduled = formatTime(departure.time.scheduled, zone)
+    val delay = departure.time.delay?.let { formatDelay(it) }
+    val late = delay != null && departure.time.best > departure.time.scheduled
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.heightIn(min = 56.dp).padding(horizontal = 12.dp, vertical = 10.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            if (selected) Text(stringResource(R.string.itinerary_your_train), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+            Text(departure.headsign ?: departure.line.name,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold,
+                color = if (departure.cancelled) secondary else Color.Unspecified,
+                textDecoration = if (departure.cancelled) TextDecoration.LineThrough else null,
+                maxLines = 2, overflow = TextOverflow.Ellipsis)
+            val track = departure.stop.track?.let { stringResource(R.string.itinerary_track, it) }
+            val arrival = departure.alightTime?.takeUnless { departure.cancelled }
+            val arrivalTime = arrival?.let { formatTime(it.best, zone) }
+            val onBoard = arrival?.let { formatDuration(Duration.between(departure.time.best, it.best)) }
+            val arrivalText = arrival?.let { stringResource(R.string.itinerary_train_arrival, arrivalTime.orEmpty(), onBoard.orEmpty()) }
+            val arrivalLabel = arrival?.let { stringResource(R.string.itinerary_train_arrival_description, arrivalTime.orEmpty(), onBoard.orEmpty()) }
+            if (track != null || arrivalText != null) {
+                Text(listOfNotNull(track, arrivalText).joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = secondary,
+                    modifier = Modifier.clearAndSetSemantics { contentDescription = listOfNotNull(track, arrivalLabel).joinToString(", ") })
             }
-            if (loading || failed) {
-                Text(stringResource(if (failed) R.string.itinerary_change_train_failed else R.string.itinerary_changing_train),
-                    style = MaterialTheme.typography.bodySmall, color = if (failed) scheme.error else scheme.onSurfaceVariant,
-                    modifier = Modifier.padding(8.dp).semantics { liveRegion = LiveRegionMode.Polite })
-            }
-            departures.forEach { departure ->
-                val selected = selectedTripId != null && departure.tripId == selectedTripId
+            val notice = if (departure.cancelled) stringResource(R.string.cancelled) else delay?.takeIf { late }
+            if (notice != null) {
+                // A pill on the selected row; plain error text has enough contrast on the other rows.
                 Surface(
-                    selected = selected,
-                    onClick = { onSelect(departure) },
-                    enabled = canSelect && !departure.cancelled && !departure.tripId.isNullOrBlank(),
-                    modifier = Modifier.fillMaxWidth().semantics { role = Role.RadioButton },
-                    color = if (selected) scheme.tertiaryContainer else Color.Transparent,
-                    contentColor = if (selected) scheme.onTertiaryContainer else scheme.onSurfaceVariant,
-                    shape = MaterialTheme.shapes.medium,
+                    color = if (selected) scheme.errorContainer else Color.Transparent,
+                    contentColor = if (selected) scheme.onErrorContainer else scheme.error,
+                    shape = CircleShape,
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.heightIn(min = 56.dp).padding(horizontal = 8.dp, vertical = 8.dp)) {
-                        RadioButton(selected = selected, onClick = null,
-                            enabled = canSelect && !departure.cancelled && !departure.tripId.isNullOrBlank())
-                        Column(Modifier.weight(1f)) {
-                            val name = departure.headsign ?: departure.line.name
-                            Text(departure.tripCode?.let { stringResource(R.string.itinerary_trip_code, it, name) } ?: name,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                textDecoration = if (departure.cancelled) TextDecoration.LineThrough else null,
-                                maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            departure.stop.track?.let { Text(stringResource(R.string.itinerary_track, it), style = MaterialTheme.typography.bodySmall) }
-                            if (departure.cancelled) Text(stringResource(R.string.cancelled), style = MaterialTheme.typography.bodySmall)
-                        }
-                        val minutes = clockMinutesUntil(now, departure.time.best)
-                        if (departure.time.isRealtime && minutes < 60) {
-                            CountdownText(minutes, live = true, style = MaterialTheme.typography.titleMedium)
-                        } else {
-                            TimeText(departure.time, departure.stop.zone, emphasized = true)
-                        }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = if (selected) Modifier.padding(start = 6.dp, end = 8.dp, top = 2.dp, bottom = 2.dp) else Modifier) {
+                        Icon(painterResource(R.drawable.ic_warning), contentDescription = null, modifier = Modifier.size(14.dp))
+                        Text(notice, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     }
+                }
+            }
+        }
+        val minutes = clockMinutesUntil(now, departure.time.best)
+        val live = departure.time.isRealtime && !departure.cancelled
+        val countdown = if (live && minutes < 60) {
+            if (minutes <= 0) stringResource(R.string.nearby_now) else stringResource(R.string.duration_min, minutes.toInt())
+        } else null
+        val liveLabel = stringResource(R.string.live)
+        val scheduledLabel = stringResource(R.string.scheduled)
+        val wasLabel = stringResource(R.string.scheduled_time_was, scheduled)
+        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier.clearAndSetSemantics {
+                contentDescription = listOfNotNull(best, if (live) liveLabel else scheduledLabel, wasLabel.takeIf { best != scheduled }, countdown).joinToString(", ")
+            }) {
+            // The planned time is above the new time: two 12-hour times do not fit side by side.
+            if (best != scheduled && !departure.cancelled) {
+                Text(scheduled, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Light, color = secondary,
+                    textDecoration = TextDecoration.LineThrough)
+            }
+            Text(best, style = MaterialTheme.typography.titleMedium,
+                fontWeight = if (departure.cancelled) FontWeight.Normal else FontWeight.ExtraBold,
+                color = when {
+                    departure.cancelled -> secondary
+                    late && !selected -> scheme.error
+                    else -> Color.Unspecified
+                },
+                textDecoration = if (departure.cancelled) TextDecoration.LineThrough else null)
+            if (live) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    val tint = if (selected) scheme.onSecondary else scheme.tertiary
+                    Icon(painterResource(R.drawable.ic_sensors), contentDescription = null, tint = tint, modifier = Modifier.size(14.dp))
+                    Text(countdown ?: liveLabel, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = tint)
                 }
             }
         }

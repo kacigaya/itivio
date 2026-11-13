@@ -326,12 +326,16 @@ data class JourneyOptions(
     companion object {
         /**
          * The modes the user can turn off. The rare modes (cable car, funicular, on-demand, and
-         * other) have no switch and stay on.
+         * other) have no switch and stay on. Flights have no switch and stay off: see
+         * [UNUSED_MODES].
          */
         val SELECTABLE_MODES: List<TransitMode> = listOf(
             TransitMode.BUS, TransitMode.COACH, TransitMode.TRAM, TransitMode.SUBWAY, TransitMode.SUBURBAN,
-            TransitMode.RAIL, TransitMode.HIGHSPEED_RAIL, TransitMode.FERRY, TransitMode.AIRPLANE,
+            TransitMode.RAIL, TransitMode.HIGHSPEED_RAIL, TransitMode.FERRY,
         )
+
+        /** The modes that no journey uses. The app plans public transport on the ground and on water. */
+        val UNUSED_MODES: Set<TransitMode> = setOf(TransitMode.AIRPLANE)
 
         /** The highest transfer limit the user can set. */
         const val MAX_TRANSFER_LIMIT = 3
@@ -370,6 +374,8 @@ data class Departure(
     val tripCode: String? = null,
     /** Service alerts for this departure at its stop. Empty unless the request asks for them. */
     val alerts: List<Alert> = emptyList(),
+    /** The arrival of this trip at the stop where the rider gets off. Set only for the departures of a journey leg. */
+    val alightTime: StopTime? = null,
 )
 
 /** A line that a disruption affects. */

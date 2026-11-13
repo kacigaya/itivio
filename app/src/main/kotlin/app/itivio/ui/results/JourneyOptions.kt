@@ -7,14 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,6 +27,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -39,6 +36,8 @@ import app.itivio.R
 import app.itivio.domain.JourneyOptions
 import app.itivio.domain.TransitMode
 import app.itivio.domain.WalkingSpeed
+import app.itivio.ui.common.Choice
+import app.itivio.ui.common.ChoiceButtons
 import app.itivio.ui.common.icon
 import app.itivio.ui.common.label
 
@@ -95,20 +94,22 @@ private fun JourneyOptionsFields(options: JourneyOptions, onChange: (JourneyOpti
     }
     // Tells why a tap on the last selected mode changes nothing.
     if (options.excludedModes.size == JourneyOptions.SELECTABLE_MODES.size - 1) {
-        SupportingText(R.string.options_modes_last, Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+        SupportingText(stringResource(R.string.options_modes_last), Modifier.semantics { liveRegion = LiveRegionMode.Polite })
     }
 
     SectionTitle(R.string.options_transfers)
-    FlowRow(horizontalArrangement = chipSpacing, modifier = Modifier.selectableGroup()) {
-        val limits = listOf<Int?>(null) + (0..JourneyOptions.MAX_TRANSFER_LIMIT)
-        limits.forEach { limit ->
-            FilterChip(
-                selected = options.maxTransfers == limit,
-                onClick = { onChange(options.copy(maxTransfers = limit)) },
-                label = { Text(transferLimitLabel(limit)) },
-            )
-        }
-    }
+    val limits = listOf<Int?>(null) + (0..JourneyOptions.MAX_TRANSFER_LIMIT)
+    // One row of short buttons. The line below gives the choice in words.
+    ChoiceButtons(
+        choices = limits.map { limit ->
+            if (limit == null) Choice(transferLimitLabel(limit), icon = R.drawable.ic_all_inclusive, text = null)
+            else Choice(transferLimitLabel(limit), text = limit.toString())
+        },
+        selected = limits.indexOf(options.maxTransfers),
+        onSelect = { onChange(options.copy(maxTransfers = limits[it])) },
+        stackLargeText = false,
+    )
+    SupportingText(transferLimitLabel(options.maxTransfers), Modifier.clearAndSetSemantics {})
 
     SectionTitle(R.string.options_walking)
     Row(
@@ -119,25 +120,22 @@ private fun JourneyOptionsFields(options: JourneyOptions, onChange: (JourneyOpti
             .toggleable(options.wheelchair, role = Role.Switch, onValueChange = { onChange(options.copy(wheelchair = it)) })
             .padding(vertical = 8.dp),
     ) {
+        Icon(painterResource(R.drawable.ic_accessible), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Column(Modifier.weight(1f)) {
             Text(stringResource(R.string.options_wheelchair), style = MaterialTheme.typography.bodyLarge)
-            SupportingText(R.string.options_wheelchair_body)
+            SupportingText(stringResource(R.string.options_wheelchair_body))
         }
         Switch(checked = options.wheelchair, onCheckedChange = null)
     }
     Text(stringResource(R.string.options_walking_speed), style = MaterialTheme.typography.bodyLarge)
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        WalkingSpeed.entries.forEachIndexed { index, speed ->
-            SegmentedButton(
-                selected = options.walkingSpeed == speed,
-                onClick = { onChange(options.copy(walkingSpeed = speed)) },
-                shape = SegmentedButtonDefaults.itemShape(index, WalkingSpeed.entries.size),
-                enabled = !options.wheelchair,
-                label = { Text(stringResource(speed.label())) },
-            )
-        }
-    }
-    if (options.wheelchair) SupportingText(R.string.options_walking_speed_unused)
+    ChoiceButtons(
+        // More arrows for more speed. The arrows point in the direction of travel.
+        choices = WalkingSpeed.entries.map { Choice(stringResource(it.label()), icon = it.icon(), iconRotation = 90f) },
+        selected = options.walkingSpeed.ordinal,
+        onSelect = { onChange(options.copy(walkingSpeed = WalkingSpeed.entries[it])) },
+        enabled = !options.wheelchair,
+    )
+    if (options.wheelchair) SupportingText(stringResource(R.string.options_walking_speed_unused))
 }
 
 @Composable
@@ -151,9 +149,9 @@ private fun SectionTitle(text: Int) {
 }
 
 @Composable
-private fun SupportingText(text: Int, modifier: Modifier = Modifier) {
+private fun SupportingText(text: String, modifier: Modifier = Modifier) {
     Text(
-        stringResource(text),
+        text,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier,
@@ -171,6 +169,12 @@ private fun WalkingSpeed.label(): Int = when (this) {
     WalkingSpeed.SLOW -> R.string.options_speed_slow
     WalkingSpeed.NORMAL -> R.string.options_speed_normal
     WalkingSpeed.FAST -> R.string.options_speed_fast
+}
+
+private fun WalkingSpeed.icon(): Int = when (this) {
+    WalkingSpeed.SLOW -> R.drawable.ic_stat_1
+    WalkingSpeed.NORMAL -> R.drawable.ic_stat_2
+    WalkingSpeed.FAST -> R.drawable.ic_stat_3
 }
 
 /** Strings only, so the draft survives a configuration change without a cast. */

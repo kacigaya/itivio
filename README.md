@@ -43,10 +43,11 @@ These images use test data from the [screenshot checks](docs/quality.md#screensh
 - Walk-only routes, when walking is a good choice.
 - Service alerts on the route cards and in the journey details.
 - Journey details: stops, platforms, times, and the route on the map. The trip tracker follows new delays while the details are open.
+- Where to board the metro in Paris: the part of the train that stops nearest to your transfer or exit. The data ships with the app, so it sends no request.
 - Walking directions: the next turn, the distance to it, the remaining time, and the arrival time. The map follows your position and heading.
 - The app keeps your search when Android stops it in the background, and plans it again.
 - Live times where the transit agency publishes them. Scheduled times have no live marker.
-- A Disruptions tab with the service alerts for your saved stops and for the stops near you.
+- A Disruptions page on the home screen with the service alerts for your saved stops and for the stops near you. A swipe changes between departures and disruptions.
 - Settings for the theme and the journey options, and an action that deletes all app data.
 - English and French.
 - Light and dark themes with Material You colors.
@@ -61,9 +62,9 @@ Read the [privacy policy](PRIVACY.md) for details about location, network servic
 - The app rounds the location it sends for search suggestions to about 1 km.
 - Walking directions use your location on the device only. The app sends it only when you select "Plan a new route".
 - Your location does not need Google Play services.
-- Favorites, Home and Work, and recent searches are stored on your device. The Disruptions tab sends saved stop IDs as described below.
+- Favorites, Home and Work, and recent searches are stored on your device. The disruptions list sends saved stop IDs as described below.
 - Journey options stay on your device. They go to Transitous only as part of a journey request. This includes the wheelchair option.
-- The Disruptions tab sends the IDs of your saved stops (Home, Work, and favorites) to Transitous, to get their alerts. It sends them only while the tab is open. A saved place that is not a stop is not sent.
+- The disruptions list sends the IDs of your saved stops (Home, Work, and favorites) to Transitous, to get their alerts. On a phone, it sends them while the home screen is open, because the home screen shows the number of alerts. On a tablet, it sends them only while the Disruptions page is open. A saved place that is not a stop is not sent.
 - The settings stay on your device. "Delete all app data" in the settings removes the saved places, the journey options, and the settings.
 - The app turns off Android backup and device transfer for its data.
 
@@ -71,7 +72,7 @@ The app sends requests to these services:
 
 | Service | Use | Data sent |
 |---|---|---|
-| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the IDs of your saved stops when you open the Disruptions tab, the map area you look at when you zoom in to street level |
+| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the IDs of your saved stops for the disruptions list, the map area you look at when you zoom in to street level |
 | [IGN Géoplateforme](https://cartes.gouv.fr/) | French address search | Search text, without your location |
 | [OpenFreeMap](https://openfreemap.org/) | Map tiles | The map area you look at |
 
@@ -80,6 +81,8 @@ The app sends requests to these services:
 Routing comes from [Transitous](https://transitous.org/), a community service that runs [MOTIS](https://github.com/motis-project/motis). Transitous combines timetables from many transit agencies. See the [list of data sources](https://transitous.org/sources/).
 
 French address search also uses IGN Géoplateforme and the [Base Adresse Nationale](https://adresse.data.gouv.fr/). Address-like queries go to IGN when the first Transitous match identifies France. IGN failures leave Transitous suggestions available.
+
+Boarding positions in Paris come from the RATP dataset [Positionnement dans la rame](https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/positionnement-dans-la-rame), published by Île-de-France Mobilités under the Licence Ouverte 2.0 (Etalab). The app ships a copy. `tools/boarding-positions.py` builds it.
 
 Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Map tiles from [OpenFreeMap](https://openfreemap.org/). The map styles derive from [OSM Liberty](https://github.com/maputnik/osm-liberty) (BSD 3-Clause code, CC BY design) with [OpenMapTiles](https://openmaptiles.org/) data.
 

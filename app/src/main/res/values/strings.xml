@@ -43,6 +43,11 @@
     <string name="explore_body">Search for a stop, an address, or a place to see public transport routes. Allow location to see departures near you.</string>
 
     <!-- Nearby -->
+    <string name="home_departures">Departures</string>
+    <plurals name="home_alerts">
+        <item quantity="one">%d alert</item>
+        <item quantity="other">%d alerts</item>
+    </plurals>
     <string name="nearby_title">Departures nearby</string>
     <string name="nearby_now">Now</string>
     <!-- The departures after the next one. %1$s is a list of minutes, such as "4 · 8". -->
@@ -194,6 +199,7 @@
         <item quantity="one">%d more alert</item>
         <item quantity="other">%d more alerts</item>
     </plurals>
+    <string name="results_more_alerts_count">+%1$d</string>
     <string name="no_transfers">Direct</string>
     <string name="walk_distance">%1$s walk</string>
     <string name="time_range">%1$s – %2$s</string>
@@ -228,12 +234,10 @@
     <string name="itinerary_more_alerts">+%1$d</string>
     <string name="itinerary_arrive">Arrive</string>
     <string name="itinerary_next_departures">Next departures</string>
-    <string name="itinerary_trip_code">%1$s · %2$s</string>
     <string name="itinerary_leave_in">Leave in %1$s</string>
     <string name="itinerary_leave_now">Leave now</string>
     <string name="itinerary_arrive_in">Arrive in %1$s</string>
     <string name="itinerary_current_step">Current step</string>
-    <string name="itinerary_operated_by">Operated by %1$s</string>
 
     <!-- Walking view -->
     <string name="walk_open">Walking directions</string>
@@ -329,6 +333,20 @@
     <string name="attribution_ign">French addresses: IGN · BAN</string>
     <string name="attribution_ign_url" translatable="false">https://cartes.gouv.fr/aide/fr/guides-utilisateur/utiliser-les-services-de-la-geoplateforme/geocodage/</string>
     <string name="privacy_ign">French address searches also go to IGN. Your location is not sent to IGN.</string>
+    <string name="itinerary_your_train">Your train</string>
+    <string name="itinerary_train_arrival">→ %1$s · %2$s</string>
+    <string name="itinerary_train_arrival_description">Arrives at %1$s, %2$s on board</string>
+    <string name="boarding_title">Where to board</string>
+    <string name="boarding_front">At the front</string>
+    <string name="boarding_middle">In the middle</string>
+    <string name="boarding_rear">At the rear</string>
+    <string name="boarding_transfer">Transfer</string>
+    <string name="boarding_exit">Near the exit</string>
+    <string name="boarding_transfer_description">for the transfer to %1$s %2$s</string>
+    <string name="boarding_description">Where to board: %1$s, %2$s</string>
+    <string name="about_boarding">Boarding positions</string>
+    <string name="about_boarding_body">RATP, via Île-de-France Mobilités. Licence Ouverte 2.0. Metro and RER in Paris.</string>
+    <string name="about_boarding_url" translatable="false">https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/positionnement-dans-la-rame</string>
     <string name="itinerary_reset_train">Reset</string>
     <string name="itinerary_changing_train">Updating train…</string>
     <string name="itinerary_change_train_failed">Could not change the train. Try again.</string>

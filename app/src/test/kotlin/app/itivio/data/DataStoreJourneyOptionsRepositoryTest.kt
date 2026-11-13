@@ -34,7 +34,7 @@ class DataStoreJourneyOptionsRepositoryTest {
     @Test
     fun `saved options read back unchanged`() = scope.runTest {
         val options = JourneyOptions(
-            excludedModes = setOf(TransitMode.BUS, TransitMode.AIRPLANE),
+            excludedModes = setOf(TransitMode.BUS, TransitMode.FERRY),
             maxTransfers = 0,
             wheelchair = true,
             walkingSpeed = WalkingSpeed.SLOW,
