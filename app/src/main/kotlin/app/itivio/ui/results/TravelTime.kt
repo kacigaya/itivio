@@ -4,11 +4,9 @@ import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -32,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.itivio.R
@@ -49,12 +46,12 @@ private const val DAYS_AHEAD = 7
 /** Shows when the trip starts or ends. Selected when the user picked a time other than now. */
 @Composable
 fun TravelTimeChip(time: Instant?, arriveBy: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    FilterChip(
-        selected = time != null,
+    FilterButton(
+        label = travelTimeLabel(time, arriveBy),
+        checked = time != null,
         onClick = onClick,
-        label = { Text(travelTimeLabel(time, arriveBy), maxLines = 1) },
-        leadingIcon = { Icon(painterResource(R.drawable.ic_schedule), contentDescription = null, modifier = Modifier.size(18.dp)) },
-        trailingIcon = { Icon(painterResource(R.drawable.ic_arrow_drop_down), contentDescription = null, modifier = Modifier.size(18.dp)) },
+        leadingIcon = R.drawable.ic_schedule,
+        trailingIcon = R.drawable.ic_arrow_drop_down,
         modifier = modifier,
     )
 }

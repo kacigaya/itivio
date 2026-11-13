@@ -45,6 +45,10 @@
     <!-- Nearby -->
     <string name="nearby_title">Departures nearby</string>
     <string name="nearby_now">Now</string>
+    <!-- The departures after the next one. %1$s is a list of minutes, such as "4 · 8". -->
+    <string name="nearby_then_minutes">then %1$s min</string>
+    <!-- %1$s is a clock time. -->
+    <string name="nearby_then">then %1$s</string>
     <string name="nearby_countdown_description">In %1$s, %2$s, %3$s</string>
     <string name="nearby_empty_title">No departures nearby</string>
     <string name="nearby_empty_body">There are no stops within 400 m, or no timetable data covers this area.</string>
@@ -116,7 +120,8 @@
     <!-- Itinerary -->
     <string name="street_leg">%1$s %2$s · %3$s</string>
     <string name="street_leg_no_distance">%1$s · %2$s</string>
-    <string name="itinerary_towards">Towards %1$s</string>
+    <!-- The <b> part shows in bold, the rest in light. Keep the markup escaped. -->
+    <string name="itinerary_towards">Towards &lt;b>%1$s&lt;/b></string>
     <string name="itinerary_track">Platform %1$s</string>
     <plurals name="itinerary_stops">
         <item quantity="one">%d stop</item>
@@ -124,6 +129,10 @@
     </plurals>
     <string name="itinerary_show_stops">Show stops</string>
     <string name="itinerary_hide_stops">Hide stops</string>
+    <string name="itinerary_show_alerts">Show all alerts</string>
+    <string name="itinerary_hide_alerts">Show the first alert only</string>
+    <!-- The number of alerts that the banner does not show. -->
+    <string name="itinerary_more_alerts">+%1$d</string>
     <string name="itinerary_arrive">Arrive</string>
     <string name="itinerary_next_departures">Next departures</string>
     <string name="itinerary_trip_code">%1$s · %2$s</string>
@@ -135,10 +144,14 @@
 
     <!-- Walking view -->
     <string name="walk_open">Walking directions</string>
+    <!-- Button label beside a walk; walk_open is its accessibility label. -->
+    <string name="walk_open_short">Directions</string>
     <string name="walk_close">Close walking directions</string>
     <string name="walk_recenter">Recenter</string>
     <string name="walk_then">Then</string>
-    <string name="walk_arrival">Arrive %1$s</string>
+    <!-- The <b> part shows in bold, the rest in light. Keep the markup escaped. -->
+    <string name="walk_arrival">Arrive &lt;b>%1$s&lt;/b></string>
+    <string name="walk_progress">Part of the walk done</string>
     <string name="walk_destination">your destination</string>
     <string name="walk_off_route">You are off the route.</string>
     <string name="walk_replan">Plan a new route</string>

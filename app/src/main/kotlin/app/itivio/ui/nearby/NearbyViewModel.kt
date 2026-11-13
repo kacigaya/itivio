@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import app.itivio.domain.Departure
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.RoutingRepository
+import app.itivio.domain.WalkRoute
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.UserLocation
+import app.itivio.ui.common.closeTogether
 import app.itivio.ui.common.toFailure
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -17,11 +19,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
-import kotlin.math.cos
-import kotlin.math.sqrt
 
-/** Departures from one stop, in time order. */
-data class StopDepartures(val name: String, val departures: List<Departure>)
+/**
+ * Departures from one stop, in time order. [distanceMeters] is the straight-line distance from
+ * the device to the nearest platform, or null without a position.
+ */
+data class StopDepartures(val name: String, val departures: List<Departure>, val distanceMeters: Double? = null)
 
 /**
  * Upcoming departures around the device. Refreshes while the screen is visible, and again when
@@ -37,7 +40,7 @@ class NearbyViewModel(
     private var shown: List<StopDepartures>? = null
 
     val departures: StateFlow<LoadState<List<StopDepartures>>> =
-        combine(userLocation.point.distinctUntilChanged(::closeTogether), retries) { point, _ -> point }
+        combine(userLocation.point.distinctUntilChanged { a, b -> closeTogether(a, b, MOVE_METERS) }, retries) { point, _ -> point }
             .transformLatest { point ->
                 if (point == null) {
                     emit(LoadState.Idle)
@@ -48,7 +51,7 @@ class NearbyViewModel(
                     val result = runCatching { repository.nearbyDepartures(point) }
                     val failure = result.exceptionOrNull()?.toFailure()
                     if (failure == null) {
-                        val groups = group(result.getOrThrow())
+                        val groups = group(result.getOrThrow(), from = point)
                         shown = groups
                         emit(LoadState.Ready(groups))
                     } else if (shown == null) {
@@ -71,19 +74,12 @@ class NearbyViewModel(
         /** Moves shorter than this keep the same stops, so they do not trigger a new request. */
         const val MOVE_METERS = 150.0
 
-        /** Groups by stop name, so platforms of one station share a heading. */
-        fun group(departures: List<Departure>): List<StopDepartures> =
+        /** Groups by stop name, so platforms of one station share a card. [from] is the device position. */
+        fun group(departures: List<Departure>, from: GeoPoint? = null): List<StopDepartures> =
             departures.sortedBy { it.time.best }
                 .groupBy { it.stop.name }
-                .map { (name, list) -> StopDepartures(name, list) }
-
-        private fun closeTogether(a: GeoPoint?, b: GeoPoint?): Boolean {
-            if (a == null || b == null) return a == b
-            // Equirectangular distance: exact enough below a few kilometres.
-            val metersPerDegree = 111_320.0
-            val dy = (a.latitude - b.latitude) * metersPerDegree
-            val dx = (a.longitude - b.longitude) * metersPerDegree * cos(Math.toRadians(a.latitude))
-            return sqrt(dx * dx + dy * dy) < MOVE_METERS
-        }
+                .map { (name, list) ->
+                    StopDepartures(name, list, from?.let { here -> list.minOf { WalkRoute.distance(here, it.stop.point) } })
+                }
     }
 }

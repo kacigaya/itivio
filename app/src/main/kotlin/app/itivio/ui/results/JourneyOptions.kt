@@ -45,12 +45,12 @@ import app.itivio.ui.common.label
 /** Opens the journey options. Selected when an option is not at its default. */
 @Composable
 fun JourneyOptionsChip(options: JourneyOptions, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
-    FilterChip(
-        selected = !options.isDefault,
-        enabled = enabled,
+    FilterButton(
+        label = stringResource(R.string.options_chip),
+        checked = !options.isDefault,
         onClick = onClick,
-        label = { Text(stringResource(R.string.options_chip), maxLines = 1) },
-        leadingIcon = { Icon(painterResource(R.drawable.ic_tune), contentDescription = null, modifier = Modifier.size(18.dp)) },
+        enabled = enabled,
+        leadingIcon = R.drawable.ic_tune,
         modifier = modifier,
     )
 }

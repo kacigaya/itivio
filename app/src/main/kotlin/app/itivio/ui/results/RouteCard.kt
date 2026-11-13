@@ -3,8 +3,6 @@ package app.itivio.ui.results
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,19 +25,13 @@ import app.itivio.R
 import app.itivio.domain.Alert
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
-import app.itivio.domain.TransitMode
-import app.itivio.ui.common.LineBadge
+import app.itivio.ui.common.LegChain
 import app.itivio.ui.common.TimeText
+import app.itivio.ui.common.amountText
 import app.itivio.ui.common.formatDistance
 import app.itivio.ui.common.formatDuration
 import app.itivio.ui.common.formatTime
-import app.itivio.ui.common.icon
-import app.itivio.ui.common.label
 
-/** Walks shorter than this are noise in the leg chain; the itinerary still lists them. */
-private const val MIN_SHOWN_WALK_SECONDS = 120
-
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun RouteCard(journey: Journey, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val firstTransit = journey.legs.firstOrNull { it is Leg.Transit } as Leg.Transit?
@@ -66,32 +58,12 @@ fun RouteCard(journey: Journey, selected: Boolean, onClick: () -> Unit, modifier
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    formatDuration(journey.duration),
+                    amountText(formatDuration(journey.duration), unitScale = 0.7f),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    fontWeight = FontWeight.ExtraBold,
                 )
             }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
-            ) {
-                val shown = journey.legs.filter { it is Leg.Transit || it.duration.seconds >= MIN_SHOWN_WALK_SECONDS }
-                shown.forEachIndexed { index, leg ->
-                    if (index > 0) {
-                        Icon(
-                            painterResource(R.drawable.ic_chevron_right),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
-                    when (leg) {
-                        is Leg.Transit -> LineBadge(leg.line, leg.mode)
-                        is Leg.Street -> StreetChip(leg)
-                    }
-                }
-            }
+            LegChain(journey)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (firstTransit != null) {
                     TimeText(firstTransit.start, firstTransit.from.zone)
@@ -141,25 +113,5 @@ private fun AlertLine(alerts: List<Alert>) {
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
-    }
-}
-
-@Composable
-private fun StreetChip(leg: Leg.Street) {
-    val label = stringResource(leg.mode.label())
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            painterResource(leg.mode.icon()),
-            contentDescription = label,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp),
-        )
-        if (leg.mode == TransitMode.WALK) {
-            Text(
-                ((leg.duration.seconds + 30) / 60).toString(),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
     }
 }

@@ -3,7 +3,6 @@ package app.itivio.ui.stop
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -15,6 +14,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.domain.Departure
@@ -25,7 +25,7 @@ import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.MapPanel
 import app.itivio.ui.common.MessageState
 import app.itivio.ui.common.clockMinutesUntil
-import app.itivio.ui.nearby.DepartureRow
+import app.itivio.ui.nearby.DeparturesCard
 import java.time.Instant
 
 val StopPeekHeight = 360.dp
@@ -55,6 +55,7 @@ fun StopScreen(
                 Text(
                     name,
                     style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp).semantics { heading() },
                 )
             }
@@ -67,8 +68,9 @@ fun StopScreen(
             item(key = "departures-title") {
                 Text(
                     stringResource(R.string.stop_departures),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Light,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 4.dp).semantics { heading() },
                 )
             }
@@ -87,7 +89,7 @@ fun StopScreen(
                             )
                         }
                     } else {
-                        items(upcoming, key = { "${it.tripId}-${it.time.scheduled}-${it.stop.stopId}" }) { DepartureRow(it, now) }
+                        item(key = "departures") { DeparturesCard(upcoming, now, Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
                     }
                 }
             }

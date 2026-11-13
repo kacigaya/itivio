@@ -1,18 +1,24 @@
 package app.itivio.ui.results
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalToggleButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.Icon
@@ -31,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
@@ -258,11 +265,40 @@ private fun FilterChips(state: PlannerState, onPickTime: () -> Unit, onPickOptio
         item(key = "options") { JourneyOptionsChip(state.options, onPickOptions, enabled = state.optionsLoaded) }
         item(key = "divider") { VerticalDivider(Modifier.height(24.dp), color = MaterialTheme.colorScheme.outlineVariant) }
         items(RouteSort.entries) { sort ->
-            FilterChip(
-                selected = sort == state.sort,
-                onClick = { onSort(sort) },
-                label = { Text(stringResource(sort.label())) },
-            )
+            FilterButton(stringResource(sort.label()), checked = sort == state.sort, onClick = { onSort(sort) })
+        }
+    }
+}
+
+/**
+ * A filter of the results as a tonal button, the same as the saved places on home. [checked]
+ * shows that the filter is on, or not at its default.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+internal fun FilterButton(
+    label: String,
+    checked: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    @DrawableRes leadingIcon: Int? = null,
+    @DrawableRes trailingIcon: Int? = null,
+) {
+    FilledTonalToggleButton(
+        checked = checked,
+        onCheckedChange = { onClick() },
+        enabled = enabled,
+        contentPadding = if (leadingIcon != null) ButtonDefaults.ButtonWithIconContentPadding else ButtonDefaults.ContentPadding,
+        modifier = modifier,
+    ) {
+        if (leadingIcon != null) {
+            Icon(painterResource(leadingIcon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+        }
+        Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        if (trailingIcon != null) {
+            Icon(painterResource(trailingIcon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
         }
     }
 }

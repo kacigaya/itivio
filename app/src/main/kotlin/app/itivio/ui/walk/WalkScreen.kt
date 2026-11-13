@@ -11,10 +11,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,10 +29,12 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.domain.CompassDirection
@@ -39,14 +43,18 @@ import app.itivio.domain.Leg
 import app.itivio.domain.Maneuver
 import app.itivio.domain.WalkInstruction
 import app.itivio.domain.WalkRoute
+import app.itivio.ui.common.IconTile
 import app.itivio.ui.common.MapPanel
+import app.itivio.ui.common.amountText
 import app.itivio.ui.common.formatDistance
 import app.itivio.ui.common.formatDuration
 import app.itivio.ui.common.formatTime
+import app.itivio.ui.common.markedStringResource
 import java.time.Duration
 import java.time.Instant
 
-val WalkPeekHeight = 112.dp
+// Drag handle, the summary row, and the progress bar.
+val WalkPeekHeight = 156.dp
 
 /** The provider default for walks, used when a leg has no distance or no duration. */
 private const val DEFAULT_METERS_PER_SECOND = 1.2
@@ -105,9 +113,9 @@ fun WalkScreen(
         val remaining = (route.lengthMeters - along).coerceAtLeast(0.0)
         val speed = (leg.distanceMeters / leg.duration.seconds.coerceAtLeast(1)).takeIf { leg.distanceMeters > 0 } ?: DEFAULT_METERS_PER_SECOND
         val left = Duration.ofSeconds((remaining / speed).toLong())
-        Summary(left, remaining, now.plus(left), leg, onClose)
+        val done = if (route.lengthMeters > 0) (along / route.lengthMeters).toFloat().coerceIn(0f, 1f) else 0f
+        Summary(left, remaining, now.plus(left), leg, done, onClose)
         LazyColumn(contentPadding = PaddingValues(bottom = 16.dp)) {
-            item(key = "divider") { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
             itemsIndexed(route.instructions) { position, instruction ->
                 InstructionRow(instruction, destination, current = position == index)
             }
@@ -117,37 +125,58 @@ fun WalkScreen(
 
 @Composable
 private fun InstructionCard(instruction: WalkInstruction, meters: Double, destination: String, then: WalkInstruction?) {
+    val scheme = MaterialTheme.colorScheme
     Surface(
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        color = scheme.primaryContainer,
+        contentColor = scheme.onPrimaryContainer,
         shape = MaterialTheme.shapes.extraLarge,
         shadowElevation = 3.dp,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 // The next instruction is read out when it changes.
                 modifier = Modifier.semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
             ) {
-                Icon(painterResource(instruction.maneuver.icon()), contentDescription = null, modifier = Modifier.size(48.dp))
+                Surface(color = scheme.primary, contentColor = scheme.onPrimary, shape = MaterialTheme.shapes.largeIncreased) {
+                    Icon(painterResource(instruction.maneuver.icon()), contentDescription = null, modifier = Modifier.padding(14.dp).size(44.dp))
+                }
                 Column(Modifier.weight(1f)) {
                     if (instruction.maneuver != Maneuver.ARRIVE || meters > 0) {
-                        Text(formatDistance(meters.coerceAtLeast(0.0)), style = MaterialTheme.typography.headlineMedium)
+                        // The distance is the largest text on the screen: a walker reads it at a glance.
+                        Text(
+                            amountText(formatDistance(meters.coerceAtLeast(0.0)), unitScale = 0.55f),
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.ExtraBold,
+                        )
                     }
-                    Text(instructionText(instruction, destination), style = MaterialTheme.typography.titleMedium)
+                    Text(instructionText(instruction, destination), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
                 }
             }
             if (then != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.semantics(mergeDescendants = true) {},
+                Surface(
+                    color = scheme.onPrimaryContainer.copy(alpha = 0.12f),
+                    contentColor = scheme.onPrimaryContainer,
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(stringResource(R.string.walk_then), style = MaterialTheme.typography.labelLarge)
-                    Icon(painterResource(then.maneuver.icon()), contentDescription = null, modifier = Modifier.size(20.dp))
-                    Text(instructionText(then, destination), style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.semantics(mergeDescendants = true) {}.padding(horizontal = 12.dp, vertical = 10.dp),
+                    ) {
+                        Text(stringResource(R.string.walk_then), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Light)
+                        Icon(painterResource(then.maneuver.icon()), contentDescription = null, modifier = Modifier.size(20.dp))
+                        Text(
+                            instructionText(then, destination),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
         }
@@ -177,30 +206,57 @@ private fun Banner(message: String, action: String, onAction: () -> Unit) {
     }
 }
 
-/** Remaining time, remaining distance, and arrival time, with the button that closes the view. */
+/**
+ * Remaining time, remaining distance, and arrival time, with the button that closes the view.
+ * The wavy bar shows the part of the walk that is done ([done], 0 to 1).
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun Summary(left: Duration, meters: Double, arrival: Instant, leg: Leg.Street, onClose: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
-    ) {
-        FilledTonalIconButton(onClick = onClose, shape = CircleShape) {
-            Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.walk_close))
+private fun Summary(left: Duration, meters: Double, arrival: Instant, leg: Leg.Street, done: Float, onClose: () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(start = 24.dp, end = 16.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    amountText(formatDuration(left)),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.semantics { heading() },
+                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+                    Icon(painterResource(R.drawable.ic_directions_walk), contentDescription = null, tint = muted, modifier = Modifier.size(16.dp))
+                    Text(formatDistance(meters), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                    Icon(
+                        painterResource(R.drawable.ic_flag),
+                        contentDescription = null,
+                        tint = muted,
+                        modifier = Modifier.padding(start = 8.dp).size(16.dp),
+                    )
+                    Text(
+                        markedStringResource(R.string.walk_arrival, formatTime(arrival, leg.to.zone ?: leg.from.zone)),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Light,
+                        color = muted,
+                    )
+                }
+            }
+            FilledIconButton(
+                onClick = onClose,
+                shape = CircleShape,
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                ),
+                modifier = Modifier.size(56.dp),
+            ) {
+                Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.walk_close))
+            }
         }
-        Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}) {
-            Text(
-                formatDuration(left),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.semantics { heading() },
-            )
-            Text(
-                listOf(formatDistance(meters), stringResource(R.string.walk_arrival, formatTime(arrival, leg.to.zone ?: leg.from.zone))).joinToString(" · "),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        val progressLabel = stringResource(R.string.walk_progress)
+        LinearWavyProgressIndicator(
+            progress = { done },
+            modifier = Modifier.fillMaxWidth().padding(end = 8.dp).semantics { contentDescription = progressLabel },
+        )
     }
 }
 
@@ -209,23 +265,24 @@ private fun InstructionRow(instruction: WalkInstruction, destination: String, cu
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.padding(horizontal = 24.dp, vertical = 12.dp),
+        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        Icon(
-            painterResource(instruction.maneuver.icon()),
-            contentDescription = null,
-            tint = if (current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (current) {
+            IconTile(instruction.maneuver.icon(), color = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary)
+        } else {
+            IconTile(instruction.maneuver.icon(), color = MaterialTheme.colorScheme.surfaceContainerHighest, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         Text(
             instructionText(instruction, destination),
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = if (current) FontWeight.Medium else FontWeight.Normal,
+            fontWeight = if (current) FontWeight.Bold else FontWeight.Normal,
             modifier = Modifier.weight(1f),
         )
         if (instruction.lengthMeters > 0) {
             Text(
                 formatDistance(instruction.lengthMeters),
                 style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Light,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

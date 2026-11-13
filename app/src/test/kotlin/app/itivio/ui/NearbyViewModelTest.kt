@@ -13,6 +13,7 @@ import app.itivio.ui.common.UserLocation
 import app.itivio.ui.nearby.NearbyViewModel
 import app.itivio.ui.nearby.NearbyViewModel.Companion.REFRESH_MILLIS
 import app.itivio.ui.nearby.StopDepartures
+import app.itivio.ui.nearby.byLine
 import app.itivio.ui.nearby.upcoming
 import java.time.Instant
 import kotlinx.coroutines.CompletableDeferred
@@ -68,8 +69,9 @@ class NearbyViewModelTest {
         assertEquals(
             LoadState.Ready(
                 listOf(
-                    StopDepartures("Zoo", listOf(zooEarly, zooLate)),
-                    StopDepartures("Central", listOf(central)),
+                    // The stops of the fixture are at the device position.
+                    StopDepartures("Zoo", listOf(zooEarly, zooLate), distanceMeters = 0.0),
+                    StopDepartures("Central", listOf(central), distanceMeters = 0.0),
                 ),
             ),
             viewModel.departures.value,
@@ -129,7 +131,7 @@ class NearbyViewModelTest {
 
         assertEquals(listOf(point, point), repository.nearbyCalls)
         assertEquals(
-            LoadState.Ready(listOf(StopDepartures("Zoo", listOf(departure)))),
+            LoadState.Ready(listOf(StopDepartures("Zoo", listOf(departure), distanceMeters = 0.0))),
             viewModel.departures.value,
         )
     }
@@ -141,7 +143,7 @@ class NearbyViewModelTest {
         userLocation.point.value = point
         viewModel.departures.launchIn(backgroundScope)
         runCurrent()
-        val ready = LoadState.Ready(listOf(StopDepartures("Zoo", listOf(departure))))
+        val ready = LoadState.Ready(listOf(StopDepartures("Zoo", listOf(departure), distanceMeters = 0.0)))
         assertEquals(ready, viewModel.departures.value)
 
         repository.nearbyResult = { throw RoutingException.Offline() }
@@ -177,6 +179,30 @@ class NearbyViewModelTest {
         val upcoming = groups.upcoming(Instant.parse("2026-11-09T10:01:30Z"))
         assertEquals(listOf("Aubert"), upcoming.map { it.name })
         assertEquals(listOf(Instant.parse("2026-11-09T10:01:00Z")), upcoming.single().departures.map { it.time.best })
+    }
+
+    @Test
+    fun `group gives the distance to the nearest platform of each stop`() {
+        val far = departure("Zoo", "zoo-1", 0).let { it.copy(stop = it.stop.copy(point = GeoPoint(48.8610, 2.35))) }
+        val near = departure("Zoo", "zoo-2", 1).let { it.copy(stop = it.stop.copy(point = GeoPoint(48.8601, 2.35))) }
+
+        val withPosition = NearbyViewModel.group(listOf(far, near), from = GeoPoint(48.86, 2.35)).single()
+        // 0.0001 degrees of latitude is about 11 m.
+        assertEquals(11.1, withPosition.distanceMeters!!, 0.1)
+        assertEquals(null, NearbyViewModel.group(listOf(far, near)).single().distanceMeters)
+    }
+
+    @Test
+    fun `byLine gives one list for each line and direction in order of the first departure`() {
+        val toTownHall1 = departure("Zoo", "zoo-1", 1)
+        val toDepot = departure("Zoo", "zoo-2", 2).copy(headsign = "Depot")
+        val toTownHall2 = departure("Zoo", "zoo-1", 5)
+        val otherLine = departure("Zoo", "zoo-1", 6).copy(line = Line("N5"))
+
+        assertEquals(
+            listOf(listOf(toTownHall1, toTownHall2), listOf(toDepot), listOf(otherLine)),
+            listOf(toTownHall1, toDepot, toTownHall2, otherLine).byLine(),
+        )
     }
 
     private fun departure(

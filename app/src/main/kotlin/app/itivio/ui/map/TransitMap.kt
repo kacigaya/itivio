@@ -1,6 +1,5 @@
 package app.itivio.ui.map
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -22,16 +21,24 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
+import app.itivio.domain.Line
 import app.itivio.domain.TransitMode
+import app.itivio.ui.common.icon
+import app.itivio.ui.common.lineColors
+import app.itivio.ui.theme.LocalDarkTheme
+import java.util.Locale
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import app.itivio.domain.BoundingBox as StopBox
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -50,10 +57,17 @@ import org.maplibre.compose.location.LocationTrackingEffect
 import org.maplibre.compose.location.updateCamera
 import org.maplibre.compose.expressions.value.LineCap
 import org.maplibre.compose.expressions.value.LineJoin
+import org.maplibre.compose.expressions.dsl.case
 import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.expressions.dsl.convertToColor
+import org.maplibre.compose.expressions.dsl.feature
+import org.maplibre.compose.expressions.dsl.image
+import org.maplibre.compose.expressions.dsl.switch
 import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.layers.LineLayer
+import org.maplibre.compose.layers.LocationIndicatorDefaults
 import org.maplibre.compose.layers.LocationIndicatorLayer
+import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.location.LocationState
 import org.maplibre.compose.map.MapStyleState
 import org.maplibre.compose.map.MaplibreMap
@@ -86,8 +100,17 @@ private const val DARK_STYLE = "asset://map/dark.json"
 /** Europe-wide view until the first location fix or route arrives. */
 private val InitialCamera = CameraPosition(center = Position(longitude = 10.0, latitude = 50.0), zoom = 3.5)
 
-/** A transit stop on the map. A tap on it opens its departures. */
-data class MapStop(val stopId: String, val name: String, val point: GeoPoint)
+/**
+ * A transit stop on the map. A tap on it opens its departures. [line] and [mode] are those of the
+ * next departure, when the app knows it; the stop then shows as a pin in the line color.
+ */
+data class MapStop(
+    val stopId: String,
+    val name: String,
+    val point: GeoPoint,
+    val line: Line? = null,
+    val mode: TransitMode? = null,
+)
 
 /** Stops load only at this zoom and closer, where a screen shows a few streets. */
 const val MAP_STOPS_MIN_ZOOM = 15.0
@@ -118,14 +141,29 @@ fun TransitMap(
     onCameraIdle: (StopBox, Double) -> Unit = { _, _ -> },
 ) {
     val scheme = MaterialTheme.colorScheme
-    val style = if (isSystemInDarkTheme()) DARK_STYLE else LIGHT_STYLE
+    val style = if (LocalDarkTheme.current) DARK_STYLE else LIGHT_STYLE
     val currentOnStop by rememberUpdatedState(onStop)
+    val pins = stops.map { stop ->
+        val (container, content) = stop.line?.let { lineColors(it) } ?: (scheme.secondaryContainer to scheme.onSecondaryContainer)
+        StopPin(stop, container, content)
+    }
     val mapState = rememberMapState(baseStyle = BaseStyle.Uri(style), initialCameraPosition = InitialCamera) {
         // Layers declared here render above the base style and follow recomposition.
         StopsLayer("area-stops", areaStops, fill = scheme.surface, stroke = scheme.outline, minZoom = MAP_STOPS_MIN_ZOOM - 0.5) { currentOnStop(it) }
-        StopsLayer("stops", stops, fill = scheme.surface, stroke = scheme.primary) { currentOnStop(it) }
-        LocationIndicatorLayer(id = "user", locationState = locationState)
-        if (journey != null) JourneyLayers(journey, accent = scheme.primary, casing = scheme.surface, walk = scheme.onSurfaceVariant)
+        StopPinsLayer("stops", pins, casing = scheme.surface) { currentOnStop(it) }
+        LocationIndicatorLayer(
+            id = "user",
+            locationState = locationState,
+            accuracyRadiusColor = scheme.primary.copy(alpha = 0.2f),
+            accuracyRadiusBorderColor = scheme.primary.copy(alpha = 0.4f),
+            topImage = LocationIndicatorDefaults.topImage(color = scheme.primary, borderColor = Color.White),
+            bearingImage = LocationIndicatorDefaults.bearingImage(color = scheme.primary),
+        )
+        if (journey != null) {
+            // A walk drawn alone, as in the walking view, is the route to follow: it gets the accent.
+            val walk = if (journey.isStreetOnly) scheme.primary else scheme.onSurfaceVariant
+            JourneyLayers(journey, accent = scheme.primary, casing = scheme.surface, walk = walk)
+        }
         EndpointLayer(journey, destination, fill = scheme.primary, stroke = scheme.surface)
     }
     MaplibreMap(
@@ -293,6 +331,64 @@ private fun StopsLayer(
         },
     )
 }
+
+/** A [MapStop] with the colors of its pin. */
+private data class StopPin(val stop: MapStop, val container: Color, val content: Color)
+
+/**
+ * Stops as pins: a disc in the color of the line, with the icon of the mode. The icons are SDF
+ * images, so each pin can tint its icon with the text color of its line.
+ */
+@Composable
+@MaplibreComposable
+private fun StopPinsLayer(id: String, pins: List<StopPin>, casing: Color, onStop: (MapStop) -> Unit) {
+    val features = remember(pins) {
+        FeatureCollection(
+            pins.map { pin ->
+                Feature(
+                    Point(Position(longitude = pin.stop.point.longitude, latitude = pin.stop.point.latitude)),
+                    buildJsonObject {
+                        put("id", pin.stop.stopId)
+                        put("color", pin.container.toCss())
+                        put("content", pin.content.toCss())
+                        put("mode", (pin.stop.mode ?: TransitMode.OTHER).name)
+                    },
+                )
+            },
+        )
+    }
+    val source = rememberGeoJsonSource(GeoJsonData.Features(features))
+    CircleLayer(
+        id = id,
+        source = source,
+        color = feature.get("color").convertToColor(),
+        radius = const(11.dp),
+        strokeColor = const(casing),
+        strokeWidth = const(2.dp),
+        // The disc is 26dp with its casing; the padding brings the target to about 48dp.
+        hitPadding = 11.dp,
+        onClick = { features ->
+            val stopId = features.firstNotNullOfOrNull { it.properties?.get("id")?.jsonPrimitive?.contentOrNull }
+            val stop = pins.firstOrNull { it.stop.stopId == stopId }?.stop
+            if (stop == null) ClickResult.Pass else ClickResult.Consume.also { onStop(stop) }
+        },
+    )
+    val icons = TransitMode.entries.filter { it.isTransit }.map { mode -> case(mode.name, pinIcon(mode)) }
+    SymbolLayer(
+        id = "$id-icons",
+        source = source,
+        iconImage = switch(feature.get("mode"), *icons.toTypedArray(), fallback = pinIcon(TransitMode.OTHER)),
+        iconColor = feature.get("content").convertToColor(),
+        // A pin always shows its icon, also when it sits on a label of the base map.
+        iconAllowOverlap = const(true),
+        iconIgnorePlacement = const(true),
+    )
+}
+
+@Composable
+private fun pinIcon(mode: TransitMode) = image(painterResource(mode.icon()), size = DpSize(14.dp, 14.dp), drawAsSdf = true)
+
+private fun Color.toCss(): String = String.format(Locale.ROOT, "#%06X", toArgb() and 0xFFFFFF)
 
 private fun List<MapStop>.toFeatures() = FeatureCollection(
     map {
