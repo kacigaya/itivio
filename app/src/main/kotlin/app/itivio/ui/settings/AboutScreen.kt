@@ -37,6 +37,7 @@ fun AboutScreen(version: String, onBack: () -> Unit) {
         section("data", R.string.about_data) {
             Link(R.drawable.ic_commute, R.string.about_transitous, R.string.about_transitous_body, R.string.attribution_url, uriHandler::openUri)
             Link(R.drawable.ic_map, R.string.about_map, R.string.about_map_body, R.string.about_map_url, uriHandler::openUri)
+            Link(R.drawable.ic_info, R.string.about_maplibre, R.string.about_maplibre_body, R.string.about_maplibre_url, uriHandler::openUri)
             Link(R.drawable.ic_location_on, R.string.about_ign, R.string.about_ign_body, R.string.attribution_ign_url, uriHandler::openUri)
         }
         section("design", R.string.about_design) {

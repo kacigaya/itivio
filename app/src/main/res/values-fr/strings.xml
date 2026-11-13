@@ -127,6 +127,7 @@
     <string name="about_data">Données</string>
     <string name="about_transitous_body">Itinéraires, départs et perturbations. Transitous réunit les horaires de nombreux réseaux de transport.</string>
     <string name="about_map_body">Données cartographiques © les contributeurs d’OpenStreetMap. Tuiles de carte d’OpenFreeMap, avec les données d’OpenMapTiles.</string>
+    <string name="about_maplibre_body">La carte est affichée avec la bibliothèque MapLibre Native.</string>
     <string name="about_ign">IGN et Base Adresse Nationale</string>
     <string name="about_ign_body">Recherche d’adresses en France.</string>
     <string name="about_design">Design</string>

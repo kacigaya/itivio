@@ -76,7 +76,6 @@ import org.maplibre.compose.material3.AttributionButtonDefaults
 import org.maplibre.compose.material3.AttributionLinks
 import org.maplibre.compose.overlay.LocalViewportInsets
 import org.maplibre.compose.overlay.MapOverlay
-import org.maplibre.compose.overlay.MaplibreLogo
 import org.maplibre.compose.overlay.attributions
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
@@ -227,8 +226,8 @@ fun TransitMap(
 }
 
 /**
- * The MapLibre logo and the map credits. The credits stay behind the info button until the user
- * opens them. The library button starts open on each launch and covers the map above the sheet.
+ * The map credits. They stay behind the info button until the user opens them. The library
+ * button starts open on each launch and covers the map above the sheet.
  */
 @Composable
 private fun MapCredits(style: MapStyleState) {
@@ -243,7 +242,6 @@ private fun MapCredits(style: MapStyleState) {
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(MapOverlay.Spacing),
     ) {
-        MaplibreLogo(Modifier.align(Alignment.BottomStart))
         if (credits.isEmpty()) return@Box
         Surface(
             color = if (expanded) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,

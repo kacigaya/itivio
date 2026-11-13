@@ -134,6 +134,9 @@
     <string name="about_map" translatable="false">OpenStreetMap</string>
     <string name="about_map_body">Map data © OpenStreetMap contributors. Map tiles from OpenFreeMap, with OpenMapTiles data.</string>
     <string name="about_map_url" translatable="false">https://www.openstreetmap.org/copyright</string>
+    <string name="about_maplibre" translatable="false">MapLibre</string>
+    <string name="about_maplibre_body">The map is rendered with the MapLibre Native library.</string>
+    <string name="about_maplibre_url" translatable="false">https://github.com/maplibre/maplibre-native/blob/main/LICENSE.md</string>
     <string name="about_ign">IGN and Base Adresse Nationale</string>
     <string name="about_ign_body">French address search.</string>
     <string name="about_design">Design</string>
