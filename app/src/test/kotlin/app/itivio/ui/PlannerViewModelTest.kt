@@ -285,6 +285,24 @@ class PlannerViewModelTest {
     }
 
     @Test
+    fun `options changed in the settings apply to the next search`() = runTest(main.dispatcher) {
+        // The planner reads the stored options when it starts.
+        assertEquals(JourneyOptions(), viewModel.state.value.options)
+        advanceUntilIdle()
+        val changed = JourneyOptions(wheelchair = true)
+
+        // The settings screen writes to the store, not to the planner.
+        options.save(changed)
+        advanceUntilIdle()
+        assertEquals(changed, viewModel.state.value.options)
+
+        viewModel.setOrigin(Endpoint.Place(location("Home")))
+        viewModel.setDestination(Endpoint.Place(location("Zoo")))
+        advanceUntilIdle()
+        assertEquals(changed, repository.plans.single().first.options)
+    }
+
+    @Test
     fun `a storage failure keeps planning with the options of the session`() = runTest(main.dispatcher) {
         options.failing = true
         viewModel.setOrigin(Endpoint.Place(location("Home")))

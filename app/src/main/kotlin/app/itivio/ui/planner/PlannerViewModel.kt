@@ -22,6 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -113,6 +114,16 @@ class PlannerViewModel(
 
     init {
         restore()
+        // The settings screen also edits the stored options. The first value is the read above.
+        viewModelScope.launch {
+            try {
+                optionsRepository.options.drop(1).collect { stored -> _state.update { it.copy(options = stored) } }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Storage failed: the options of this session stay.
+            }
+        }
     }
 
     private fun restore() {

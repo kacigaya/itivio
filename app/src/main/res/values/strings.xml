@@ -97,6 +97,57 @@
     <string name="disruption_cause_medical">Medical emergency</string>
     <string name="disruption_cause_event">Special event</string>
 
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_body">Opens the language setting of Android for this app.</string>
+    <string name="settings_journeys">Journeys</string>
+    <string name="settings_options_body">Transport modes, transfers, and walking. They apply to each search.</string>
+    <string name="settings_data">Stored data</string>
+    <string name="settings_clear_recents_body">Removes your search history. Your favorites stay.</string>
+    <string name="settings_delete_all">Delete all app data</string>
+    <string name="settings_delete_all_body">Removes saved places, journey options, and settings from this device.</string>
+    <string name="settings_delete_all_question">Delete all app data?</string>
+    <string name="settings_delete_all_warning">This removes Home, Work, favorites, recent searches, journey options, and settings. You cannot undo this.</string>
+    <string name="settings_delete">Delete</string>
+    <string name="settings_about">About itivio</string>
+    <string name="settings_about_body">Version, license, credits, and privacy.</string>
+
+    <!-- About -->
+    <string name="about_title">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_license">License</string>
+    <string name="about_license_name">GNU General Public License</string>
+    <string name="about_license_body">itivio is free software. You can use it, change it, and share it under version 3 of the license, or any later version.</string>
+    <string name="about_license_url" translatable="false">https://www.gnu.org/licenses/gpl-3.0.html</string>
+    <string name="about_source">Source code</string>
+    <string name="about_source_body">Read the code and report problems on GitHub.</string>
+    <string name="about_source_url" translatable="false">https://github.com/kacigaya/itivio</string>
+    <string name="about_data">Data</string>
+    <string name="about_transitous" translatable="false">Transitous</string>
+    <string name="about_transitous_body">Routes, departures, and disruptions. Transitous combines timetables from many transit agencies.</string>
+    <string name="about_map" translatable="false">OpenStreetMap</string>
+    <string name="about_map_body">Map data © OpenStreetMap contributors. Map tiles from OpenFreeMap, with OpenMapTiles data.</string>
+    <string name="about_map_url" translatable="false">https://www.openstreetmap.org/copyright</string>
+    <string name="about_ign">IGN and Base Adresse Nationale</string>
+    <string name="about_ign_body">French address search.</string>
+    <string name="about_design">Design</string>
+    <string name="about_font" translatable="false">Google Sans Flex</string>
+    <string name="about_font_body">The typeface of the app. SIL Open Font License 1.1.</string>
+    <string name="about_font_url" translatable="false">https://openfontlicense.org/open-font-license-official-text/</string>
+    <string name="about_icons" translatable="false">Material Symbols</string>
+    <string name="about_icons_body">The icons of the app. Apache License 2.0.</string>
+    <string name="about_icons_url" translatable="false">https://www.apache.org/licenses/LICENSE-2.0</string>
+    <string name="about_privacy">Privacy</string>
+    <string name="about_privacy_none">No account, no analytics, no ads. The app does not log your journeys or your location.</string>
+    <string name="about_privacy_requests">The app sends requests to Transitous for search, routes, departures, and disruptions, and to OpenFreeMap for map tiles. The Disruptions tab sends the IDs of your saved stops to Transitous.</string>
+    <string name="about_privacy_device">Saved places, journey options, and settings stay on this device. Android backup is off for them.</string>
+
     <!-- Travel time -->
     <string name="travel_title">Travel time</string>
     <string name="travel_now">Leave now</string>

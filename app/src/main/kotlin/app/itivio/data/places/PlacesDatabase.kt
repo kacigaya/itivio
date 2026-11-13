@@ -48,6 +48,9 @@ internal abstract class SavedPlaceDao {
     @Query("DELETE FROM saved_place WHERE role = :role")
     abstract suspend fun deleteAll(role: PlaceRole)
 
+    @Query("DELETE FROM saved_place")
+    abstract suspend fun deleteEverything()
+
     @Query(
         "DELETE FROM saved_place WHERE role = :role AND place_key NOT IN " +
             "(SELECT place_key FROM saved_place WHERE role = :role ORDER BY saved_at DESC, rowid DESC LIMIT :keep)",
