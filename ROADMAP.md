@@ -158,7 +158,7 @@ Feature work stops here. Only fixes go in after this release.
 - [ ] Add F-Droid metadata and send the app to F-Droid.
 - [ ] Add `CHANGELOG.md`, `CONTRIBUTING.md`, and `SECURITY.md`.
 - [x] Add a privacy policy file.
-- [ ] Add screenshots to the README.
+- [x] Add screenshots to the README.
 
 ## v1.0.0: Stable
 

@@ -17,6 +17,18 @@
   <a href="https://github.com/kacigaya/itivio/blob/main/LICENSE"><img alt="GPL-3.0-or-later License" src="https://shieldcn.dev/github/license/kacigaya/itivio.svg?variant=secondary"></a>
 </p>
 
+## Screenshots
+
+Journey results in the light theme, disruptions in the dark theme, and settings in the light theme.
+
+<p>
+  <img src="app/src/test/screenshots/results_light.png" alt="Journey results with travel time, transport lines, live departures, and service alerts" width="240">
+  <img src="app/src/test/screenshots/disruptions_dark.png" alt="Disruptions for saved stops, with affected lines, dates, and service alert details" width="240">
+  <img src="app/src/test/screenshots/settings_light.png" alt="Settings for theme, language, journey options, and deletion of stored data" width="240">
+</p>
+
+These images use test data from the [screenshot checks](docs/quality.md#screenshot-references). The native map is excluded.
+
 ## Features
 
 - Map with your current location.
