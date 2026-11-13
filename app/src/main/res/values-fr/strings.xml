@@ -315,4 +315,9 @@
     <string name="attribution_sources">Sources des données</string>
     <string name="attribution_ign">Adresses françaises : IGN · BAN</string>
     <string name="privacy_ign">Les recherches d’adresses françaises vont aussi à l’IGN. Votre position n’est pas envoyée à l’IGN.</string>
+    <string name="itinerary_reset_train">Réinitialiser</string>
+    <string name="itinerary_changing_train">Mise à jour du train…</string>
+    <string name="itinerary_change_train_failed">Impossible de changer de train. Réessayez.</string>
+    <string name="itinerary_missed_connection">Cette correspondance n’est plus possible. Choisissez un autre départ pour la prochaine étape.</string>
+    <string name="itinerary_platform_changed">Le quai a changé. Suivez les panneaux dans la gare.</string>
 </resources>

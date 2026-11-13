@@ -17,6 +17,16 @@ class TransitousMapperTest {
         requireNotNull(javaClass.getResource("/transitous/$name.json")).readText(),
     )
 
+    @Test fun transilienMissionNamesAreCodesRatherThanDestinations() {
+        val source = fixture<StoptimesResponse>("stoptimes-idfm").stopTimes[1]
+        val departure = source.copy(agencyName = "Transilien", headsign = "GAMO", tripShortName = "151071").toDomain()
+        assertEquals("GAMO", departure.tripCode)
+        assertEquals(source.tripTo?.name, departure.headsign)
+        val otherAgency = source.copy(agencyName = "Other", headsign = "GAMO", tripShortName = "151071").toDomain()
+        assertNull(otherAgency.tripCode)
+        assertEquals("GAMO", otherAgency.headsign)
+    }
+
     @Test fun googlePolyline() {
         val points = decodePolyline("_p~iF~ps|U_ulLnnqC_mqNvxq`@", 5)
         assertEquals(3, points.size)

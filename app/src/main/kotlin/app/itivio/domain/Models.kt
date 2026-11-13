@@ -180,6 +180,68 @@ data class Journey(
     /** The service alerts of all transit legs. An alert on more than one leg shows once. */
     val alerts: List<Alert> get() = legs.filterIsInstance<Leg.Transit>().flatMap { it.alerts }.distinct()
 
+    /** First onward train that leaves before the incoming ride and transfer walk finish. */
+    val missedConnectionIndex: Int?
+        get() {
+            var ready: Instant? = null
+            legs.forEachIndexed { index, leg ->
+                if (leg is Leg.Transit) {
+                    if (ready?.let { leg.start.best < it } == true) return index
+                    ready = leg.end.best
+                } else {
+                    ready = ready?.plus(leg.duration)
+                }
+            }
+            return null
+        }
+
+    /** Replaces a ride only after its actual trip confirms both stops and the boarding visit. */
+    fun withDeparture(legIndex: Int, departure: Departure, trip: Trip): Journey? {
+        val leg = legs.getOrNull(legIndex) as? Leg.Transit ?: return null
+        if (departure.tripId.isNullOrBlank() || departure.cancelled || trip.cancelled) return null
+        val sameLine = if (leg.line.id != null && departure.line.id != null) leg.line.id == departure.line.id else leg.line.name == departure.line.name
+        if (!sameLine || !departure.stop.sameStationAs(leg.from)) return null
+        val board = trip.stops.indexOfFirst {
+            it.sameStationAs(departure.stop) && it.departure?.scheduled == departure.time.scheduled
+        }.takeIf { it >= 0 } ?: return null
+        val alight = (board + 1 until trip.stops.size).firstOrNull { trip.stops[it].sameStationAs(leg.to) } ?: return null
+        val from = trip.stops[board]
+        val to = trip.stops[alight]
+        val start = from.departure ?: return null
+        val end = to.arrival ?: return null
+        if (from.cancelled || to.cancelled || end.best <= start.best) return null
+        val replacement = leg.copy(
+            from = from, to = to, start = start, end = end,
+            mode = departure.mode, line = departure.line, headsign = departure.headsign,
+            tripId = departure.tripId, tripCode = departure.tripCode, directionId = departure.directionId,
+            intermediateStops = trip.stops.subList(board + 1, alight),
+            cancelled = false, alerts = trip.alerts,
+        )
+        val initial = legs.take(legIndex).none { it is Leg.Transit }
+        val beforeShift = Duration.between(legs.getOrNull(legIndex - 1)?.end?.best ?: leg.start.best, start.best)
+        val afterShift = Duration.between(leg.end.best, end.best)
+        val next = (legIndex + 1 until legs.size).firstOrNull { legs[it] is Leg.Transit } ?: legs.size
+        val changed = legs.mapIndexed { index, item ->
+            val shifted = when {
+                index == legIndex -> replacement
+                initial && index < legIndex && item is Leg.Street -> item.copy(start = item.start.moved(beforeShift), end = item.end.moved(beforeShift))
+                index in legIndex + 1 until next && item is Leg.Street -> item.copy(start = item.start.moved(afterShift), end = item.end.moved(afterShift))
+                else -> item
+            }
+            // A route to a different platform must not keep the old walking instructions.
+            if (shifted is Leg.Street && index == legIndex - 1) {
+                val platformChanged = shifted.to.stopId != from.stopId || shifted.to.track != from.track
+                shifted.copy(to = from, geometry = if (platformChanged) emptyList() else shifted.geometry,
+                    steps = if (platformChanged) emptyList() else shifted.steps)
+            } else if (shifted is Leg.Street && index == legIndex + 1) {
+                val platformChanged = shifted.from.stopId != to.stopId || shifted.from.track != to.track
+                shifted.copy(from = to, geometry = if (platformChanged) emptyList() else shifted.geometry,
+                    steps = if (platformChanged) emptyList() else shifted.steps)
+            } else shifted
+        }
+        return copy(legs = changed, departure = changed.first().start, arrival = changed.last().end)
+    }
+
     /**
      * Applies the current times of the trip of the transit leg at [legIndex]. The boarding and
      * alighting stops keep their place in the trip; the walks after the leg move with its arrival.
@@ -216,6 +278,13 @@ data class Journey(
         return copy(legs = newLegs, departure = newLegs.first().start, arrival = newLegs.last().end)
     }
 }
+
+private fun Stop.sameStationAs(other: Stop): Boolean =
+    (stopId != null && stopId == other.stopId) ||
+        (stationId != null && (stationId == other.stationId || stationId == other.stopId)) ||
+        (other.stationId != null && stopId == other.stationId)
+
+private fun StopTime.moved(shift: Duration) = copy(scheduled = scheduled.plus(shift), estimated = estimated?.plus(shift))
 
 private fun Stop.isBoardingOf(leg: Leg.Transit) =
     stopId != null && stopId == leg.from.stopId && departure?.scheduled == leg.start.scheduled

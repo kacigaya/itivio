@@ -83,10 +83,11 @@ internal fun Place.toDomain(coordinateName: String? = null): DomainStop = Domain
  * Some feeds, such as the RER in Île-de-France, put the mission code in the headsign: "QOKA" for
  * trip "QOKA52". The headsign then names no place, so the trip's final stop replaces it.
  */
-private class Heading(headsign: String?, tripShortName: String?, tripTo: Place?) {
+private class Heading(headsign: String?, tripShortName: String?, tripTo: Place?, agency: String?) {
     private val code = !headsign.isNullOrBlank() && !tripShortName.isNullOrBlank() && tripShortName.startsWith(headsign)
-    val headsign: String? = if (code) tripTo?.name ?: headsign else headsign?.takeIf { it.isNotBlank() } ?: tripTo?.name
-    val tripCode: String? = tripShortName.takeIf { code }
+    private val missionCode = headsign?.takeIf { agency == "Transilien" && it.matches(Regex("[A-Z]{4}")) }
+    val headsign: String? = if (code || missionCode != null) tripTo?.name ?: headsign else headsign?.takeIf { it.isNotBlank() } ?: tripTo?.name
+    val tripCode: String? = if (code) tripShortName else missionCode
 }
 
 internal fun Leg.toDomain(fromName: String? = null, toName: String? = null): DomainLeg {
@@ -97,7 +98,7 @@ internal fun Leg.toDomain(fromName: String? = null, toName: String? = null): Dom
     val from = from.toDomain(fromName)
     val to = to.toDomain(toName)
     if (!mode.isTransit) return DomainLeg.Street(mode, from, to, start, end, geometry, distance ?: 0.0, steps.map { it.toDomain() })
-    val heading = Heading(headsign, tripShortName, tripTo)
+    val heading = Heading(headsign, tripShortName, tripTo, agencyName)
     return DomainLeg.Transit(mode, from, to, start, end, geometry,
         line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName, routeId),
         heading.headsign, tripId, intermediateStops.map { it.toDomain() }, cancelled,
@@ -180,7 +181,7 @@ internal fun PlanResponse.toDomain(fromName: String? = null, toName: String? = n
 )
 
 internal fun StopTime.toDomain(): Departure {
-    val heading = Heading(headsign, tripShortName, tripTo)
+    val heading = Heading(headsign, tripShortName, tripTo, agencyName)
     return Departure(
         place.toDomain(), line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName, routeId),
         // A trip's last stop has only an arrival; fall back to it instead of failing the whole list.

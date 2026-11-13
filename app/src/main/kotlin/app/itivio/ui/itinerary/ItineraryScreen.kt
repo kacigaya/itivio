@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -23,6 +24,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -44,6 +49,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
@@ -98,6 +107,9 @@ fun ItineraryScreen(
     lineTimes: Map<Int, List<Departure>>,
     onBack: () -> Unit,
     onWalk: (legIndex: Int) -> Unit,
+    selection: TrainSelectionState = TrainSelectionState(),
+    onSelectDeparture: (Int, Departure) -> Unit = { _, _ -> },
+    onResetTrain: (Int) -> Unit = {},
 ) {
     val currentLeg = journey.currentLegIndex(now)
     MapPanel(
@@ -114,10 +126,27 @@ fun ItineraryScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item(key = "summary") { Summary(journey, now) }
+            if (journey.missedConnectionIndex != null) {
+                item(key = "missed_connection") {
+                    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.large) {
+                        Text(stringResource(R.string.itinerary_missed_connection), style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(16.dp).semantics { liveRegion = LiveRegionMode.Polite })
+                    }
+                }
+            }
             itemsIndexed(journey.legs, key = { index, _ -> index }) { index, leg ->
                 Step(current = index == currentLeg, card = leg is Leg.Transit) {
                     when (leg) {
-                        is Leg.Transit -> TransitLegItem(leg, lineTimes[index].orEmpty(), now)
+                        is Leg.Transit -> TransitLegItem(
+                            leg, lineTimes[index].orEmpty(), now,
+                            loading = selection.loadingLeg == index,
+                            canSelect = selection.loadingLeg == null,
+                            changed = index in selection.changedLegs,
+                            platformChanged = index in selection.platformChangedLegs,
+                            failed = selection.failedLeg == index,
+                            onSelect = { onSelectDeparture(index, it) },
+                            onReset = { onResetTrain(index) },
+                        )
                         is Leg.Street -> StreetLegItem(leg, onWalk = { onWalk(index) }.takeIf { leg.hasWalkingView })
                     }
                 }
@@ -220,7 +249,11 @@ private fun Summary(journey: Journey, now: Instant) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TransitLegItem(leg: Leg.Transit, departures: List<Departure>, now: Instant) {
+private fun TransitLegItem(
+    leg: Leg.Transit, departures: List<Departure>, now: Instant,
+    loading: Boolean, canSelect: Boolean, changed: Boolean, platformChanged: Boolean, failed: Boolean,
+    onSelect: (Departure) -> Unit, onReset: () -> Unit,
+) {
     val (lineColor, _) = lineColors(leg.line)
     var expanded by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.padding(start = 8.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)) {
@@ -235,14 +268,17 @@ private fun TransitLegItem(leg: Leg.Transit, departures: List<Departure>, now: I
             Column(Modifier.padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     LineBadge(leg.line, leg.mode)
-                    leg.headsign?.let {
-                        Text(
-                            markedStringResource(R.string.itinerary_towards, it),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Light,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                    Column(Modifier.weight(1f)) {
+                        leg.tripCode?.let { Text(it, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+                        leg.headsign?.let {
+                            Text(
+                                markedStringResource(R.string.itinerary_towards, it),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Light,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
                 if (leg.cancelled) {
@@ -254,9 +290,15 @@ private fun TransitLegItem(leg: Leg.Transit, departures: List<Departure>, now: I
                     )
                 }
                 if (leg.alerts.isNotEmpty()) AlertBanner(leg.alerts)
+                if (platformChanged) {
+                    Text(stringResource(R.string.itinerary_platform_changed), style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                }
                 // Line times refresh once a minute; drop the ones that left since.
                 val upcoming = departures.filter { clockMinutesUntil(now, it.time.best) >= 0 }
-                if (upcoming.isNotEmpty()) LineTimes(upcoming, leg.tripId, now)
+                if (upcoming.isNotEmpty() || loading || failed || changed) {
+                    TrainDepartures(upcoming, leg.tripId, now, loading, canSelect, changed, failed, onSelect, onReset)
+                }
                 val stops = leg.intermediateStops
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -381,40 +423,52 @@ internal fun AlertBanner(alerts: List<Alert>) {
  * container. A live departure in the next hour shows as a countdown; other departures show the
  * clock time.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun LineTimes(departures: List<Departure>, plannedTripId: String?, now: Instant) {
+internal fun TrainDepartures(
+    departures: List<Departure>, selectedTripId: String?, now: Instant,
+    loading: Boolean, canSelect: Boolean, changed: Boolean, failed: Boolean,
+    onSelect: (Departure) -> Unit, onReset: () -> Unit,
+) {
     val scheme = MaterialTheme.colorScheme
     Surface(color = scheme.surfaceContainerHighest, shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(6.dp)) {
-            Text(
-                stringResource(R.string.itinerary_next_departures),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = scheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 4.dp, bottom = 4.dp),
-            )
+        Column(Modifier.padding(8.dp).selectableGroup()) {
+            Row(Modifier.fillMaxWidth().padding(start = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.itinerary_next_departures), style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                if (loading) LoadingIndicator(Modifier.size(32.dp).clearAndSetSemantics {})
+                if (changed) TextButton(onClick = onReset, enabled = canSelect) { Text(stringResource(R.string.itinerary_reset_train)) }
+            }
+            if (loading || failed) {
+                Text(stringResource(if (failed) R.string.itinerary_change_train_failed else R.string.itinerary_changing_train),
+                    style = MaterialTheme.typography.bodySmall, color = if (failed) scheme.error else scheme.onSurfaceVariant,
+                    modifier = Modifier.padding(8.dp).semantics { liveRegion = LiveRegionMode.Polite })
+            }
             departures.forEach { departure ->
-                val planned = plannedTripId != null && departure.tripId == plannedTripId
+                val selected = selectedTripId != null && departure.tripId == selectedTripId
                 Surface(
-                    color = if (planned) scheme.tertiaryContainer else Color.Transparent,
-                    contentColor = if (planned) scheme.onTertiaryContainer else scheme.onSurfaceVariant,
+                    selected = selected,
+                    onClick = { onSelect(departure) },
+                    enabled = canSelect && !departure.cancelled && !departure.tripId.isNullOrBlank(),
+                    modifier = Modifier.fillMaxWidth().semantics { role = Role.RadioButton },
+                    color = if (selected) scheme.tertiaryContainer else Color.Transparent,
+                    contentColor = if (selected) scheme.onTertiaryContainer else scheme.onSurfaceVariant,
                     shape = MaterialTheme.shapes.medium,
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.semantics(mergeDescendants = true) {}.heightIn(min = 36.dp).padding(horizontal = 10.dp),
-                    ) {
-                        val name = departure.headsign ?: departure.line.name
-                        Text(
-                            departure.tripCode?.let { stringResource(R.string.itinerary_trip_code, it, name) } ?: name,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = if (planned) FontWeight.Bold else FontWeight.Normal,
-                            textDecoration = if (departure.cancelled) TextDecoration.LineThrough else null,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.heightIn(min = 56.dp).padding(horizontal = 8.dp, vertical = 8.dp)) {
+                        RadioButton(selected = selected, onClick = null,
+                            enabled = canSelect && !departure.cancelled && !departure.tripId.isNullOrBlank())
+                        Column(Modifier.weight(1f)) {
+                            val name = departure.headsign ?: departure.line.name
+                            Text(departure.tripCode?.let { stringResource(R.string.itinerary_trip_code, it, name) } ?: name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                textDecoration = if (departure.cancelled) TextDecoration.LineThrough else null,
+                                maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            departure.stop.track?.let { Text(stringResource(R.string.itinerary_track, it), style = MaterialTheme.typography.bodySmall) }
+                            if (departure.cancelled) Text(stringResource(R.string.cancelled), style = MaterialTheme.typography.bodySmall)
+                        }
                         val minutes = clockMinutesUntil(now, departure.time.best)
                         if (departure.time.isRealtime && minutes < 60) {
                             CountdownText(minutes, live = true, style = MaterialTheme.typography.titleMedium)

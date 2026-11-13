@@ -155,9 +155,12 @@ fun ItivioRoot(
     val areaStops = mapStops.stops.collectAsStateWithLifecycle().value.takeIf { top == ExploreRoute }.orEmpty()
     val now by rememberNow()
 
-    val walkLeg = (top as? WalkRoute)?.let { route -> state.journey(route.journeyId)?.legs?.getOrNull(route.legIndex) as? Leg.Street }
+    var trackedJourney by remember { mutableStateOf<Journey?>(null) }
+    val walkLeg = (top as? WalkRoute)?.let { route ->
+        (trackedJourney?.takeIf { it.id == route.journeyId } ?: state.journey(route.journeyId))?.legs?.getOrNull(route.legIndex) as? Leg.Street
+    }
     val mapJourney = when (top) {
-        is ItineraryRoute -> state.journey(top.journeyId)
+        is ItineraryRoute -> trackedJourney?.takeIf { it.id == top.journeyId } ?: state.journey(top.journeyId)
         ResultsRoute -> state.highlighted
         // The walking view draws only its walk, from its start to its end.
         is WalkRoute -> walkLeg?.let { Journey("${top.journeyId}-walk-${top.legIndex}", listOf(it), it.start, it.end, 0) }
@@ -314,15 +317,22 @@ fun ItivioRoot(
                                 val lineTimes: LineTimesViewModel = koinViewModel()
                                 val tracker: TripTrackerViewModel = koinViewModel()
                                 LaunchedEffect(journey) {
-                                    lineTimes.show(journey, if (state.arriveBy) journey.departure.best else state.time)
                                     tracker.show(journey)
                                 }
                                 val tracked = tracker.journey.collectAsStateWithLifecycle().value?.takeIf { it.id == journey.id }
+                                val visible = tracked ?: journey
+                                LaunchedEffect(visible, state.time, state.arriveBy) {
+                                    trackedJourney = visible
+                                    lineTimes.show(visible, if (state.arriveBy) journey.departure.best else state.time)
+                                }
                                 ItineraryScreen(
                                     wide = wide,
-                                    journey = tracked ?: journey,
+                                    journey = visible,
                                     now = now,
                                     lineTimes = lineTimes.times.collectAsStateWithLifecycle().value,
+                                    selection = tracker.selection.collectAsStateWithLifecycle().value,
+                                    onSelectDeparture = tracker::selectDeparture,
+                                    onResetTrain = tracker::resetTrain,
                                     onBack = { backStack.pop(planner) },
                                     onWalk = { index ->
                                         following = true
@@ -332,7 +342,7 @@ fun ItivioRoot(
                             }
                         }
                         entry<WalkRoute> { route ->
-                            val leg = state.journey(route.journeyId)?.legs?.getOrNull(route.legIndex) as? Leg.Street
+                            val leg = (trackedJourney?.takeIf { it.id == route.journeyId } ?: state.journey(route.journeyId))?.legs?.getOrNull(route.legIndex) as? Leg.Street
                             if (leg == null) {
                                 SessionFallback(wide, state.results) { backStack.pop(planner) }
                             } else {

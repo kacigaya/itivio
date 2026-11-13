@@ -325,4 +325,9 @@
     <string name="attribution_ign">French addresses: IGN · BAN</string>
     <string name="attribution_ign_url" translatable="false">https://cartes.gouv.fr/aide/fr/guides-utilisateur/utiliser-les-services-de-la-geoplateforme/geocodage/</string>
     <string name="privacy_ign">French address searches also go to IGN. Your location is not sent to IGN.</string>
+    <string name="itinerary_reset_train">Reset</string>
+    <string name="itinerary_changing_train">Updating train…</string>
+    <string name="itinerary_change_train_failed">Could not change the train. Try again.</string>
+    <string name="itinerary_missed_connection">This connection no longer works. Choose another departure for the next leg.</string>
+    <string name="itinerary_platform_changed">Platform changed. Follow the signs at the station.</string>
 </resources>
