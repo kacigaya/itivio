@@ -221,7 +221,7 @@ fun TimeText(time: StopTime, zone: ZoneId?, modifier: Modifier = Modifier, empha
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = modifier.semantics(mergeDescendants = true) {
+        modifier = modifier.clearAndSetSemantics {
             contentDescription = buildString {
                 append(best)
                 append(", ")
@@ -305,7 +305,7 @@ fun LoadingState(modifier: Modifier = Modifier) {
     val label = stringResource(R.string.loading)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.fillMaxWidth().padding(32.dp).semantics { contentDescription = label },
+        modifier = modifier.fillMaxWidth().padding(32.dp).clearAndSetSemantics { contentDescription = label },
     ) {
         LoadingIndicator()
     }
