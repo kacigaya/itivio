@@ -72,6 +72,7 @@ fun LocationInputField(
     placeholder: String,
     onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     SearchBarDefaults.InputField(
         textFieldState = textFieldState,
@@ -92,6 +93,8 @@ fun LocationInputField(
                 IconButton(onClick = { textFieldState.clearText() }) {
                     Icon(painterResource(R.drawable.ic_close), contentDescription = stringResource(R.string.search_clear))
                 }
+            } else {
+                trailing?.invoke()
             }
         },
         modifier = modifier,

@@ -4,7 +4,21 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -16,7 +30,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import app.itivio.BuildConfig
+import app.itivio.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -25,12 +46,12 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import app.itivio.domain.Departure
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
 import app.itivio.domain.Location
 import app.itivio.domain.LocationKind
-import app.itivio.domain.Stop
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.MapPanel
@@ -39,7 +60,12 @@ import app.itivio.ui.common.LocalPanelHeaderHeight
 import app.itivio.ui.common.isWideLayout
 import app.itivio.ui.common.panelInsets
 import app.itivio.ui.explore.ExplorePeekHeight
+import app.itivio.ui.disruptions.DisruptionsScreen
+import app.itivio.ui.disruptions.DisruptionsViewModel
 import app.itivio.ui.explore.ExploreScreen
+import app.itivio.ui.settings.AboutScreen
+import app.itivio.ui.settings.SettingsScreen
+import app.itivio.ui.settings.SettingsViewModel
 import app.itivio.ui.itinerary.ItineraryPeekHeight
 import app.itivio.ui.itinerary.ItineraryScreen
 import app.itivio.ui.itinerary.LineTimesViewModel
@@ -75,6 +101,9 @@ import org.maplibre.compose.location.rememberLocationState
 @Serializable data object ResultsRoute : NavKey
 @Serializable data class ItineraryRoute(val journeyId: String) : NavKey
 @Serializable data class WalkRoute(val journeyId: String, val legIndex: Int) : NavKey
+@Serializable data object DisruptionsRoute : NavKey
+@Serializable data object SettingsRoute : NavKey
+@Serializable data object AboutRoute : NavKey
 
 /** Routes that show the planning session. After process death they wait for the session to plan again. */
 private val NavKey.needsSession: Boolean get() = this == ResultsRoute || this is ItineraryRoute || this is WalkRoute
@@ -144,7 +173,7 @@ fun ItivioRoot(
     val stopPoint = (top as? StopRoute)?.let { GeoPoint(it.latitude, it.longitude) }
     val destinationPoint = stopPoint ?: (state.destination as? Endpoint.Place)?.location?.point?.takeIf { top.needsSession }
     val stops = (nearbyState as? LoadState.Ready)?.value.orEmpty()
-        .flatMap { group -> group.departures.mapNotNull { departure -> departure.stop.toMapStop() } }
+        .flatMap { group -> group.departures.mapNotNull { departure -> departure.toMapStop() } }
         .distinctBy { it.stopId }
 
     fun openStop(stop: MapStop) {
@@ -153,6 +182,9 @@ fun ItivioRoot(
 
     // The screen on top measures its floating header, so the camera keeps routes below it.
     val headerHeight = remember { mutableStateOf(0.dp) }
+    // Only the two top-level screens show the navigation bar or rail.
+    val topLevel = top == ExploreRoute || top == DisruptionsRoute
+    var navigationSize by remember { mutableStateOf(0.dp) }
 
     Box(Modifier.fillMaxSize()) {
         TransitMap(
@@ -160,7 +192,7 @@ fun ItivioRoot(
             journey = mapJourney,
             destination = destinationPoint,
             stops = stops,
-            insets = panelInsets(wide, peek, headerHeight.value),
+            insets = panelInsets(wide, peek, headerHeight.value, navigation = if (topLevel) navigationSize else 0.dp),
             recenterRequest = recenterRequest,
             areaStops = areaStops,
             focus = stopPoint,
@@ -170,126 +202,225 @@ fun ItivioRoot(
             onCameraIdle = { box, zoom -> if (backStack.last() == ExploreRoute) mapStops.onCameraIdle(box, zoom) },
             modifier = Modifier.fillMaxSize(),
         )
-        CompositionLocalProvider(LocalPanelHeaderHeight provides headerHeight) {
-            NavDisplay(
-                backStack = backStack,
-                onBack = { backStack.pop(planner) },
-                entryDecorators = listOf(
-                    rememberSaveableStateHolderNavEntryDecorator(),
-                    rememberViewModelStoreNavEntryDecorator(),
-                ),
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                popTransitionSpec = { fadeIn() togetherWith fadeOut() },
-                predictivePopTransitionSpec = { fadeIn() togetherWith fadeOut() },
-                entryProvider = entryProvider {
-                    entry<ExploreRoute> {
-                        ExploreScreen(
-                            wide = wide,
-                            locationGranted = locationGranted,
-                            nearby = nearbyState,
-                            now = now,
-                            onRequestLocation = locationState::requestPermission,
-                            onRecenter = { recenterRequest++ },
-                            onRetryNearby = nearby::retry,
-                            onDestination = { endpoint ->
-                                planner.setDestination(endpoint)
-                                backStack.add(ResultsRoute)
-                            },
-                            onStop = { location ->
-                                location.stopId?.let { openStop(MapStop(it, location.name, location.point)) }
-                            },
-                        )
-                    }
-                    entry<StopRoute> { route ->
-                        // Scoped to this entry, so the board refreshes only while it is open.
-                        val board: StopDeparturesViewModel = koinViewModel()
-                        LaunchedEffect(route.stopId) { board.show(route.stopId) }
-                        StopScreen(
-                            wide = wide,
-                            name = route.name,
-                            departures = board.departures.collectAsStateWithLifecycle().value,
-                            now = now,
-                            onBack = { backStack.pop(planner) },
-                            onDirections = {
-                                val point = GeoPoint(route.latitude, route.longitude)
-                                planner.setDestination(Endpoint.Place(Location(route.stopId, route.name, LocationKind.STOP, point, stopId = route.stopId)))
-                                backStack.add(ResultsRoute)
-                            },
-                            onRetry = board::retry,
-                        )
-                    }
-                    entry<ResultsRoute> {
-                        ResultsScreen(
-                            wide = wide,
-                            state = state,
-                            onBack = { backStack.pop(planner) },
-                            onOrigin = { endpoint ->
-                                if (endpoint == Endpoint.MyLocation && !locationGranted) locationState.requestPermission()
-                                planner.setOrigin(endpoint)
-                            },
-                            onDestination = planner::setDestination,
-                            onSwap = planner::swap,
-                            onTime = planner::setTime,
-                            onOptions = planner::setOptions,
-                            onSort = planner::setSort,
-                            onSelect = planner::select,
-                            onOpen = { id -> backStack.add(ItineraryRoute(id)) },
-                            onEarlier = planner::loadEarlier,
-                            onLater = planner::loadLater,
-                            onRetry = planner::retry,
-                        )
-                    }
-                    entry<ItineraryRoute> { route ->
-                        val journey = state.journey(route.journeyId)
-                        if (journey == null) {
-                            SessionFallback(wide, state.results) { backStack.pop(planner) }
-                        } else {
-                            // Scoped to this entry, so the times refresh only while the itinerary is open.
-                            val lineTimes: LineTimesViewModel = koinViewModel()
-                            val tracker: TripTrackerViewModel = koinViewModel()
-                            LaunchedEffect(journey) {
-                                lineTimes.show(journey)
-                                tracker.show(journey)
-                            }
-                            val tracked = tracker.journey.collectAsStateWithLifecycle().value?.takeIf { it.id == journey.id }
-                            ItineraryScreen(
+        TopLevelNavigation(
+            wide = wide,
+            visible = topLevel,
+            disruptions = top == DisruptionsRoute,
+            onMap = { if (backStack.last() == DisruptionsRoute) backStack.pop(planner) },
+            onDisruptions = { if (backStack.last() != DisruptionsRoute) backStack.add(DisruptionsRoute) },
+            onSize = { navigationSize = it },
+        ) {
+            CompositionLocalProvider(LocalPanelHeaderHeight provides headerHeight) {
+                NavDisplay(
+                    backStack = backStack,
+                    onBack = { backStack.pop(planner) },
+                    entryDecorators = listOf(
+                        rememberSaveableStateHolderNavEntryDecorator(),
+                        rememberViewModelStoreNavEntryDecorator(),
+                    ),
+                    transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    popTransitionSpec = { fadeIn() togetherWith fadeOut() },
+                    predictivePopTransitionSpec = { fadeIn() togetherWith fadeOut() },
+                    entryProvider = entryProvider {
+                        entry<ExploreRoute> {
+                            ExploreScreen(
                                 wide = wide,
-                                journey = tracked ?: journey,
-                                now = now,
-                                lineTimes = lineTimes.times.collectAsStateWithLifecycle().value,
-                                onBack = { backStack.pop(planner) },
-                                onWalk = { index ->
-                                    following = true
-                                    backStack.add(WalkRoute(journey.id, index))
-                                },
-                            )
-                        }
-                    }
-                    entry<WalkRoute> { route ->
-                        val leg = state.journey(route.journeyId)?.legs?.getOrNull(route.legIndex) as? Leg.Street
-                        if (leg == null) {
-                            SessionFallback(wide, state.results) { backStack.pop(planner) }
-                        } else {
-                            val position by userLocation.point.collectAsStateWithLifecycle()
-                            WalkScreen(
-                                wide = wide,
-                                leg = leg,
-                                position = position,
                                 locationGranted = locationGranted,
-                                following = following,
+                                nearby = nearbyState,
                                 now = now,
-                                onClose = { backStack.pop(planner) },
-                                onRecenter = { following = true },
                                 onRequestLocation = locationState::requestPermission,
-                                onReplan = {
-                                    planner.replanFromHere()
-                                    while (backStack.last() != ResultsRoute && backStack.size > 1) backStack.removeAt(backStack.lastIndex)
+                                onRecenter = { recenterRequest++ },
+                                onRetryNearby = nearby::retry,
+                                onDestination = { endpoint ->
+                                    planner.setDestination(endpoint)
+                                    backStack.add(ResultsRoute)
                                 },
+                                onStop = { location ->
+                                    location.stopId?.let { openStop(MapStop(it, location.name, location.point)) }
+                                },
+                                onSettings = { backStack.add(SettingsRoute) },
                             )
                         }
-                    }
-                },
-            )
+                        entry<DisruptionsRoute> {
+                            // Scoped to this entry, so the alerts load only while the tab is open.
+                            val disruptions: DisruptionsViewModel = koinViewModel()
+                            DisruptionsScreen(
+                                state = disruptions.disruptions.collectAsStateWithLifecycle().value,
+                                now = now,
+                                onRetry = disruptions::retry,
+                            )
+                        }
+                        entry<SettingsRoute> {
+                            val settings: SettingsViewModel = koinViewModel()
+                            SettingsScreen(
+                                theme = settings.theme.collectAsStateWithLifecycle().value,
+                                options = settings.options.collectAsStateWithLifecycle().value,
+                                onBack = { backStack.pop(planner) },
+                                onTheme = settings::setTheme,
+                                onOptions = settings::setOptions,
+                                onClearRecents = settings::clearRecents,
+                                onDeleteAll = settings::deleteAll,
+                                onAbout = { backStack.add(AboutRoute) },
+                            )
+                        }
+                        entry<AboutRoute> {
+                            AboutScreen(version = BuildConfig.VERSION_NAME, onBack = { backStack.pop(planner) })
+                        }
+                        entry<StopRoute> { route ->
+                            // Scoped to this entry, so the board refreshes only while it is open.
+                            val board: StopDeparturesViewModel = koinViewModel()
+                            LaunchedEffect(route.stopId) { board.show(route.stopId) }
+                            StopScreen(
+                                wide = wide,
+                                name = route.name,
+                                departures = board.departures.collectAsStateWithLifecycle().value,
+                                now = now,
+                                onBack = { backStack.pop(planner) },
+                                onDirections = {
+                                    val point = GeoPoint(route.latitude, route.longitude)
+                                    planner.setDestination(Endpoint.Place(Location(route.stopId, route.name, LocationKind.STOP, point, stopId = route.stopId)))
+                                    backStack.add(ResultsRoute)
+                                },
+                                onRetry = board::retry,
+                            )
+                        }
+                        entry<ResultsRoute> {
+                            ResultsScreen(
+                                wide = wide,
+                                state = state,
+                                onBack = { backStack.pop(planner) },
+                                onOrigin = { endpoint ->
+                                    if (endpoint == Endpoint.MyLocation && !locationGranted) locationState.requestPermission()
+                                    planner.setOrigin(endpoint)
+                                },
+                                onDestination = planner::setDestination,
+                                onSwap = planner::swap,
+                                onTime = planner::setTime,
+                                onOptions = planner::setOptions,
+                                onSort = planner::setSort,
+                                onSelect = planner::select,
+                                onOpen = { id -> backStack.add(ItineraryRoute(id)) },
+                                onEarlier = planner::loadEarlier,
+                                onLater = planner::loadLater,
+                                onRetry = planner::retry,
+                            )
+                        }
+                        entry<ItineraryRoute> { route ->
+                            val journey = state.journey(route.journeyId)
+                            if (journey == null) {
+                                SessionFallback(wide, state.results) { backStack.pop(planner) }
+                            } else {
+                                // Scoped to this entry, so the times refresh only while the itinerary is open.
+                                val lineTimes: LineTimesViewModel = koinViewModel()
+                                val tracker: TripTrackerViewModel = koinViewModel()
+                                LaunchedEffect(journey) {
+                                    lineTimes.show(journey)
+                                    tracker.show(journey)
+                                }
+                                val tracked = tracker.journey.collectAsStateWithLifecycle().value?.takeIf { it.id == journey.id }
+                                ItineraryScreen(
+                                    wide = wide,
+                                    journey = tracked ?: journey,
+                                    now = now,
+                                    lineTimes = lineTimes.times.collectAsStateWithLifecycle().value,
+                                    onBack = { backStack.pop(planner) },
+                                    onWalk = { index ->
+                                        following = true
+                                        backStack.add(WalkRoute(journey.id, index))
+                                    },
+                                )
+                            }
+                        }
+                        entry<WalkRoute> { route ->
+                            val leg = state.journey(route.journeyId)?.legs?.getOrNull(route.legIndex) as? Leg.Street
+                            if (leg == null) {
+                                SessionFallback(wide, state.results) { backStack.pop(planner) }
+                            } else {
+                                val position by userLocation.point.collectAsStateWithLifecycle()
+                                WalkScreen(
+                                    wide = wide,
+                                    leg = leg,
+                                    position = position,
+                                    locationGranted = locationGranted,
+                                    following = following,
+                                    now = now,
+                                    onClose = { backStack.pop(planner) },
+                                    onRecenter = { following = true },
+                                    onRequestLocation = locationState::requestPermission,
+                                    onReplan = {
+                                        planner.replanFromHere()
+                                        while (backStack.last() != ResultsRoute && backStack.size > 1) backStack.removeAt(backStack.lastIndex)
+                                    },
+                                )
+                            }
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The two top-level destinations: a navigation bar below [content] on phones, and a navigation
+ * rail beside it on wide windows. Only the top-level screens show it ([visible]). The layout
+ * around [content] is the same in all cases, so the screens keep their state. [onSize] gets the
+ * height of the bar or the width of the rail.
+ */
+@Composable
+private fun TopLevelNavigation(
+    wide: Boolean,
+    visible: Boolean,
+    disruptions: Boolean,
+    onMap: () -> Unit,
+    onDisruptions: () -> Unit,
+    onSize: (Dp) -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val density = LocalDensity.current
+    val mapLabel = stringResource(R.string.navigation_map)
+    val disruptionsLabel = stringResource(R.string.disruptions_title)
+    Row(Modifier.fillMaxSize()) {
+        if (visible && wide) {
+            NavigationRail(Modifier.onSizeChanged { onSize(with(density) { it.width.toDp() }) }) {
+                NavigationRailItem(
+                    selected = !disruptions,
+                    onClick = onMap,
+                    icon = { Icon(painterResource(R.drawable.ic_map), contentDescription = null) },
+                    label = { Text(mapLabel) },
+                )
+                NavigationRailItem(
+                    selected = disruptions,
+                    onClick = onDisruptions,
+                    icon = { Icon(painterResource(R.drawable.ic_warning), contentDescription = null) },
+                    label = { Text(disruptionsLabel) },
+                )
+            }
+        }
+        Column(Modifier.weight(1f)) {
+            // The bar or the rail takes the system inset on its side; the screens must not add it again.
+            val insets = when {
+                !visible -> Modifier
+                wide -> Modifier.consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start))
+                else -> Modifier.consumeWindowInsets(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+            }
+            Box(Modifier.weight(1f).then(insets)) { content() }
+            if (visible && !wide) {
+                NavigationBar(Modifier.onSizeChanged { onSize(with(density) { it.height.toDp() }) }) {
+                    NavigationBarItem(
+                        selected = !disruptions,
+                        onClick = onMap,
+                        icon = { Icon(painterResource(R.drawable.ic_map), contentDescription = null) },
+                        label = { Text(mapLabel) },
+                    )
+                    NavigationBarItem(
+                        selected = disruptions,
+                        onClick = onDisruptions,
+                        icon = { Icon(painterResource(R.drawable.ic_warning), contentDescription = null) },
+                        label = { Text(disruptionsLabel) },
+                    )
+                }
+            }
         }
     }
 }
@@ -312,7 +443,8 @@ private object NoHeading : HeadingProvider {
     override fun updates(request: HeadingRequest) = emptyFlow<HeadingMeasurement>()
 }
 
-private fun Stop.toMapStop(): MapStop? = stopId?.let { MapStop(it, name, point) }
+/** The departures are in time order, so a stop gets the line of its next departure. */
+private fun Departure.toMapStop(): MapStop? = stop.stopId?.let { MapStop(it, stop.name, stop.point, line, mode) }
 
 private fun NavBackStack<NavKey>.pop(planner: PlannerViewModel) {
     if (size <= 1) return

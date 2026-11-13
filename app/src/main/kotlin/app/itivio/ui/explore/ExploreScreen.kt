@@ -1,5 +1,6 @@
 package app.itivio.ui.explore
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,13 +13,13 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.clearText
-import androidx.compose.material3.AssistChip
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
@@ -37,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -63,7 +65,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 // Drag handle, search row, shortcut chips, title, and the first departures.
-val ExplorePeekHeight = 336.dp
+val ExplorePeekHeight = 344.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,6 +79,7 @@ fun ExploreScreen(
     onRetryNearby: () -> Unit,
     onDestination: (Endpoint) -> Unit,
     onStop: (Location) -> Unit,
+    onSettings: () -> Unit,
     places: SavedPlacesViewModel = koinViewModel(),
 ) {
     val searchBarState = rememberLocationSearchBarState()
@@ -105,7 +108,13 @@ fun ExploreScreen(
         ) {
             SearchBar(
                 state = searchBarState,
-                inputField = { LocationInputField(textState, searchBarState, placeholder, onBack = null) },
+                inputField = {
+                    LocationInputField(textState, searchBarState, placeholder, onBack = null, trailing = {
+                        IconButton(onClick = onSettings) {
+                            Icon(painterResource(R.drawable.ic_settings), contentDescription = stringResource(R.string.settings_title))
+                        }
+                    })
+                },
                 modifier = Modifier.weight(1f),
             )
             LocateButton(locationGranted, onRequestLocation, onRecenter)
@@ -162,26 +171,35 @@ private fun SavedChips(saved: SavedPlaces?, onOpen: (Location) -> Unit, onAssign
         verticalAlignment = Alignment.CenterVertically,
         contentPadding = PaddingValues(horizontal = 16.dp),
         // A minimum, not a fixed height: chips grow with large text.
-        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 8.dp).heightIn(min = 48.dp),
     ) {
         if (saved == null) return@LazyRow
         items(Shortcut.entries, key = { "shortcut:$it" }) { shortcut ->
             val location = saved.shortcut(shortcut)
-            AssistChip(
+            SavedChip(
+                icon = shortcut.iconRes(),
+                label = stringResource(if (location != null) shortcut.labelRes() else shortcut.setLabelRes()),
                 onClick = { if (location != null) onOpen(location) else onAssign(shortcut) },
-                label = {
-                    Text(stringResource(if (location != null) shortcut.labelRes() else shortcut.setLabelRes()))
-                },
-                leadingIcon = { Icon(painterResource(shortcut.iconRes()), contentDescription = null, Modifier.size(18.dp)) },
             )
         }
         items(saved.favorites, key = { "favorite:${it.savedKey}" }) { location ->
-            AssistChip(
-                onClick = { onOpen(location) },
-                label = { Text(location.name, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 160.dp)) },
-                leadingIcon = { Icon(painterResource(R.drawable.ic_star_filled), contentDescription = null, Modifier.size(18.dp)) },
-            )
+            SavedChip(icon = R.drawable.ic_star_filled, label = location.name, onClick = { onOpen(location) })
         }
+    }
+}
+
+/** A saved place as a tonal button: bolder than a chip, because it starts a journey with one tap. */
+@Composable
+private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit) {
+    FilledTonalButton(onClick = onClick, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
+        Icon(painterResource(icon), contentDescription = null, Modifier.size(ButtonDefaults.IconSize))
+        Text(
+            label,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = ButtonDefaults.IconSpacing).widthIn(max = 160.dp),
+        )
     }
 }
 
@@ -190,16 +208,19 @@ private fun Shortcut.setLabelRes(): Int = when (this) {
     Shortcut.WORK -> R.string.shortcut_set_work
 }
 
-/** A round button with the height and the container color of the search bar, so the two read as one row. */
+/**
+ * A button with the height of the search bar. Its shape and its primary container color set it
+ * apart from the bar, so the two do not read as one field.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LocateButton(locationGranted: Boolean, onRequestLocation: () -> Unit, onRecenter: () -> Unit) {
     FilledIconButton(
         onClick = if (locationGranted) onRecenter else onRequestLocation,
-        shape = CircleShape,
+        shape = MaterialTheme.shapes.largeIncreased,
         colors = IconButtonDefaults.filledIconButtonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            contentColor = MaterialTheme.colorScheme.onSurface,
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         ),
         modifier = Modifier.size(SearchBarDefaults.InputFieldHeight),
     ) {
@@ -214,7 +235,7 @@ private fun Intro(onRequestLocation: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
     ) {
-        Text(stringResource(R.string.explore_title), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.explore_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
         Text(
             stringResource(R.string.explore_body),
             style = MaterialTheme.typography.bodyMedium,

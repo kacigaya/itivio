@@ -12,6 +12,8 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.onRoot
 import app.itivio.data.transitous.PlanResponse
 import app.itivio.data.transitous.toDomain
@@ -27,10 +29,16 @@ import app.itivio.domain.PlacesRepository
 import app.itivio.domain.SavedPlaces
 import app.itivio.domain.Stop
 import app.itivio.domain.StopTime
+import app.itivio.domain.ThemeMode
 import app.itivio.domain.TransitMode
+import app.itivio.domain.disruptionsOf
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.UserLocation
+import app.itivio.ui.disruptions.DisruptionGroups
+import app.itivio.ui.disruptions.DisruptionsScreen
 import app.itivio.ui.explore.ExploreScreen
+import app.itivio.ui.settings.AboutScreen
+import app.itivio.ui.settings.SettingsScreen
 import app.itivio.ui.itinerary.ItineraryScreen
 import app.itivio.ui.nearby.NearbyViewModel
 import app.itivio.ui.nearby.StopDepartures
@@ -109,7 +117,7 @@ class ScreenshotTest {
     fun explore() = capture("explore") {
         ExploreScreen(
             wide = false, locationGranted = false, nearby = LoadState.Idle, now = t0,
-            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {},
+            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {}, onSettings = {},
         )
     }
 
@@ -122,7 +130,7 @@ class ScreenshotTest {
         capture("explore_saved") {
             ExploreScreen(
                 wide = false, locationGranted = true, nearby = LoadState.Ready(sampleDepartures), now = t0,
-                onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {},
+                onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {}, onSettings = {},
             )
         }
     }
@@ -131,7 +139,7 @@ class ScreenshotTest {
     fun nearby() = capture("nearby") {
         ExploreScreen(
             wide = false, locationGranted = true, nearby = LoadState.Ready(sampleDepartures), now = t0,
-            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {},
+            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {}, onSettings = {},
         )
     }
 
@@ -232,6 +240,35 @@ class ScreenshotTest {
     }
 
     @Test
+    fun disruptions() = capture("disruptions") {
+        val departures = transitousJson.decodeFromString<app.itivio.data.transitous.StoptimesResponse>(
+            requireNotNull(javaClass.getResource("/transitous/stoptimes-alerts.json")).readText(),
+        ).stopTimes.map { it.toDomain() }
+        val saved = disruptionsOf(departures.filter { it.line.name != "57" })
+        DisruptionsScreen(
+            state = LoadState.Ready(DisruptionGroups(saved, disruptionsOf(departures, shown = saved.map { it.alert }.toSet()))),
+            now = t0,
+            onRetry = {},
+        )
+    }
+
+    @Test
+    fun disruptionsEmpty() = capture("disruptions_empty") {
+        DisruptionsScreen(state = LoadState.Ready(DisruptionGroups()), now = t0, onRetry = {})
+    }
+
+    @Test
+    fun settings() = capture("settings") {
+        SettingsScreen(
+            theme = ThemeMode.SYSTEM, options = JourneyOptions(),
+            onBack = {}, onTheme = {}, onOptions = {}, onClearRecents = {}, onDeleteAll = {}, onAbout = {},
+        )
+    }
+
+    @Test
+    fun about() = capture("about") { AboutScreen(version = "0.7.0", onBack = {}) }
+
+    @Test
     fun walk() = capture("walk") { Walk(position = { it.points[it.points.size / 3] }) }
 
     @Test
@@ -271,6 +308,20 @@ class ScreenshotTest {
         )
     }
 
+    @Test
+    fun singleLongAlertIsFullyReadable() {
+        val header = "The station is closed for maintenance. Use the temporary bus stop on the other side of the main road. ".repeat(4)
+        compose.setContent {
+            ItivioTheme { app.itivio.ui.itinerary.AlertBanner(listOf(Alert(header, ""))) }
+        }
+        val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        compose.onNodeWithText(header).performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult) {
+            it(layouts)
+        }
+        org.junit.Assert.assertTrue(layouts.single().lineCount > 2)
+        org.junit.Assert.assertFalse(layouts.single().hasVisualOverflow)
+    }
+
     private companion object {
         val berlin: ZoneId = ZoneId.of("Europe/Berlin")
         val t0: Instant = Instant.parse("2026-11-09T07:58:00Z")
@@ -293,6 +344,7 @@ class ScreenshotTest {
                 Departure(stop("Alexanderplatz/Memhardstr."), Line("N5"),
                     TransitMode.BUS, "Hellersdorf", at(75), false, "d6"),
             ),
+            from = GeoPoint(52.5013, 13.4),
         )
 
         val sampleJourneys: List<Journey> = listOf(

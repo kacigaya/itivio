@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -51,13 +50,18 @@ fun isWideLayout(): Boolean =
  */
 val LocalPanelHeaderHeight = compositionLocalOf<MutableState<Dp>?> { null }
 
-/** The map area a [MapPanel] covers, so the camera can keep routes visible. */
+/**
+ * The map area a [MapPanel] covers, so the camera can keep routes visible. [navigation] is the
+ * size of the navigation bar or rail of the app, or zero when the screen shows none. The bar
+ * covers the system navigation area, so the two do not add up.
+ */
 @Composable
-fun panelInsets(wide: Boolean, peekHeight: Dp, headerHeight: Dp): PaddingValues =
+fun panelInsets(wide: Boolean, peekHeight: Dp, headerHeight: Dp, navigation: Dp = 0.dp): PaddingValues =
     if (wide) {
-        PaddingValues(start = PaneWidth + PaneMargin * 2)
+        PaddingValues(start = PaneWidth + PaneMargin * 2 + navigation)
     } else {
-        PaddingValues(top = headerHeight, bottom = peekHeight + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
+        val below = if (navigation > 0.dp) navigation else WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        PaddingValues(top = headerHeight, bottom = peekHeight + below)
     }
 
 /**
@@ -111,12 +115,13 @@ fun MapPanel(
                     }
                 },
             )
-            // The scaffold keeps content above the system bar; cover the map in that inset.
+            // The scaffold keeps content above the system bar; cover the map in that inset. The
+            // padding gives the height: it is zero when the navigation bar of the app took the inset.
             Spacer(
                 Modifier.align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .windowInsetsBottomHeight(WindowInsets.navigationBars)
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .navigationBarsPadding(),
             )
         }
     }

@@ -1,6 +1,7 @@
 package app.itivio
 
 import app.itivio.ui.common.UserLocation
+import app.itivio.ui.disruptions.DisruptionsViewModel
 import app.itivio.ui.itinerary.LineTimesViewModel
 import app.itivio.ui.itinerary.TripTrackerViewModel
 import app.itivio.ui.map.MapStopsViewModel
@@ -8,6 +9,7 @@ import app.itivio.ui.nearby.NearbyViewModel
 import app.itivio.ui.planner.PlannerViewModel
 import app.itivio.ui.search.SavedPlacesViewModel
 import app.itivio.ui.search.SearchViewModel
+import app.itivio.ui.settings.SettingsViewModel
 import app.itivio.ui.stop.StopDeparturesViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -24,4 +26,6 @@ val uiModule = module {
     viewModel { TripTrackerViewModel(get()) }
     viewModelOf(::StopDeparturesViewModel)
     viewModelOf(::MapStopsViewModel)
+    viewModelOf(::DisruptionsViewModel)
+    viewModelOf(::SettingsViewModel)
 }
