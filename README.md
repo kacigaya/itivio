@@ -42,6 +42,8 @@
 
 ## Privacy
 
+Read the [privacy policy](PRIVACY.md) for details about location, network services, stored data, and deletion.
+
 - No account, no analytics, no ads.
 - The app does not log your journeys or your location.
 - The app rounds the location it sends for search suggestions to about 1 km.

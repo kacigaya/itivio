@@ -157,7 +157,7 @@ Feature work stops here. Only fixes go in after this release.
 - [ ] Add a release workflow that builds, signs, and publishes the APKs with checksums.
 - [ ] Add F-Droid metadata and send the app to F-Droid.
 - [ ] Add `CHANGELOG.md`, `CONTRIBUTING.md`, and `SECURITY.md`.
-- [ ] Add a privacy policy file.
+- [x] Add a privacy policy file.
 - [ ] Add screenshots to the README.
 
 ## v1.0.0: Stable
