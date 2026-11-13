@@ -34,6 +34,9 @@
 - Walking directions: the next turn, the distance to it, the remaining time, and the arrival time. The map follows your position and heading.
 - The app keeps your search when Android stops it in the background, and plans it again.
 - Live times where the transit agency publishes them. Scheduled times have no live marker.
+- A Disruptions tab with the service alerts for your saved stops and for the stops near you.
+- Settings for the theme and the journey options, and an action that deletes all app data.
+- English and French.
 - Light and dark themes with Material You colors.
 - Layout for phones, tablets, and foldables.
 
@@ -44,15 +47,17 @@
 - The app rounds the location it sends for search suggestions to about 1 km.
 - Walking directions use your location on the device only. The app sends it only when you select "Plan a new route".
 - Your location does not need Google Play services.
-- Favorites, Home and Work, and recent searches stay on your device. The app sends them to no service.
+- Favorites, Home and Work, and recent searches are stored on your device. The Disruptions tab sends saved stop IDs as described below.
 - Journey options stay on your device. They go to Transitous only as part of a journey request. This includes the wheelchair option.
+- The Disruptions tab sends the IDs of your saved stops (Home, Work, and favorites) to Transitous, to get their alerts. It sends them only while the tab is open. A saved place that is not a stop is not sent.
+- The settings stay on your device. "Delete all app data" in the settings removes the saved places, the journey options, and the settings.
 - The app turns off Android backup and device transfer for its data.
 
 The app sends requests to these services:
 
 | Service | Use | Data sent |
 |---|---|---|
-| [Transitous](https://transitous.org/) | Search, routes, departures, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the map area you look at when you zoom in to street level |
+| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the IDs of your saved stops when you open the Disruptions tab, the map area you look at when you zoom in to street level |
 | [IGN Géoplateforme](https://cartes.gouv.fr/) | French address search | Search text, without your location |
 | [OpenFreeMap](https://openfreemap.org/) | Map tiles | The map area you look at |
 
@@ -112,3 +117,5 @@ Read the [Transitous usage policy](https://transitous.org/api/) before you publi
 ## License
 
 itivio is free software. You can redistribute it and change it under the terms of the [GNU General Public License](LICENSE), version 3 or any later version.
+
+The app bundles the Google Sans Flex typeface, unmodified. It has its own license, the [SIL Open Font License 1.1](licenses/GoogleSansFlex-OFL.txt). The icons are Material Symbols, under the Apache License 2.0.

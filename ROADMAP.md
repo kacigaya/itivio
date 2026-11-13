@@ -75,37 +75,58 @@ Limits for this release:
 - The device position stays on the device during the walking view. Only the "plan a new route" button sends it.
 - The walking view works only while the app is on screen. The app does not ask for background location.
 
-## v0.7.0: Disruptions, languages, and settings
+## v0.7.0: Interface refresh, disruptions, languages, and settings
 
 This is the last alpha release.
 
+### Interface refresh
+
+A bolder Material 3 Expressive look for the main screens. All items are done.
+
+- [x] Bundle the Google Sans Flex typeface. Pair a heavy weight for numbers and names with a light weight for units and secondary text.
+- [x] Change the icons to Material Symbols Rounded, filled.
+- [x] Home: show the saved places as tonal buttons. Show the nearby stops on the map as pins in the line color, with the mode icon.
+- [x] Nearby departures and the departure board: show one card for each stop, with one row for each line and direction. Show the distance to each nearby stop.
+- [x] Results: show the travel time, the options, and the sort order as tonal toggle buttons.
+- [x] Itinerary: show the summary on a hero card with the legs of the journey. Show each transit leg on a card. Show the alerts of a leg in one banner.
+- [x] Walking view: make the distance to the next turn the largest text. Add a progress bar for the walk.
+
+Limits for this release:
+
+- The font adds about 3.9 MB to each APK before compression. The app bundles the file unmodified, so the license and the trademark terms stay simple. Make a subset only if the APK size becomes a problem.
+- The distance to a nearby stop is a straight line, not a walking route. The app shows no walking time for this reason.
+
 ### Disruptions tab
 
-A tab that lists the service disruptions ("Perturbations" in French) that affect the user's stops.
+A tab that lists the service disruptions ("Perturbations" in French) that affect the user's stops. All items are done.
 
-- [ ] Add top-level navigation with two destinations: Map and Disruptions. The app has no tabs today. Use a navigation bar on phones and a navigation rail on wide screens.
-- [ ] Ask for alerts with the stop times. Today the app sets `withAlerts=false` on `/v6/stoptimes`.
-- [ ] Read the severity, effect, cause, and impact period of an alert. Today the app reads only the header, the description, and the link.
-- [ ] Show the disruptions in two groups: favorite stops, then stops near the user.
-- [ ] Put the most severe disruptions first in each group.
-- [ ] Show each disruption with its stop, its effect, its time period, and its link.
-- [ ] Show an alert only one time when it applies to more than one stop.
-- [ ] Add an empty state. Tell the user that some regions publish no alerts.
-- [ ] Add a test fixture with alerts. The current fixtures have none.
-- [ ] Add the new data to the README privacy table: the tab sends the IDs of the favorite stops to Transitous.
+- [x] Add top-level navigation with two destinations: Map and Disruptions. Use a navigation bar on phones and a navigation rail on wide screens.
+- [x] Ask for alerts with the stop times of the tab. The other screens keep `withAlerts=false` on `/v6/stoptimes`.
+- [x] Read the severity, effect, cause, and impact period of an alert.
+- [x] Show the disruptions in two groups: saved stops (Home, Work, and favorites), then stops near the user.
+- [x] Put the most severe disruptions first in each group.
+- [x] Show each disruption with its stop, its effect, its time period, and its link.
+- [x] Show an alert only one time when it applies to more than one stop.
+- [x] Add an empty state. Tell the user that some regions publish no alerts.
+- [x] Add a test fixture with alerts.
+- [x] Add the new data to the README privacy table: the tab sends the IDs of the saved stops to Transitous.
 
 Limits for this release:
 
 - The provider has no endpoint that lists all disruptions of a network or a line. The tab shows only the disruptions on the stops it asks about.
 - The tab loads disruptions only while it is on screen. The app sends no background requests and no notifications.
+- Alerts come with departures. A line with no departure soon shows no alert.
+- Many feeds give no severity. The app then ranks an alert by its effect.
 
 ### Languages and settings
 
-- [ ] Add a French translation. English is the only language today.
-- [ ] Add each new language to `locales_config.xml`, so Android shows the per-app language setting.
-- [ ] Add a settings screen: theme, journey options, and stored data.
-- [ ] Add an about screen: version, license, data credits, and privacy text.
-- [ ] Add an action that deletes all app data: the Room database and DataStore.
+All items are done.
+
+- [x] Add a French translation.
+- [x] Add each new language to `locales_config.xml`, so Android shows the per-app language setting.
+- [x] Add a settings screen: theme, language, journey options, and stored data. The language row opens the Android setting.
+- [x] Add an about screen: version, license, data credits, the font license, and privacy text.
+- [x] Add an action that deletes all app data: the Room database and DataStore.
 
 ## v0.8.0: Accessibility and quality
 

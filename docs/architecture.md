@@ -14,6 +14,7 @@ data/      Transitous client, DTOs, mappers, caches, local storage, location
 - `data` implements `domain` interfaces. Koin binds them in `data/DataModule.kt`.
 - `domain.PlacesRepository` holds saved places. `data/places` implements it with Room.
 - `domain.JourneyOptionsRepository` holds the journey options. `data/options` implements it with DataStore.
+- `domain.SettingsRepository` holds the app settings. `domain.AppData` deletes all stored data. `data/settings` implements both.
 - ViewModels are bound in `UiModule.kt`.
 
 The planning session is in memory. The planner also keeps the minimal request in its `SavedStateHandle`: the origin, the destination, the travel time, and "arrive by". After process death, the planner reads the request and plans again. The results, the sort, and the selection are not saved. A request from "My location" waits up to 10 seconds for the first location fix. While the new plan loads, the itinerary and the walking view show a loading state. If the journey is not in the new results, the screen goes back to the results. Without a saved request, the screens of the session close. "Back" from the results deletes the request.
@@ -29,6 +30,7 @@ The planning session is in memory. The planner also keeps the minimal request in
 | Journey planning | `GET /v6/plan` |
 | Departures | `GET /v6/stoptimes` |
 | Departure board of a stop | `GET /v6/stoptimes` with `stopId` |
+| Disruptions | `GET /v6/stoptimes` with `withAlerts=true` |
 | Line times of an itinerary | `GET /v6/stoptimes` with `stopId` |
 | Live times of an itinerary | `GET /v6/trip` |
 | Map stops | `GET /v6/map/stops` |
@@ -74,10 +76,36 @@ The options are in a Preferences DataStore file, `settings`. A value that the ap
 
 "Earlier departures" and "Later departures" use the page cursors of the plan response. The request of a page is the same as the first request, with `pageCursor` added. Each direction continues from the cursor of its last page. Only one page loads at a time.
 
+The options have two editors: the dialog on the results and the settings screen. The planner observes the store after the first read, so a change in the settings applies to the next search. A change in the settings starts no search.
+
+Limit: the rare modes have no switch. Add one if users must exclude them.
+
+## Settings and stored data
+
+The `settings` DataStore file holds the journey options and the theme (`ThemeMode`: system, light, or dark). `DataModule` binds one `DataStore` instance for the file; two instances for one file fail. `MainActivity` reads the theme before the first frame, so the app does not flash the wrong theme. The icons of the system bars and the map style follow the theme of the app.
+
+The language uses the per-app language setting of Android (`locales_config.xml`). The app has no language picker of its own. Each request reads the language at call time, so a change applies without a restart.
+
+"Delete all app data" (`domain.AppData`) deletes all rows of `saved_place` and clears the `settings` file. The search cache and the planning session are in memory only and end with the process.
+
+## Disruptions
+
+MOTIS has no endpoint that lists the disruptions of a network or a line. Alerts come with stop times: with `withAlerts=true`, each stop time carries the alerts for its trip at that stop. The Disruptions tab sends:
+
+- One `/v6/stoptimes` request with `stopId` and 20 departures for each saved stop: Home, Work, then the favorites. Saved places that are not stops are not sent. The tab asks for at most 10 stops.
+- One `/v6/stoptimes` request around the device position, the same as the nearby departures, when the position is known.
+
+`domain.disruptionsOf` makes one `Disruption` for each alert, with all the stops and lines that carry it. The nearby group leaves out the alerts of the saved group.
+
+The mapper reads the severity, the effect, the cause, and the impact periods. Many feeds give no severity; `Alert.level` then uses the effect. A value that the app does not know reads as "unknown". The description can contain HTML. The app shows its text and follows no link in it. The "More information" button opens only `http` and `https` links.
+
+A request that fails leaves out its stop. The tab shows an error only when no request of the first load gives an answer. Other screens keep `withAlerts=false`.
+
 Limits:
 
-- The options have one editor, the dialog on the results. The planner does not observe the store after the first read. Observe it when a second editor exists, such as the settings screen.
-- The rare modes have no switch. Add one if users must exclude them.
+- The tab shows only the disruptions on the stops it asks about, and only for trips among the next departures. A line with no departure soon shows no alert.
+- The app does not filter on the communication period of an alert. The provider sends the alerts that are current.
+- The tab does not ask for location access. Without it, only the saved stops show.
 
 ## Journeys without transit
 
@@ -106,6 +134,7 @@ Limits: the projection picks the nearest part of the route, so a route that pass
 - The itinerary sends one `/stoptimes` request for each transit leg, once a minute, only while the itinerary is on screen and the app is in the foreground.
 - The itinerary also sends one `/trip` request for each transit leg that has not ended, once a minute, under the same conditions.
 - The departure board sends one `/stoptimes` request once a minute, only while the board is on screen and the app is in the foreground.
+- The Disruptions tab sends one `/stoptimes` request for each saved stop (at most 10) and one for the device position, once every five minutes, only while the tab is on screen and the app is in the foreground.
 - `/map/stops` runs only on the home screen, at zoom 15 or closer, 0.5 seconds after the camera stops. The request asks for the view rounded out to a 0.01° grid. A view inside the area already loaded sends no request. A view wider than 0.05° sends no request.
 - The walking view sends no request. "Plan a new route" sends one `/plan` request.
 - Geocode results are cached in memory.
@@ -115,7 +144,8 @@ Limits: the projection picks the nearest part of the route, so a route that pass
 - No analytics, no crash reporting, no request logging.
 - French address queries also go to IGN. No coordinates are sent to IGN.
 - The search bias point is rounded to about 1 km before it is sent.
-- The nearby departures center is rounded to about 10 m before it is sent.
+- The nearby departures center is rounded to about 10 m before it is sent. The Disruptions tab uses the same rounding.
+- The Disruptions tab sends the IDs of the saved stops. This is the only place where saved places go to a service without a journey request.
 - The origin of a journey is sent at full precision only when the user plans from their location.
 - The walking view uses the device position on the device. Only "Plan a new route" sends it, as the origin of a new journey.
 - The compass runs only while the walking view is open.

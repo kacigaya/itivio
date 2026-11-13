@@ -33,5 +33,8 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 - Unit tests use the JSON fixtures in `app/src/test/resources/transitous/`. Tests never call the live API.
 - Saved places use Room through KSP. Commit the exported schemas in `app/schemas/`. A schema change needs a new database version and a migration.
 - Journey options use Preferences DataStore, in the `settings` file. Read each value with a fallback to its default.
-- User-facing strings go in `res/values/strings.xml`.
-- Icons are Material Symbols vector drawables in `res/drawable/` (`ic_<name>.xml`).
+- User-facing strings go in `res/values/strings.xml`. Each translatable string also needs its French text in `res/values-fr/strings.xml`. A new language needs an entry in `res/xml/locales_config.xml`.
+- The `settings` DataStore file has one instance, bound in `DataModule`. The journey options and the app settings share it.
+- Icons are Material Symbols Rounded, filled (`<name>_fill1_24px.xml` in google/material-design-icons, without the `android:tint` attribute), as vector drawables in `res/drawable/` (`ic_<name>.xml`).
+- The typeface is Google Sans Flex, bundled unmodified in `res/font/google_sans_flex.ttf` under the SIL Open Font License 1.1. Keep `licenses/GoogleSansFlex-OFL.txt` with it.
+- A string with `<b>` markup is read with `markedStringResource`. Keep the markup escaped (`&lt;b>`).
