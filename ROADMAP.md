@@ -130,9 +130,16 @@ All items are done.
 
 ## v0.8.0: Accessibility, quality, and train selection
 
-This is the first beta release. The code and automated checks are ready. The manual TalkBack check remains open.
+This is the first beta release. The committed documentation and accessibility fixes pass all 211 tests, lint, and the debug build. The Docker TalkBack check is partly complete. The manual release gate remains open.
 
-- [ ] Finish the TalkBack check. Docker tests found and fixed repeated labels. Train choices, dynamic error states, the full theme/text-size matrix, and physical touch and audio checks remain. See `docs/quality.md`.
+- [x] Install TalkBack and eSpeak in the Docker Android test device.
+- [x] Check nine screens with TalkBack: home, search, results, itinerary, the stop board, walking, disruptions, settings, and about.
+- [x] Check journey options, travel time, saved-place menus, and the delete confirmation with TalkBack.
+- [x] Add minutes to spoken walking badges. Remove the repeated walking-direction label. Correct "In Now" departure labels in English and French.
+- [ ] Check train-choice rows with available departures.
+- [ ] Check cancellations, train-change errors, connection warnings, and changing walking instructions with TalkBack.
+- [ ] Complete TalkBack checks for each screen and dialog at 100% and 200% text size, in light, dark, and system dynamic colors.
+- [ ] Verify physical touch gestures and audible speech output. The Docker check used keyboard navigation and generated speech output.
 - [x] Check accessible names on visible click actions. Prevent duplicate announcements for times and loading states.
 - [x] Test each screen at 200% text size. Fix the theme controls and walking text layout. Test dialog windows with Android's font scale too.
 - [x] Check text contrast in light, dark, and system dynamic palettes. Fix unreadable agency line colors.
@@ -144,15 +151,34 @@ This is the first beta release. The code and automated checks are ready. The man
 
 Limits for this release:
 
+- The Docker TalkBack build has no native Braille support. It does not verify the Play Store build. See [quality checks](docs/quality.md) for coverage and remaining work.
 - The test devices run SDK 35. Runtime behavior on SDK 37 still needs a device check.
 - Screenshot references exclude the native map. They cover panels and dialogs in light and dark at 100% and 200% text size.
 - Train selection does not change onward trains automatically. A platform change removes stale walking directions and gives a notice to follow station signs. See `docs/train-selection.md`.
+
+## UI redesign in progress
+
+Implementation continues in the separate UI thread. These items remain open until the changes are complete and verified. The completed accessibility fixes above stay complete. Earlier checks cover the interim UI, so the final UI needs new checks before release.
+
+- [ ] Improve train-choice contrast and readability. Show delay, arrival time, and time on board. Use the destination name in each choice row.
+- [ ] Make choice buttons use the available width. Add icons and labels to journey options and the theme picker.
+- [ ] Fix the location marker contrast in dark mode.
+- [ ] Update route cards and leg chains to the selected design. Show one alert line with a count.
+- [ ] Merge Map and Disruptions into a home panel with two titles and swipe navigation. Add the alert count badge and document its network requests.
+- [ ] Remove flight selection and exclude flights from journey searches.
+- [ ] Keep the transfer-choice and train-arrival accessibility fixes with the UI changes they depend on.
+- [ ] Repeat TalkBack checks on the final screens, dialogs, and navigation. Include train choices and dynamic warnings.
+- [ ] Repeat large-text and contrast checks at 100% and 200%, in light, dark, and system dynamic colors.
+- [ ] Inspect the final screenshots, update intentional reference changes, and run tests, lint, and the debug build.
+- [ ] Complete physical touch, audible speech, and SDK 37 device checks.
+
+Tablet navigation changes remain deferred. Boarding-position hints are excluded because the checked Transitous API provides no boarding-position data.
 
 ## v0.9.0: Release candidate
 
 Feature work stops here. Only fixes go in after this release.
 
-- [ ] Sign the APKs with a release key. Today the releases use a debug key.
+- [ ] Sign the APKs with a release key. Without all signing values, release APKs stay unsigned.
 - [ ] Tell users that the key change needs one reinstall.
 - [ ] Add a release workflow that builds, signs, and publishes the APKs with checksums.
 - [ ] Add F-Droid metadata and send the app to F-Droid.
