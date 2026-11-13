@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Search -->
+    <string name="search_where_to">Où allez-vous ?</string>
+    <string name="search_from">Départ</string>
+    <string name="search_to">Arrivée</string>
+    <string name="search_my_location">Ma position</string>
+    <string name="search_swap">Inverser le départ et l’arrivée</string>
+    <string name="search_clear">Effacer</string>
+    <string name="search_hint_more">Saisissez au moins 2 caractères</string>
+    <string name="search_no_results">Aucun lieu trouvé pour « %1$s »</string>
+    <string name="search_kind_stop">Arrêt</string>
+    <string name="search_kind_address">Adresse</string>
+    <string name="search_kind_place">Lieu</string>
+
+    <!-- Saved places -->
+    <string name="shortcut_home">Domicile</string>
+    <string name="shortcut_work">Travail</string>
+    <string name="shortcut_set_home">Définir le domicile</string>
+    <string name="shortcut_set_work">Définir le travail</string>
+    <string name="shortcut_search_home">Cherchez votre domicile</string>
+    <string name="shortcut_search_work">Cherchez votre lieu de travail</string>
+    <string name="saved_favorites">Favoris</string>
+    <string name="saved_recents">Recherches récentes</string>
+    <string name="saved_clear_recents">Effacer les recherches récentes</string>
+    <string name="place_options">Plus d’options pour %1$s</string>
+    <string name="place_add_favorite">Ajouter aux favoris</string>
+    <string name="place_remove_favorite">Retirer des favoris</string>
+    <string name="place_set_home">Définir comme domicile</string>
+    <string name="place_remove_home">Retirer comme domicile</string>
+    <string name="place_set_work">Définir comme travail</string>
+    <string name="place_remove_work">Retirer comme travail</string>
+    <string name="place_show_departures">Afficher les départs</string>
+
+    <!-- Navigation -->
+    <string name="back">Retour</string>
+    <string name="locate_me">Afficher ma position</string>
+
+    <!-- Explore -->
+    <string name="explore_title">Préparez un trajet</string>
+    <string name="explore_body">Cherchez un arrêt, une adresse ou un lieu pour voir les itinéraires en transports en commun. Autorisez la localisation pour voir les départs près de vous.</string>
+
+    <!-- Nearby -->
+    <string name="nearby_title">Départs à proximité</string>
+    <string name="nearby_now">Imminent</string>
+    <!-- The departures after the next one. %1$s is a list of minutes, such as "4 · 8". -->
+    <string name="nearby_then_minutes">puis %1$s min</string>
+    <!-- %1$s is a clock time. -->
+    <string name="nearby_then">puis %1$s</string>
+    <string name="nearby_countdown_description">Dans %1$s, %2$s, %3$s</string>
+    <string name="nearby_empty_title">Aucun départ à proximité</string>
+    <string name="nearby_empty_body">Il n’y a aucun arrêt à moins de 400 m, ou aucune donnée horaire ne couvre cette zone.</string>
+
+    <!-- Stop departures -->
+    <string name="stop_directions">Itinéraire vers cet arrêt</string>
+    <string name="stop_departures">Départs</string>
+    <string name="stop_empty_title">Aucun départ à venir</string>
+    <string name="stop_empty_body">Les horaires n’ont aucun départ prochain à cet arrêt, ou ils ne couvrent pas cet arrêt.</string>
+
+    <!-- Navigation bar -->
+    <string name="navigation_map">Carte</string>
+
+    <!-- Disruptions -->
+    <string name="disruptions_title">Perturbations</string>
+    <string name="disruptions_scope">Alertes pour vos arrêts enregistrés et pour les arrêts à moins de 400 m.</string>
+    <string name="disruptions_saved">Vos arrêts enregistrés</string>
+    <string name="disruptions_nearby">Près de vous</string>
+    <string name="disruptions_empty_title">Aucune perturbation</string>
+    <string name="disruptions_empty_body">Il n’y a aucune alerte pour vos arrêts enregistrés ni pour les arrêts près de vous. Certaines régions ne publient aucune alerte.</string>
+    <string name="disruption_show_more">Afficher le texte complet</string>
+    <string name="disruption_show_less">Afficher moins de texte</string>
+    <string name="disruption_more_information">Plus d’informations</string>
+    <!-- %1$s and %2$s are a date with a time. -->
+    <string name="disruption_until">Jusqu’au %1$s</string>
+    <string name="disruption_from">À partir du %1$s</string>
+    <string name="disruption_from_to">Du %1$s au %2$s</string>
+    <string name="disruption_effect_no_service">Trafic interrompu</string>
+    <string name="disruption_effect_delays">Retards importants</string>
+    <string name="disruption_effect_reduced">Service réduit</string>
+    <string name="disruption_effect_detour">Déviation</string>
+    <string name="disruption_effect_modified">Service modifié</string>
+    <string name="disruption_effect_stop_moved">Arrêt déplacé</string>
+    <string name="disruption_effect_accessibility">Problème d’accessibilité</string>
+    <string name="disruption_effect_additional">Service renforcé</string>
+    <string name="disruption_effect_information">Information</string>
+    <string name="disruption_cause_technical">Problème technique</string>
+    <string name="disruption_cause_strike">Grève</string>
+    <string name="disruption_cause_demonstration">Manifestation</string>
+    <string name="disruption_cause_accident">Accident</string>
+    <string name="disruption_cause_holiday">Jour férié</string>
+    <string name="disruption_cause_weather">Météo</string>
+    <string name="disruption_cause_maintenance">Maintenance</string>
+    <string name="disruption_cause_construction">Travaux</string>
+    <string name="disruption_cause_police">Intervention de police</string>
+    <string name="disruption_cause_medical">Urgence médicale</string>
+    <string name="disruption_cause_event">Événement</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_appearance">Apparence</string>
+    <string name="settings_theme">Thème</string>
+    <string name="settings_theme_system">Système</string>
+    <string name="settings_theme_light">Clair</string>
+    <string name="settings_theme_dark">Sombre</string>
+    <string name="settings_language">Langue</string>
+    <string name="settings_language_body">Ouvre le réglage de langue d’Android pour cette application.</string>
+    <string name="settings_journeys">Trajets</string>
+    <string name="settings_options_body">Modes de transport, correspondances et marche. Ces options s’appliquent à chaque recherche.</string>
+    <string name="settings_data">Données enregistrées</string>
+    <string name="settings_clear_recents_body">Supprime votre historique de recherche. Vos favoris restent.</string>
+    <string name="settings_delete_all">Supprimer toutes les données</string>
+    <string name="settings_delete_all_body">Supprime de cet appareil les lieux enregistrés, les options de trajet et les paramètres.</string>
+    <string name="settings_delete_all_question">Supprimer toutes les données ?</string>
+    <string name="settings_delete_all_warning">Cette action supprime le domicile, le travail, les favoris, les recherches récentes, les options de trajet et les paramètres. Vous ne pouvez pas l’annuler.</string>
+    <string name="settings_delete">Supprimer</string>
+    <string name="settings_about">À propos d’itivio</string>
+    <string name="settings_about_body">Version, licence, crédits et confidentialité.</string>
+
+    <!-- About -->
+    <string name="about_title">À propos</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_license">Licence</string>
+    <string name="about_license_name">Licence publique générale GNU</string>
+    <string name="about_license_body">itivio est un logiciel libre. Vous pouvez l’utiliser, le modifier et le partager selon la version 3 de la licence, ou toute version ultérieure.</string>
+    <string name="about_source">Code source</string>
+    <string name="about_source_body">Lisez le code et signalez les problèmes sur GitHub.</string>
+    <string name="about_data">Données</string>
+    <string name="about_transitous_body">Itinéraires, départs et perturbations. Transitous réunit les horaires de nombreux réseaux de transport.</string>
+    <string name="about_map_body">Données cartographiques © les contributeurs d’OpenStreetMap. Tuiles de carte d’OpenFreeMap, avec les données d’OpenMapTiles.</string>
+    <string name="about_ign">IGN et Base Adresse Nationale</string>
+    <string name="about_ign_body">Recherche d’adresses en France.</string>
+    <string name="about_design">Design</string>
+    <string name="about_font_body">La police de l’application. SIL Open Font License 1.1.</string>
+    <string name="about_icons_body">Les icônes de l’application. Licence Apache 2.0.</string>
+    <string name="about_privacy">Confidentialité</string>
+    <string name="about_privacy_none">Pas de compte, pas d’outil d’analyse, pas de publicité. L’application n’enregistre ni vos trajets ni votre position.</string>
+    <string name="about_privacy_requests">L’application envoie des requêtes à Transitous pour la recherche, les itinéraires, les départs et les perturbations, et à OpenFreeMap pour les tuiles de carte. L’onglet Perturbations envoie à Transitous les identifiants de vos arrêts enregistrés.</string>
+    <string name="about_privacy_device">Les lieux enregistrés, les options de trajet et les paramètres restent sur cet appareil. La sauvegarde Android est désactivée pour ces données.</string>
+
+    <!-- Travel time -->
+    <string name="travel_title">Heure du trajet</string>
+    <string name="travel_now">Partir maintenant</string>
+    <string name="travel_leave">Partir à</string>
+    <string name="travel_arrive">Arriver avant</string>
+    <string name="travel_leave_at">Départ %1$s</string>
+    <string name="travel_arrive_by">Arrivée avant %1$s</string>
+    <string name="travel_day_time">%1$s, %2$s</string>
+    <string name="travel_today">Aujourd’hui</string>
+    <string name="travel_tomorrow">Demain</string>
+
+    <!-- Journey options -->
+    <string name="options_chip">Options</string>
+    <string name="options_title">Options de trajet</string>
+    <string name="options_modes">Modes de transport</string>
+    <string name="options_modes_last">Un mode doit rester sélectionné.</string>
+    <string name="options_transfers">Correspondances maximum</string>
+    <string name="options_no_limit">Sans limite</string>
+    <string name="options_walking">Marche</string>
+    <string name="options_wheelchair">Accessible en fauteuil roulant</string>
+    <string name="options_wheelchair_body">Les marches et les correspondances utilisent des chemins sans marche quand la carte a les données. Les véhicules ne sont pas vérifiés.</string>
+    <string name="options_walking_speed">Vitesse de marche</string>
+    <string name="options_walking_speed_unused">Non utilisée pour les itinéraires accessibles en fauteuil roulant.</string>
+    <string name="options_speed_slow">Lente</string>
+    <string name="options_speed_normal">Normale</string>
+    <string name="options_speed_fast">Rapide</string>
+    <string name="options_reset">Réinitialiser</string>
+
+    <!-- Results -->
+    <string name="results_empty_title">Aucun itinéraire trouvé</string>
+    <string name="results_empty_body">Essayez une autre heure, un arrêt proche ou d’autres options de trajet. Les données de transport ne couvrent peut-être pas cette zone.</string>
+    <string name="results_earlier">Départs plus tôt</string>
+    <string name="results_later">Départs plus tard</string>
+    <string name="results_walk_only">Tout le trajet à pied</string>
+    <plurals name="transfers">
+        <item quantity="one">%d correspondance</item>
+        <item quantity="many">%d correspondances</item>
+        <item quantity="other">%d correspondances</item>
+    </plurals>
+    <plurals name="results_more_alerts">
+        <item quantity="one">%d autre alerte</item>
+        <item quantity="many">%d autres alertes</item>
+        <item quantity="other">%d autres alertes</item>
+    </plurals>
+    <string name="no_transfers">Direct</string>
+    <string name="walk_distance">%1$s à pied</string>
+    <string name="time_range">%1$s – %2$s</string>
+    <string name="cancelled">Supprimé</string>
+    <string name="sort_best">Meilleur</string>
+    <string name="sort_fastest">Le plus rapide</string>
+    <string name="sort_fewest_transfers">Moins de correspondances</string>
+    <string name="sort_least_walking">Moins de marche</string>
+
+    <!-- Real-time -->
+    <string name="live">En direct</string>
+    <string name="scheduled">Horaire prévu</string>
+    <string name="delay_late">%1$s de retard</string>
+    <string name="delay_early">%1$s d’avance</string>
+    <string name="scheduled_time_was">Prévu à %1$s</string>
+
+    <!-- Itinerary -->
+    <string name="street_leg">%1$s %2$s · %3$s</string>
+    <string name="street_leg_no_distance">%1$s · %2$s</string>
+    <!-- The <b> part shows in bold, the rest in light. Keep the markup escaped. -->
+    <string name="itinerary_towards">Direction &lt;b>%1$s&lt;/b></string>
+    <string name="itinerary_track">Voie %1$s</string>
+    <plurals name="itinerary_stops">
+        <item quantity="one">%d arrêt</item>
+        <item quantity="many">%d arrêts</item>
+        <item quantity="other">%d arrêts</item>
+    </plurals>
+    <string name="itinerary_show_stops">Afficher les arrêts</string>
+    <string name="itinerary_hide_stops">Masquer les arrêts</string>
+    <string name="itinerary_show_alerts">Afficher toutes les alertes</string>
+    <string name="itinerary_hide_alerts">Afficher seulement la première alerte</string>
+    <!-- The number of alerts that the banner does not show. -->
+    <string name="itinerary_more_alerts">+%1$d</string>
+    <string name="itinerary_arrive">Arrivée</string>
+    <string name="itinerary_next_departures">Prochains départs</string>
+    <string name="itinerary_trip_code">%1$s · %2$s</string>
+    <string name="itinerary_leave_in">Départ dans %1$s</string>
+    <string name="itinerary_leave_now">Partez maintenant</string>
+    <string name="itinerary_arrive_in">Arrivée dans %1$s</string>
+    <string name="itinerary_current_step">Étape en cours</string>
+    <string name="itinerary_operated_by">Exploité par %1$s</string>
+
+    <!-- Walking view -->
+    <string name="walk_open">Itinéraire à pied</string>
+    <!-- Button label beside a walk; walk_open is its accessibility label. -->
+    <string name="walk_open_short">Itinéraire</string>
+    <string name="walk_close">Fermer l’itinéraire à pied</string>
+    <string name="walk_recenter">Recentrer</string>
+    <string name="walk_then">Puis</string>
+    <!-- The <b> part shows in bold, the rest in light. Keep the markup escaped. -->
+    <string name="walk_arrival">Arrivée &lt;b>%1$s&lt;/b></string>
+    <string name="walk_progress">Partie de la marche effectuée</string>
+    <string name="walk_destination">votre destination</string>
+    <string name="walk_off_route">Vous êtes hors de l’itinéraire.</string>
+    <string name="walk_replan">Calculer un nouvel itinéraire</string>
+    <string name="walk_no_location">Autorisez la localisation pour suivre votre marche.</string>
+    <string name="walk_depart">Commencez à marcher</string>
+    <string name="walk_depart_heading">Allez vers %1$s</string>
+    <string name="walk_depart_street">Commencez à marcher sur %1$s</string>
+    <string name="walk_depart_heading_street">Allez vers %1$s sur %2$s</string>
+    <string name="walk_continue">Continuez tout droit</string>
+    <string name="walk_continue_street">Continuez sur %1$s</string>
+    <string name="walk_slight_left">Tournez légèrement à gauche</string>
+    <string name="walk_slight_left_street">Tournez légèrement à gauche sur %1$s</string>
+    <string name="walk_left">Tournez à gauche</string>
+    <string name="walk_left_street">Tournez à gauche sur %1$s</string>
+    <string name="walk_sharp_left">Tournez franchement à gauche</string>
+    <string name="walk_sharp_left_street">Tournez franchement à gauche sur %1$s</string>
+    <string name="walk_slight_right">Tournez légèrement à droite</string>
+    <string name="walk_slight_right_street">Tournez légèrement à droite sur %1$s</string>
+    <string name="walk_right">Tournez à droite</string>
+    <string name="walk_right_street">Tournez à droite sur %1$s</string>
+    <string name="walk_sharp_right">Tournez franchement à droite</string>
+    <string name="walk_sharp_right_street">Tournez franchement à droite sur %1$s</string>
+    <string name="walk_u_turn">Faites demi-tour</string>
+    <string name="walk_u_turn_street">Faites demi-tour sur %1$s</string>
+    <string name="walk_stairs">Prenez l’escalier</string>
+    <string name="walk_elevator">Prenez l’ascenseur</string>
+    <string name="walk_arrive">Arrivée à %1$s</string>
+    <string name="walk_north">le nord</string>
+    <string name="walk_northeast">le nord-est</string>
+    <string name="walk_east">l’est</string>
+    <string name="walk_southeast">le sud-est</string>
+    <string name="walk_south">le sud</string>
+    <string name="walk_southwest">le sud-ouest</string>
+    <string name="walk_west">l’ouest</string>
+    <string name="walk_northwest">le nord-ouest</string>
+
+    <!-- Units -->
+    <string name="duration_min">%1$d min</string>
+    <string name="duration_h_min">%1$d h %2$d min</string>
+    <string name="duration_h">%1$d h</string>
+    <string name="distance_m">%1$d m</string>
+    <string name="distance_km">%1$s km</string>
+
+    <!-- Modes (content descriptions) -->
+    <string name="mode_walk">Marche</string>
+    <string name="mode_bike">Vélo</string>
+    <string name="mode_car">Voiture</string>
+    <string name="mode_bus">Bus</string>
+    <string name="mode_coach">Car</string>
+    <string name="mode_tram">Tramway</string>
+    <string name="mode_subway">Métro</string>
+    <string name="mode_suburban">Train de banlieue</string>
+    <string name="mode_rail">Train</string>
+    <string name="mode_highspeed_rail">Train à grande vitesse</string>
+    <string name="mode_ferry">Ferry</string>
+    <string name="mode_airplane">Vol</string>
+    <string name="mode_aerial_lift">Téléphérique</string>
+    <string name="mode_funicular">Funiculaire</string>
+    <string name="mode_on_demand">Transport à la demande</string>
+    <string name="mode_other">Transport</string>
+    <string name="line_description">%1$s %2$s</string>
+
+    <!-- States -->
+    <string name="error_offline_title">Vous êtes hors ligne</string>
+    <string name="error_offline_body">Connectez-vous à Internet et réessayez.</string>
+    <string name="error_server_title">Service indisponible</string>
+    <string name="error_server_body">Le service d’itinéraires n’a pas répondu. Réessayez dans un moment.</string>
+    <string name="error_unexpected_title">Un problème est survenu</string>
+    <string name="error_unexpected_body">L’application n’a pas pu lire la réponse. Réessayez.</string>
+    <string name="error_no_location_title">Position indisponible</string>
+    <string name="error_no_location_body">Autorisez l’accès à la localisation, ou choisissez un point de départ.</string>
+    <string name="retry">Réessayer</string>
+    <string name="cancel">Annuler</string>
+    <string name="done">OK</string>
+    <string name="loading">Chargement</string>
+    <string name="allow_location">Autoriser la localisation</string>
+
+    <!-- Attribution -->
+    <string name="attribution_routing">Itinéraires par Transitous</string>
+    <string name="attribution_sources">Sources des données</string>
+    <string name="attribution_ign">Adresses françaises : IGN · BAN</string>
+    <string name="privacy_ign">Les recherches d’adresses françaises vont aussi à l’IGN. Votre position n’est pas envoyée à l’IGN.</string>
+</resources>
