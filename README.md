@@ -83,6 +83,8 @@ Requirements: JDK 21 and the Android SDK (compile SDK 37).
 
 ### APK builds on GitHub
 
+Tests, lint, and the debug build run on each push and pull request. To download APKs, run the workflow manually:
+
 1. Open [Build APK](https://github.com/kacigaya/itivio/actions/workflows/apk.yml).
 2. Select **Run workflow** on `main`.
 3. Wait for the build to pass.
@@ -90,6 +92,8 @@ Requirements: JDK 21 and the Android SDK (compile SDK 37).
 5. Extract the archive. Install the universal APK, or select the APK for your CPU type.
 
 The workflow runs tests and lint before uploading the APKs. These are debug builds signed with a temporary debug key. Later builds can need a reinstall because the key can change. Artifacts expire after 14 days. A GitHub login is required to download them.
+
+See [Quality checks](docs/quality.md) for screenshot references and the manual accessibility checks.
 
 ### Release builds
 

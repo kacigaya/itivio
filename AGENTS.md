@@ -21,7 +21,7 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 
 ## Rules
 
-- `.github/workflows/apk.yml` builds debug APKs on `workflow_dispatch`. It uses Ubuntu 24.04, JDK 21, Android platform `android-37.0`, and build-tools `36.0.0`. It runs all three checks above and uploads `itivio-debug-apks` for 14 days.
+- `.github/workflows/apk.yml` runs tests, lint, and the debug build on each push and pull request. A `workflow_dispatch` run also uploads debug APKs. It uses Ubuntu 24.04, JDK 21, Android platform `android-37.0`, and build-tools `36.0.0`. It runs all three checks above and uploads `itivio-debug-apks` for 14 days.
 
 - Release builds make APKs for `arm64-v8a`, `armeabi-v7a`, and `x86_64`, plus a universal APK.
 - Signing needs `ITIVIO_KEYSTORE`, `ITIVIO_KEYSTORE_PASSWORD`, `ITIVIO_KEY_ALIAS`, and `ITIVIO_KEY_PASSWORD` (or `itivio.keystore`, `itivio.keystorePassword`, `itivio.keyAlias`, and `itivio.keyPassword` in `~/.gradle/gradle.properties`); environment variables take priority. If any value is missing, release APKs stay unsigned.
@@ -30,6 +30,7 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 - Every Transitous request goes through the shared `HttpClient`, which sets the User-Agent.
 - French address search uses `https://data.geopf.fr/geocodage/search` only for address-like queries whose first Transitous match has country `FR`. IGN uses a separate client with no contact details and receives no location bias.
 - IGN fixtures are in `app/src/test/resources/ign/`. Tests never call the live IGN API.
+- Screenshot tests compare against `app/src/test/screenshots/` by default. To update references, run `./gradlew :app:testDebugUnitTest --tests 'app.itivio.ui.*ScreenshotTest' -Proborazzi.test.record=true`, inspect the images, then run the normal checks. See `docs/quality.md`.
 - Unit tests use the JSON fixtures in `app/src/test/resources/transitous/`. Tests never call the live API.
 - Saved places use Room through KSP. Commit the exported schemas in `app/schemas/`. A schema change needs a new database version and a migration.
 - Journey options use Preferences DataStore, in the `settings` file. Read each value with a fallback to its default.

@@ -7,7 +7,7 @@ Material 3 Expressive on Jetpack Compose. The map is the canvas. The UI floats o
 1. Map first. Search, results, and itineraries sit on a bottom sheet over the map. The map always shows the context.
 2. One primary action per screen. The search bar on home, at the top of the sheet in reach of the thumb. The route cards on results. The itinerary steps on detail.
 3. Live data must be clear. Live times use the `tertiary` role and a live icon. Scheduled times use `onSurfaceVariant`. A delay shows the struck-through scheduled time beside the live time.
-4. Line colors come from the agency. Line badges use the agency color and text color. When the feed has no color, badges use `secondaryContainer`.
+4. Line colors come from the agency. Line badges use the agency color. They keep its text color when it meets 4.5:1 contrast. Otherwise they use black or white, whichever has more contrast. When the feed has no color, badges use `secondaryContainer`.
 
 ## Color
 
@@ -93,7 +93,7 @@ The itinerary is a trip tracker. The summary is a `primaryContainer` card with t
 
 Each transit leg is a `surfaceContainerHigh` card with the line color as a rail. A walk is a row with an icon tile, the distance in bold, and a "Directions" button. The step in progress has a `primary` outline. The service alerts of a leg are in one `errorContainer` banner: it shows the first alert and the number of the others, and a tap shows all of them. A tag gives the travel time of the leg. A second tag gives the number of stops; a tap shows or hides the stops.
 
-Each transit leg shows the next 4 departures of its line at the boarding stop on a `surfaceContainerHighest` card. The list has only trips that stop at the alighting stop. Each row shows the trip code when the feed has one, then the destination: "QOKA52 · Marne-la-Vallée - Chessy". The planned trip is bold on a `tertiaryContainer` row. A live departure in the next hour shows as a countdown with the live icon. Other departures show the clock time. The line times refresh once a minute while the itinerary is visible.
+Each transit leg shows the next 4 departures of its line at the boarding stop on a `surfaceContainerHighest` card. The list has only trips that stop at the alighting stop. Each row shows the trip code when the feed has one, then the destination: "QOKA52 · Marne-la-Vallée - Chessy". The planned trip is bold on a `tertiaryContainer` row. A live departure in the next hour shows as a countdown with the live icon. Other departures show the clock time. The line times refresh once a minute while the itinerary is visible. The scan starts when the platform is reachable and pages past other lines. A departure row is a selectable radio item. Selecting a train checks its trip and updates the tracked leg. A changed leg has a Reset button. The selected trip code stays in the leg header after departure. A warning explains a missed onward connection or cleared walking directions after a platform change. See `train-selection.md` for the limits.
 
 ## Disruptions
 
@@ -104,6 +104,8 @@ Each disruption is a card: a tag with the effect and the cause, the badges of th
 The empty state says that some regions publish no alerts. The list loads only while the page is on screen.
 
 ## Settings and about
+
+At larger text sizes, the theme choices use a vertical radio group so each label stays readable.
 
 Settings has four groups of rows on cards: appearance (theme as a segmented button with System, Light, and Dark; language, which opens the Android setting on Android 13 and later), journeys (the journey options dialog of the results), stored data (clear recent searches; delete all app data, in `error` color, with a confirmation dialog), and about.
 
@@ -150,3 +152,5 @@ Each list has a loading, empty, offline, and error state. Offline and error stat
 - Line badges have content descriptions ("Bus M41").
 - Live status is in text, not only color.
 - All strings live in `res/values/strings.xml`.
+
+Automated checks cover visible click-action names, text contrast, and panel screenshots at 100% and 200% text size. The manual TalkBack check remains open. See `quality.md`.

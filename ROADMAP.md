@@ -128,17 +128,25 @@ All items are done.
 - [x] Add an about screen: version, license, data credits, the font license, and privacy text.
 - [x] Add an action that deletes all app data: the Room database and DataStore.
 
-## v0.8.0: Accessibility and quality
+## v0.8.0: Accessibility, quality, and train selection
 
-This is the first beta release.
+This is the first beta release. The code and automated checks are ready. The manual TalkBack check remains open.
 
-- [ ] Test each screen with TalkBack. Fix the problems.
-- [ ] Test each screen at 200% text size. Fix the problems.
-- [ ] Check color contrast in light, dark, and dynamic color themes.
-- [ ] Compare screenshots against goldens. Today Roborazzi only records them.
-- [ ] Run tests, lint, and the build on each push and each pull request.
-- [ ] Replace pre-release dependencies with stable versions: Material 3 `1.5.0-rc01` and Robolectric `4.18-beta-1`.
-- [ ] Set `targetSdk` to 37.
+- [ ] Test each screen with TalkBack. Fix the problems. Neither connected test device has TalkBack installed. See `docs/quality.md` for the manual check.
+- [x] Check accessible names on visible click actions. Prevent duplicate announcements for times and loading states.
+- [x] Test each screen at 200% text size. Fix the theme controls and walking text layout. Test dialog windows with Android's font scale too.
+- [x] Check text contrast in light, dark, and system dynamic palettes. Fix unreadable agency line colors.
+- [x] Compare screenshots against committed references. Normal test runs fail on differences or missing references.
+- [x] Run tests, lint, and the build on each push and each pull request.
+- [x] Set `targetSdk` to 37.
+- [x] Fix missing line departures with paging and a start time based on when the platform is reachable.
+- [x] Let users select and reset a train on each itinerary leg. Track that train, keep its code visible, and warn about missed onward connections.
+
+Limits for this release:
+
+- The test devices run SDK 35. Runtime behavior on SDK 37 still needs a device check.
+- Screenshot references exclude the native map. They cover panels and dialogs in light and dark at 100% and 200% text size.
+- Train selection does not change onward trains automatically. A platform change removes stale walking directions and gives a notice to follow station signs. See `docs/train-selection.md`.
 
 ## v0.9.0: Release candidate
 
@@ -156,6 +164,7 @@ Feature work stops here. Only fixes go in after this release.
 
 v1.0.0 has no new features. It ships when all these conditions are true:
 
+- [ ] Replace pre-release dependencies with stable versions: Material 3 `1.5.0-rc01` and Robolectric `4.18-beta-1`.
 - [ ] No open bug causes a crash or data loss.
 - [ ] v0.9.x has had no new blocker for two weeks.
 - [ ] All validation gates pass on the release commit.
