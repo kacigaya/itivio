@@ -8,6 +8,7 @@ import io.ktor.client.request.HttpRequestData
 import io.ktor.http.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.*
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.IOException
@@ -206,8 +207,53 @@ class TransitousRoutingRepositoryTest {
             // Without next stops in the response, the direction ID decides.
             name = "stoptimes"
             val m5 = Line("M5", id = "de-VBB_17459_900")
-            assertEquals(2, repo.lineDepartures("stop:a", m5, "0", time, alightAt = nation).size)
-            assertTrue(repo.lineDepartures("stop:a", m5, "1", time, alightAt = nation).isEmpty())
+            assertEquals(2, repo.lineDepartures("stop:a", m5, "0", Instant.parse("2026-11-09T01:00:00Z"), alightAt = nation).size)
+            assertTrue(repo.lineDepartures("stop:a", m5, "1", Instant.parse("2026-11-09T01:00:00Z"), alightAt = nation).isEmpty())
+        }
+        engine.close()
+    }
+
+    @Test fun lineDeparturesPagePastOtherLinesAndDeduplicateEvents() = runTest {
+        val events = Json.parseToJsonElement(fixture("stoptimes")).jsonObject.getValue("stopTimes").jsonArray
+        val matching = events.filter { it.jsonObject["routeShortName"]?.jsonPrimitive?.content == "M5" }
+        val other = events.filterNot { it in matching }
+        val cursors = mutableListOf<String?>()
+        val engine = MockEngine { request ->
+            val cursor = request.url.parameters["pageCursor"]
+            cursors += cursor
+            assertEquals("2026-11-09T01:00:00Z", request.url.parameters["time"])
+            val rows = when (cursor) { null -> other; "next" -> listOf(matching.first(), matching.first()); else -> matching }
+            val next = when (cursor) { null -> "next"; "next" -> "last"; else -> "unused" }
+            respond(JsonObject(mapOf("stopTimes" to JsonArray(rows), "nextPageCursor" to JsonPrimitive(next))).toString(),
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        createHttpClient(engine, "test", "").use { client ->
+            val result = TransitousRoutingRepository(client).lineDepartures("stop:a", Line("M5"), "0", Instant.parse("2026-11-09T01:00:00Z"), limit = 2)
+            assertEquals(2, result.size)
+            assertEquals(listOf(null, "next", "last"), cursors)
+        }
+        engine.close()
+    }
+
+    @Test fun lineDeparturePagingStopsOnRepeatedCursorsAndKeepsPartialResultsOnFailure() = runTest {
+        val events = Json.parseToJsonElement(fixture("stoptimes")).jsonObject.getValue("stopTimes").jsonArray
+        val event = events.first { it.jsonObject["routeShortName"]?.jsonPrimitive?.content == "M5" }
+        var calls = 0
+        var fail = false
+        val engine = MockEngine {
+            calls++
+            if (fail && calls == 2) throw IOException("connection lost")
+            else respond(JsonObject(mapOf("stopTimes" to JsonArray(listOf(event)), "nextPageCursor" to JsonPrimitive("same"))).toString(),
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        createHttpClient(engine, "test", "").use { client ->
+            val repo = TransitousRoutingRepository(client)
+            assertEquals(1, repo.lineDepartures("stop:a", Line("M5"), "0", Instant.parse("2026-11-09T01:00:00Z")).size)
+            assertEquals(2, calls)
+            fail = true
+            calls = 0
+            assertEquals(1, repo.lineDepartures("stop:a", Line("M5"), "0", Instant.parse("2026-11-09T01:00:00Z")).size)
+            assertEquals(2, calls)
         }
         engine.close()
     }

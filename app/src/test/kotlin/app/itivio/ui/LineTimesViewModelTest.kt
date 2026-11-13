@@ -54,16 +54,34 @@ class LineTimesViewModelTest {
     }
 
     @Test
-    fun `the list starts at the planned departure, then at the current time`() = runTest(main.dispatcher) {
+    fun `the list starts now instead of hiding earlier departures`() = runTest(main.dispatcher) {
         viewModel.times.launchIn(backgroundScope)
         viewModel.show(journey(ride("a", start = 8)))
         runCurrent()
-        assertEquals(at(8).scheduled, repository.lineCalls.single().second)
+        assertEquals(now, repository.lineCalls.single().second)
 
         now = at(30).scheduled
         advanceTimeBy(REFRESH_MILLIS)
         runCurrent()
         assertEquals(now, repository.lineCalls.last().second)
+    }
+
+    @Test
+    fun `initial waiting is removed but walking and transfer time remain`() = runTest(main.dispatcher) {
+        val initial = Leg.Street(TransitMode.WALK, stop(null), stop("a"), at(6), at(8), emptyList(), 90.0)
+        val transfer = Leg.Street(TransitMode.WALK, stop("end"), stop("b"), at(18), at(21), emptyList(), 150.0)
+        viewModel.times.launchIn(backgroundScope)
+        viewModel.show(journey(initial, ride("a", 8), transfer, ride("b", 30)))
+        runCurrent()
+        assertEquals(listOf(at(2).scheduled, at(21).scheduled), repository.lineCalls.map { it.second })
+    }
+
+    @Test
+    fun `a future search keeps its requested start time`() = runTest(main.dispatcher) {
+        viewModel.times.launchIn(backgroundScope)
+        viewModel.show(journey(ride("a", 80)), notBefore = at(60).scheduled)
+        runCurrent()
+        assertEquals(at(60).scheduled, repository.lineCalls.single().second)
     }
 
     @Test

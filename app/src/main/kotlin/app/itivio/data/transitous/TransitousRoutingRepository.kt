@@ -148,26 +148,44 @@ class TransitousRoutingRepository(
         alightAt: Stop?,
     ): List<Departure> = mapped {
         val target = alightAt?.takeIf { it.stopId != null || it.stationId != null }
-        val stopTimes = get<StoptimesResponse>("v6/stoptimes") {
-            parameter("stopId", stopId)
-            parameter("time", from.toString())
-            parameter("n", LINE_SCAN)
-            parameter("withAlerts", false)
-            parameter("language", language())
-            if (target != null) parameter("fetchStops", true)
-        }.stopTimes.map { it to it.toDomain() }.filter { (_, departure) -> departure.line.sameAs(line) }
-        // Some feeds give one direction ID to both directions of a line, such as the RER A. The
-        // next stops are exact. They are experimental in MOTIS, so fall back when they are absent.
-        // A cancelled trip stays and shows as cancelled; a trip that only skips the stop goes.
-        val byStops = target?.takeIf { stopTimes.any { (dto, _) -> dto.nextStops != null } }
-        stopTimes
-            .filter { (dto, departure) ->
+        if (limit <= 0) return@mapped emptyList()
+        val collected = mutableListOf<StopTime>()
+        val cursors = mutableSetOf<String>()
+        var cursor: String? = null
+        var departures = emptyList<Departure>()
+        repeat(LINE_MAX_PAGES) {
+            val page = try {
+                mapped { get<StoptimesResponse>("v6/stoptimes") {
+                    parameter("stopId", stopId)
+                    parameter("time", from.toString())
+                    parameter("n", LINE_SCAN)
+                    parameter("withAlerts", false)
+                    parameter("language", language())
+                    if (target != null) parameter("fetchStops", true)
+                    cursor?.let { parameter("pageCursor", it) }
+                } }
+            } catch (error: RoutingException) {
+                if (departures.isEmpty()) throw error
+                return@mapped departures.take(limit)
+            }
+            collected += page.stopTimes
+            val sameLine = collected.map { it to it.toDomain() }.filter { (_, departure) -> departure.line.sameAs(line) }
+            // IDFM can use the same direction ID in both directions. Prefer actual next stops.
+            val byStops = target?.takeIf { sameLine.any { (dto, _) -> dto.nextStops != null } }
+            departures = sameLine.filter { (dto, departure) ->
                 if (byStops != null) dto.nextStops.orEmpty().any { it.isAt(byStops) && (!it.cancelled || departure.cancelled) }
                 else directionId == null || departure.directionId == directionId
+            }.map { it.second }
+                .filter { it.time.best >= from }
+                .distinctBy { Triple(it.tripId, it.stop.stopId, it.time.scheduled) }
+                .sortedBy { it.time.best }
+            val next = page.nextPageCursor?.takeIf { it.isNotBlank() }
+            if (departures.size >= limit || page.stopTimes.isEmpty() || next == null || !cursors.add(next)) {
+                return@mapped departures.take(limit)
             }
-            .map { it.second }
-            .sortedBy { it.time.best }
-            .take(limit)
+            cursor = next
+        }
+        departures.take(limit)
     }
 
     override suspend fun stopsIn(box: BoundingBox): List<Location> = mapped {
@@ -204,11 +222,9 @@ class TransitousRoutingRepository(
     }
 }
 
-/**
- * The API has no line filter, so a line's departures come from a scan of the stop's next
- * departures. A stop with many lines can give fewer than the requested number.
- */
-private const val LINE_SCAN = 40
+// Bound each refresh at busy stations and on lines with little service.
+private const val LINE_SCAN = 80
+private const val LINE_MAX_PAGES = 8
 
 /** A trip can stop at another platform of the same station as the planned one. */
 private fun Place.isAt(stop: Stop) =

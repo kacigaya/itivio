@@ -146,4 +146,5 @@ internal data class PlanResponse(
 @Serializable
 internal data class StoptimesResponse(
     val stopTimes: List<StopTime>,
+    val nextPageCursor: String? = null,
 )

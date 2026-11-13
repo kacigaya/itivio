@@ -314,7 +314,7 @@ fun ItivioRoot(
                                 val lineTimes: LineTimesViewModel = koinViewModel()
                                 val tracker: TripTrackerViewModel = koinViewModel()
                                 LaunchedEffect(journey) {
-                                    lineTimes.show(journey)
+                                    lineTimes.show(journey, if (state.arriveBy) journey.departure.best else state.time)
                                     tracker.show(journey)
                                 }
                                 val tracked = tracker.journey.collectAsStateWithLifecycle().value?.takeIf { it.id == journey.id }

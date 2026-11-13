@@ -131,7 +131,7 @@ Limits: the projection picks the nearest part of the route, so a route that pass
 - Autocomplete waits for typing to pause, needs 2 or more characters, and cancels stale requests.
 - `/plan` runs only on explicit user action. No background polling. The journey options dialog sends one request when the user confirms, not one for each change.
 - `/stoptimes` refreshes once a minute, only while the nearby list is on screen and the app is in the foreground. A move of less than 150 m does not send a new request.
-- The itinerary sends one `/stoptimes` request for each transit leg, once a minute, only while the itinerary is on screen and the app is in the foreground.
+- The itinerary scans up to eight `/stoptimes` pages for each transit leg, once a minute, only while the itinerary is on screen and the app is in the foreground. It stops when it has four matching departures.
 - The itinerary also sends one `/trip` request for each transit leg that has not ended, once a minute, under the same conditions.
 - The departure board sends one `/stoptimes` request once a minute, only while the board is on screen and the app is in the foreground.
 - The Disruptions tab sends one `/stoptimes` request for each saved stop (at most 10) and one for the device position, once every five minutes, only while the tab is on screen and the app is in the foreground.
@@ -159,7 +159,9 @@ Limits: the projection picks the nearest part of the route, so a route that pass
 
 The itinerary tracker uses the clock and the leg times. It does not use the device position. While the itinerary is open, `TripTrackerViewModel` asks `/v6/trip` for the trip of each transit leg once a minute. `Journey.withTrip` finds the boarding stop by stop ID and scheduled departure, so a loop trip boards at the correct visit. It then finds the alighting stop after it. It updates the times, platforms, stops, cancellation, and alerts of the leg. The walks after the leg move with its arrival. A trip that does not contain the stops of the leg changes nothing. A failed request keeps the last times. The planned journey in the results does not change.
 
-`/stoptimes` has no line filter. The line times come from the next 40 departures of the boarding stop, filtered by route ID. A stop with many lines can show fewer than 4 times.
+`/stoptimes` has no line filter. The line times scan pages of 80 departures from the boarding stop, filtered by route ID. A refresh stops after four matching departures, the last page, or eight pages. This bound can still leave fewer than four times at very busy stations or on lines with little service. Duplicate events and repeated cursors do not extend the scan. A later page failure keeps the matches already found.
+
+The first leg lists departures after the remaining initial walk, starting now. It does not inherit the wait that the planner put before that walk. Later legs start after the previous transit arrival and the transfer walk.
 
 The line times keep only trips that stop at the alighting stop, or at another platform of its station. The request sets `fetchStops` to get the next stops of each trip. The direction ID is not enough: IDFM gives direction 0 to RER A trains in both directions. `fetchStops` is experimental in MOTIS. If the response has no next stops, the direction ID filters the list. The next stops make each refresh about 5 times larger (about 40 kB compressed at La Défense).
 
