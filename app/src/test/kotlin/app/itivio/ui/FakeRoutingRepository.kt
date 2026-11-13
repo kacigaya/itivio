@@ -41,8 +41,12 @@ class FakeRoutingRepository : RoutingRepository {
         return planResult(request, cursor)
     }
 
-    override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int): List<Departure> {
+    /** The points of the calls that asked for alerts. */
+    val nearbyAlertCalls = mutableListOf<GeoPoint>()
+
+    override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int, withAlerts: Boolean): List<Departure> {
         nearbyCalls += point
+        if (withAlerts) nearbyAlertCalls += point
         return nearbyResult(point)
     }
 
@@ -65,8 +69,12 @@ class FakeRoutingRepository : RoutingRepository {
     val boxes = mutableListOf<BoundingBox>()
     var stopsResult: suspend (BoundingBox) -> List<Location> = { emptyList() }
 
-    override suspend fun stopDepartures(stopId: String, limit: Int): List<Departure> {
+    /** The stops of the calls that asked for alerts. */
+    val stopAlertCalls = mutableListOf<String>()
+
+    override suspend fun stopDepartures(stopId: String, limit: Int, withAlerts: Boolean): List<Departure> {
         stopCalls += stopId
+        if (withAlerts) stopAlertCalls += stopId
         return stopResult(stopId)
     }
 

@@ -1,0 +1,639 @@
+{
+ "stopTimes": [
+  {
+   "place": {
+    "name": "Nation",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:37708",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71673",
+    "importance": 0.006673392839729786,
+    "lat": 48.8483,
+    "lon": 2.3945742,
+    "tz": "Europe/Paris",
+    "arrival": "2026-11-13T13:34:00Z",
+    "departure": "2026-11-13T13:34:00Z",
+    "scheduledArrival": "2026-11-13T13:34:00Z",
+    "scheduledDeparture": "2026-11-13T13:34:00Z",
+    "vertexType": "TRANSIT",
+    "pickupType": "NORMAL",
+    "dropoffType": "NORMAL",
+    "cancelled": false,
+    "arrivalTimestampReason": "NO_RT_DATA",
+    "departureTimestampReason": "NO_RT_DATA",
+    "alerts": [
+     {
+      "communicationPeriod": [
+       {
+        "start": "2026-08-12T15:36:00Z",
+        "end": "2027-02-01T02:30:00Z"
+       }
+      ],
+      "impactPeriod": [
+       {
+        "start": "2026-08-12T15:36:00Z",
+        "end": "2027-02-01T02:30:00Z"
+       }
+      ],
+      "cause": "CONSTRUCTION",
+      "effect": "MODIFIED_SERVICE",
+      "headerText": "Bus 57 : Travaux - Arrêt(s) non desservi(s)",
+      "descriptionText": "<p>La ligne 57 est déviée : les arrêts situés entre Porte de Bagnolet - Louis Ganne et Porte de Montreuil ne sont plus desservis en direction de Arcueil – Laplace <RER>. Reprise estimée : lundi 1 février 2027, à partir…</p>"
+     }
+    ],
+    "modes": [
+     "REGIONAL_RAIL",
+     "SUBWAY",
+     "BUS"
+    ]
+   },
+   "mode": "BUS",
+   "realTime": false,
+   "headsign": "Arcueil – Laplace RER",
+   "tripFrom": {
+    "name": "Porte de Bagnolet",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:36487",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71799",
+    "importance": 0.001241894206032157,
+    "lat": 48.86337,
+    "lon": 2.4097883999999996,
+    "tz": "Europe/Paris",
+    "vertexType": "TRANSIT",
+    "pickupType": "NORMAL",
+    "dropoffType": "NOT_ALLOWED",
+    "cancelled": false,
+    "departureTimestampReason": "NO_RT_DATA",
+    "modes": [
+     "SUBWAY",
+     "TRAM",
+     "BUS"
+    ]
+   },
+   "tripTo": {
+    "name": "Laplace",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:427522",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:70427",
+    "importance": 0.0009753741323947906,
+    "lat": 48.808098,
+    "lon": 2.3329217,
+    "tz": "Europe/Paris",
+    "vertexType": "TRANSIT",
+    "pickupType": "NOT_ALLOWED",
+    "dropoffType": "NORMAL",
+    "cancelled": false,
+    "arrivalTimestampReason": "NO_RT_DATA",
+    "modes": [
+     "REGIONAL_RAIL",
+     "BUS"
+    ]
+   },
+   "agencyId": "IDFM:1099",
+   "agencyName": "Rive Droite",
+   "agencyUrl": "https://www.iledefrance-mobilites.fr",
+   "routeId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:C01094",
+   "routeUrl": "",
+   "directionId": "1",
+   "routeColor": "6e6e00",
+   "routeTextColor": "ffffff",
+   "tripId": "20261113_14:15_fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:RCRIVEDROITE:266667-C01094-51550236",
+   "routeType": 3,
+   "routeShortName": "57",
+   "routeLongName": "",
+   "tripShortName": "",
+   "displayName": "57",
+   "pickupDropoffType": "NORMAL",
+   "cancelled": false,
+   "tripCancelled": false,
+   "bikesAllowed": false,
+   "wheelchairAccessible": "ACCESSIBLE",
+   "reservation": "NONE",
+   "source": "fr_reseau-urbain-et-interurbain-dile-de-france-mobilites.gtfs.zip/stop_times.txt:1962520:1962555"
+  },
+  {
+   "place": {
+    "name": "Nation",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:462943",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71673",
+    "importance": 0.006673392839729786,
+    "lat": 48.84764499999999,
+    "lon": 2.3963667999999996,
+    "level": -2.0,
+    "tz": "Europe/Paris",
+    "arrival": "2026-11-13T13:34:00Z",
+    "departure": "2026-11-13T13:34:00Z",
+    "scheduledArrival": "2026-11-13T13:33:00Z",
+    "scheduledDeparture": "2026-11-13T13:33:00Z",
+    "vertexType": "TRANSIT",
+    "pickupType": "NORMAL",
+    "dropoffType": "NORMAL",
+    "cancelled": false,
+    "arrivalTimestampReason": "PREDICTED",
+    "departureTimestampReason": "PREDICTED",
+    "modes": [
+     "REGIONAL_RAIL",
+     "SUBWAY",
+     "BUS"
+    ]
+   },
+   "mode": "SUBWAY",
+   "realTime": true,
+   "headsign": "La Défense",
+   "tripFrom": {
+    "name": "Château de Vincennes",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:463149",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71634",
+    "importance": 0.0015410009073093534,
+    "lat": 48.84465999999999,
+    "lon": 2.4387922,
+    "tz": "Europe/Paris",
+    "vertexType": "TRANSIT",
+    "pickupType": "NORMAL",
+    "dropoffType": "NOT_ALLOWED",
+    "cancelled": false,
+    "departureTimestampReason": "NO_RT_DATA",
+    "modes": [
+     "SUBWAY",
+     "BUS"
+    ]
+   },
+   "tripTo": {
+    "name": "La Défense",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:463193",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71517",
+    "importance": 0.00481050880625844,
+    "lat": 48.892197,
+    "lon": 2.2370415,
+    "level": -1.0,
+    "tz": "Europe/Paris",
+    "vertexType": "TRANSIT",
+    "pickupType": "NOT_ALLOWED",
+    "dropoffType": "NORMAL",
+    "cancelled": false,
+    "arrivalTimestampReason": "PREDICTED",
+    "modes": [
+     "REGIONAL_RAIL",
+     "SUBWAY",
+     "TRAM",
+     "BUS"
+    ]
+   },
+   "agencyId": "IDFM:Operator_100",
+   "agencyName": "RATP",
+   "agencyUrl": "https://www.iledefrance-mobilites.fr",
+   "routeId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:C01371",
+   "routeUrl": "",
+   "directionId": "1",
+   "routeColor": "ffbe00",
+   "routeTextColor": "000000",
+   "tripId": "20261113_14:27_fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:RATP:COU_RATP_01VEARLES_2026_Vinc20Vinc13-11",
+   "routeType": 1,
+   "routeShortName": "1",
+   "routeLongName": "",
+   "tripShortName": "RATP",
+   "displayName": "1",
+   "pickupDropoffType": "NORMAL",
+   "cancelled": false,
+   "tripCancelled": false,
+   "bikesAllowed": false,
+   "wheelchairAccessible": "NOT_ACCESSIBLE",
+   "reservation": "NONE",
+   "source": "fr_reseau-urbain-et-interurbain-dile-de-france-mobilites.gtfs.zip/stop_times.txt:786156:786180"
+  },
+  {
+   "place": {
+    "name": "Nation",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:473875",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71673",
+    "importance": 0.006673392839729786,
+    "lat": 48.848232,
+    "lon": 2.3959443999999994,
+    "level": -7.0,
+    "tz": "Europe/Paris",
+    "arrival": "2026-11-13T13:33:00Z",
+    "departure": "2026-11-13T13:34:00Z",
+    "scheduledArrival": "2026-11-13T13:33:00Z",
+    "scheduledDeparture": "2026-11-13T13:34:00Z",
+    "vertexType": "TRANSIT",
+    "pickupType": "NORMAL",
+    "dropoffType": "NORMAL",
+    "cancelled": false,
+    "arrivalTimestampReason": "NO_RT_DATA",
+    "departureTimestampReason": "NO_RT_DATA",
+    "alerts": [
+     {
+      "communicationPeriod": [
+       {
+        "start": "2026-11-30T21:00:00Z",
+        "end": "2026-12-01T02:00:00Z"
+       },
+       {
+        "start": "2026-12-01T21:00:00Z",
+        "end": "2026-12-02T02:00:00Z"
+       },
+       {
+        "start": "2026-12-02T21:00:00Z",
+        "end": "2026-12-03T02:00:00Z"
+       },
+       {
+        "start": "2026-12-03T21:00:00Z",
+        "end": "2026-12-04T02:00:00Z"
+       },
+       {
+        "start": "2026-12-04T21:00:00Z",
+        "end": "2026-12-05T02:00:00Z"
+       },
+       {
+        "start": "2026-12-07T21:00:00Z",
+        "end": "2026-12-08T02:00:00Z"
+       },
+       {
+        "start": "2026-12-08T21:00:00Z",
+        "end": "2026-12-09T02:00:00Z"
+       },
+       {
+        "start": "2026-12-09T21:00:00Z",
+        "end": "2026-12-10T02:00:00Z"
+       },
+       {
+        "start": "2026-12-10T21:00:00Z",
+        "end": "2026-12-11T02:00:00Z"
+       },
+       {
+        "start": "2026-12-11T21:00:00Z",
+        "end": "2026-12-12T02:00:00Z"
+       }
+      ],
+      "impactPeriod": [
+       {
+        "start": "2026-11-30T21:00:00Z",
+        "end": "2026-12-01T02:00:00Z"
+       },
+       {
+        "start": "2026-12-01T21:00:00Z",
+        "end": "2026-12-02T02:00:00Z"
+       },
+       {
+        "start": "2026-12-02T21:00:00Z",
+        "end": "2026-12-03T02:00:00Z"
+       },
+       {
+        "start": "2026-12-03T21:00:00Z",
+        "end": "2026-12-04T02:00:00Z"
+       },
+       {
+        "start": "2026-12-04T21:00:00Z",
+        "end": "2026-12-05T02:00:00Z"
+       },
+       {
+        "start": "2026-12-07T21:00:00Z",
+        "end": "2026-12-08T02:00:00Z"
+       },
+       {
+        "start": "2026-12-08T21:00:00Z",
+        "end": "2026-12-09T02:00:00Z"
+       },
+       {
+        "start": "2026-12-09T21:00:00Z",
+        "end": "2026-12-10T02:00:00Z"
+       },
+       {
+        "start": "2026-12-10T21:00:00Z",
+        "end": "2026-12-11T02:00:00Z"
+       },
+       {
+        "start": "2026-12-11T21:00:00Z",
+        "end": "2026-12-12T02:00:00Z"
+       }
+      ],
+      "cause": "CONSTRUCTION",
+      "effect": "REDUCED_SERVICE",
+      "headerText": "RER A: Nanterre-Préfecture-Cergy le Haut/Poissy du 30/11 au 11/12",
+      "descriptionText": "<p>P&#233;riode : en soir&#233;e &#224; partir de 22h00.<br><br>Dates : du lundi 30 novembre au vendredi 11 d&#233;cembre.<br><br>Le trafic est interrompu entre Nanterre&#8211;Pr&#233;fecture et Cergy le Haut /…</p>"
+     },
+     {
+      "communicationPeriod": [
+       {
+        "start": "2026-11-09T21:30:00Z",
+        "end": "2026-11-10T02:00:00Z"
+       },
+       {
+        "start": "2026-11-10T21:30:00Z",
+        "end": "2026-11-11T02:00:00Z"
+       },
+       {
+        "start": "2026-11-11T21:30:00Z",
+        "end": "2026-11-12T02:00:00Z"
+       },
+       {
+        "start": "2026-11-12T21:30:00Z",
+        "end": "2026-11-13T02:00:00Z"
+       },
+       {
+        "start": "2026-11-13T21:30:00Z",
+        "end": "2026-11-14T02:00:00Z"
+       }
+      ],
+      "impactPeriod": [
+       {
+        "start": "2026-11-09T21:30:00Z",
+        "end": "2026-11-10T02:00:00Z"
+       },
+       {
+        "start": "2026-11-10T21:30:00Z",
+        "end": "2026-11-11T02:00:00Z"
+       },
+       {
+        "start": "2026-11-11T21:30:00Z",
+        "end": "2026-11-12T02:00:00Z"
+       },
+       {
+        "start": "2026-11-12T21:30:00Z",
+        "end": "2026-11-13T02:00:00Z"
+       },
+       {
+        "start": "2026-11-13T21:30:00Z",
+        "end": "2026-11-14T02:00:00Z"
+       }
+      ],
+      "cause": "CONSTRUCTION",
+      "effect": "REDUCED_SERVICE",
+      "headerText": "RER A : Nanterre-Préfecture - Cergy le Haut/Poissy du 09 au 13/11",
+      "descriptionText": "<p>P&#233;riode : en soir&#233;e &#224; partir de 22h00.<br><br>Dates : du lundi 09 au vendredi 13 novembre.<br><br>Le trafic est interrompu entre Nanterre&#8211;Pr&#233;fecture et Cergy le Haut / Poissy.<br><br>Un…</p>"
+     },
+     {
+      "communicationPeriod": [
+       {
+        "start": "2026-11-16T20:50:00Z",
+        "end": "2026-11-17T02:00:00Z"
+       },
+       {
+        "start": "2026-11-17T20:50:00Z",
+        "end": "2026-11-18T02:00:00Z"
+       },
+       {
+        "start": "2026-11-18T20:50:00Z",
+        "end": "2026-11-19T02:00:00Z"
+       },
+       {
+        "start": "2026-11-19T20:50:00Z",
+        "end": "2026-11-20T02:00:00Z"
+       },
+       {
+        "start": "2026-11-20T20:50:00Z",
+        "end": "2026-11-21T02:00:00Z"
+       },
+       {
+        "start": "2026-11-23T20:50:00Z",
+        "end": "2026-11-24T02:00:00Z"
+       },
+       {
+        "start": "2026-11-24T20:50:00Z",
+        "end": "2026-11-25T02:00:00Z"
+       },
+       {
+        "start": "2026-11-25T20:50:00Z",
+        "end": "2026-11-26T02:00:00Z"
+       },
+       {
+        "start": "2026-11-26T20:50:00Z",
+        "end": "2026-11-27T02:00:00Z"
+       },
+       {
+        "start": "2026-11-27T20:50:00Z",
+        "end": "2026-11-28T02:00:00Z"
+       }
+      ],
+      "impactPeriod": [
+       {
+        "start": "2026-11-16T20:50:00Z",
+        "end": "2026-11-17T02:00:00Z"
+       },
+       {
+        "start": "2026-11-17T20:50:00Z",
+        "end": "2026-11-18T02:00:00Z"
+       },
+       {
+        "start": "2026-11-18T20:50:00Z",
+        "end": "2026-11-19T02:00:00Z"
+       },
+       {
+        "start": "2026-11-19T20:50:00Z",
+        "end": "2026-11-20T02:00:00Z"
+       },
+       {
+        "start": "2026-11-20T20:50:00Z",
+        "end": "2026-11-21T02:00:00Z"
+       },
+       {
+        "start": "2026-11-23T20:50:00Z",
+        "end": "2026-11-24T02:00:00Z"
+       },
+       {
+        "start": "2026-11-24T20:50:00Z",
+        "end": "2026-11-25T02:00:00Z"
+       },
+       {
+        "start": "2026-11-25T20:50:00Z",
+        "end": "2026-11-26T02:00:00Z"
+       },
+       {
+        "start": "2026-11-26T20:50:00Z",
+        "end": "2026-11-27T02:00:00Z"
+       },
+       {
+        "start": "2026-11-27T20:50:00Z",
+        "end": "2026-11-28T02:00:00Z"
+       }
+      ],
+      "cause": "CONSTRUCTION",
+      "effect": "REDUCED_SERVICE",
+      "headerText": "RER A : Maisons-Laffitte - Cergy le Haut du 16 au 27/11",
+      "descriptionText": "<p>P&#233;riode : en semaine &#224; partir de 21h50.<br><br>Dates : du lundi 16 au vendredi 27 novembre.<br><br>Le trafic est interrompu entre Maisons-Laffitte et Cergy le Haut.<br><br>Un service de bus de remplacement…</p>"
+     }
+    ],
+    "modes": [
+     "REGIONAL_RAIL",
+     "SUBWAY",
+     "BUS"
+    ]
+   },
+   "mode": "REGIONAL_RAIL",
+   "realTime": false,
+   "headsign": "UZAR",
+   "tripFrom": {
+    "name": "Boissy-Saint-Léger",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:43094",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:72881",
+    "importance": 0.0006221311050467193,
+    "lat": 48.752266,
+    "lon": 2.5044982,
+    "tz": "Europe/Paris",
+    "vertexType": "TRANSIT",
+    "pickupType": "NORMAL",
+    "dropoffType": "NOT_ALLOWED",
+    "cancelled": false,
+    "departureTimestampReason": "NO_RT_DATA",
+    "modes": [
+     "REGIONAL_RAIL",
+     "BUS"
+    ]
+   },
+   "tripTo": {
+    "name": "Cergy le Haut",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:43104",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:66834",
+    "importance": 0.0004960831138305366,
+    "lat": 49.048233,
+    "lon": 2.011579,
+    "level": -1.0,
+    "tz": "Europe/Paris",
+    "vertexType": "TRANSIT",
+    "pickupType": "NOT_ALLOWED",
+    "dropoffType": "NORMAL",
+    "cancelled": false,
+    "arrivalTimestampReason": "NO_RT_DATA",
+    "modes": [
+     "REGIONAL_RAIL",
+     "BUS"
+    ]
+   },
+   "agencyId": "IDFM:71",
+   "agencyName": "RER",
+   "agencyUrl": "https://www.iledefrance-mobilites.fr",
+   "routeId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:C01742",
+   "routeUrl": "",
+   "directionId": "0",
+   "routeColor": "eb2132",
+   "routeTextColor": "ffffff",
+   "tripId": "20261113_14:10_fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:TN:SNCF:4eef6355-8ca8-4df1-9f18-c6ea3d625510",
+   "routeType": 2,
+   "routeShortName": "A",
+   "routeLongName": "",
+   "tripShortName": "UZAR95",
+   "displayName": "A",
+   "pickupDropoffType": "NORMAL",
+   "cancelled": false,
+   "tripCancelled": false,
+   "bikesAllowed": false,
+   "wheelchairAccessible": "ACCESSIBLE",
+   "reservation": "NONE",
+   "source": "fr_reseau-urbain-et-interurbain-dile-de-france-mobilites.gtfs.zip/stop_times.txt:1785054:1785079"
+  },
+  {
+   "place": {
+    "name": "Nation",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:22073",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71673",
+    "importance": 0.006673392839729786,
+    "lat": 48.84789699999999,
+    "lon": 2.3958596999999995,
+    "level": -2.0,
+    "tz": "Europe/Paris",
+    "departure": "2026-11-13T13:36:00Z",
+    "scheduledDeparture": "2026-11-13T13:36:00Z",
+    "vertexType": "TRANSIT",
+    "pickupType": "NORMAL",
+    "dropoffType": "NOT_ALLOWED",
+    "cancelled": false,
+    "departureTimestampReason": "PREDICTED",
+    "alerts": [
+     {
+      "communicationPeriod": [
+       {
+        "start": "2026-11-22T03:45:00Z",
+        "end": "2026-11-22T03:45:00Z"
+       }
+      ],
+      "impactPeriod": [
+       {
+        "start": "2026-11-22T03:45:00Z",
+        "end": "2026-11-22T03:45:00Z"
+       }
+      ],
+      "cause": "CONSTRUCTION",
+      "effect": "NO_SERVICE",
+      "headerText": "Métro 6 : Travaux de modernisation - Trafic interrompu",
+      "descriptionText": "<p>Le 22 novembre, le trafic sera interrompu sur toute la ligne en raison de travaux de modernisation.<br>Bus de remplacement.</p>",
+      "severityLevel": "SEVERE",
+      "url": "https://example.org/alerts/metro-6"
+     }
+    ],
+    "modes": [
+     "REGIONAL_RAIL",
+     "SUBWAY",
+     "BUS"
+    ]
+   },
+   "mode": "SUBWAY",
+   "realTime": true,
+   "headsign": "Charles de Gaulle - Étoile",
+   "tripFrom": {
+    "name": "Nation",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:22073",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71673",
+    "importance": 0.006673392839729786,
+    "lat": 48.84789699999999,
+    "lon": 2.3958596999999995,
+    "level": -2.0,
+    "tz": "Europe/Paris",
+    "vertexType": "TRANSIT",
+    "pickupType": "NORMAL",
+    "dropoffType": "NOT_ALLOWED",
+    "cancelled": false,
+    "departureTimestampReason": "PREDICTED",
+    "modes": [
+     "REGIONAL_RAIL",
+     "SUBWAY",
+     "BUS"
+    ]
+   },
+   "tripTo": {
+    "name": "Charles de Gaulle - Étoile",
+    "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:463042",
+    "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71347",
+    "importance": 0.005429686047136784,
+    "lat": 48.87371,
+    "lon": 2.2947520999999997,
+    "level": 0.0,
+    "tz": "Europe/Paris",
+    "vertexType": "TRANSIT",
+    "pickupType": "NOT_ALLOWED",
+    "dropoffType": "NORMAL",
+    "cancelled": false,
+    "arrivalTimestampReason": "PREDICTED",
+    "modes": [
+     "REGIONAL_RAIL",
+     "SUBWAY",
+     "BUS"
+    ]
+   },
+   "agencyId": "IDFM:Operator_100",
+   "agencyName": "RATP",
+   "agencyUrl": "https://www.iledefrance-mobilites.fr",
+   "routeId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:C01376",
+   "routeUrl": "",
+   "directionId": "1",
+   "routeColor": "82dc73",
+   "routeTextColor": "000000",
+   "tripId": "20261113_14:36_fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:RATP:COU_RATP_06JOFIZEAU4_2026_Kleb12Nat610-12",
+   "routeType": 1,
+   "routeShortName": "6",
+   "routeLongName": "",
+   "tripShortName": "RATP",
+   "displayName": "6",
+   "pickupDropoffType": "NORMAL",
+   "cancelled": false,
+   "tripCancelled": false,
+   "bikesAllowed": false,
+   "wheelchairAccessible": "NOT_ACCESSIBLE",
+   "reservation": "NONE",
+   "source": "fr_reseau-urbain-et-interurbain-dile-de-france-mobilites.gtfs.zip/stop_times.txt:569196:569223"
+  }
+ ],
+ "place": {
+  "name": "center",
+  "lat": 48.8484,
+  "lon": 2.3959,
+  "vertexType": "NORMAL"
+ },
+ "previousPageCursor": "",
+ "nextPageCursor": ""
+}

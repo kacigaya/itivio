@@ -31,7 +31,8 @@ import java.util.Locale
 
 class TransitousRoutingRepository(
     private val client: HttpClient,
-    private val language: String = Locale.getDefault().toLanguageTag(),
+    // Read for each request: the user can change the app language while the app runs.
+    private val language: () -> String = { Locale.getDefault().toLanguageTag() },
     private val frenchAddresses: IgnAddressSearch? = null,
 ) : RoutingRepository {
     private data class SearchKey(val query: String, val bias: String?, val language: String)
@@ -43,13 +44,14 @@ class TransitousRoutingRepository(
         val text = query.trim()
         if (text.isBlank()) return emptyList()
         val bias = near?.rounded(2)
+        val language = language()
         val key = SearchKey(text.lowercase(Locale.ROOT), bias, language)
         synchronized(cache) { cache[key] }?.let { return it }
         return mapped {
             val matches = get<List<Match>>("v1/geocode") {
                 parameter("text", text)
                 parameter("numResults", 10)
-                parameter("language", language)
+                parameter("language", language())
                 bias?.let { parameter("place", it) }
             }
             var complete = true
@@ -104,27 +106,27 @@ class TransitousRoutingRepository(
             }
             parameter("detailedLegs", true)
             parameter("detailedTransfers", false)
-            parameter("language", language)
+            parameter("language", language())
         }.toDomain(request.from.name, request.to.name)
     }
 
-    override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int): List<Departure> = mapped {
+    override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int, withAlerts: Boolean): List<Departure> = mapped {
         get<StoptimesResponse>("v6/stoptimes") {
             parameter("center", point.rounded(4))
             parameter("radius", radiusMeters)
             parameter("exactRadius", true)
             parameter("n", limit)
-            parameter("withAlerts", false)
-            parameter("language", language)
+            parameter("withAlerts", withAlerts)
+            parameter("language", language())
         }.stopTimes.map { it.toDomain() }.sortedBy { it.time.best }
     }
 
-    override suspend fun stopDepartures(stopId: String, limit: Int): List<Departure> = mapped {
+    override suspend fun stopDepartures(stopId: String, limit: Int, withAlerts: Boolean): List<Departure> = mapped {
         get<StoptimesResponse>("v6/stoptimes") {
             parameter("stopId", stopId)
             parameter("n", limit)
-            parameter("withAlerts", false)
-            parameter("language", language)
+            parameter("withAlerts", withAlerts)
+            parameter("language", language())
         }.stopTimes.map { it.toDomain() }.sortedBy { it.time.best }
     }
 
@@ -133,7 +135,7 @@ class TransitousRoutingRepository(
             parameter("tripId", tripId)
             // The tracker needs the times, not the shape of the route.
             parameter("detailedLegs", false)
-            parameter("language", language)
+            parameter("language", language())
         }.toTrip()
     }
 
@@ -151,7 +153,7 @@ class TransitousRoutingRepository(
             parameter("time", from.toString())
             parameter("n", LINE_SCAN)
             parameter("withAlerts", false)
-            parameter("language", language)
+            parameter("language", language())
             if (target != null) parameter("fetchStops", true)
         }.stopTimes.map { it to it.toDomain() }.filter { (_, departure) -> departure.line.sameAs(line) }
         // Some feeds give one direction ID to both directions of a line, such as the RER A. The

@@ -1,5 +1,8 @@
 package app.itivio.data.transitous
 
+import app.itivio.domain.AlertCause
+import app.itivio.domain.AlertEffect
+import app.itivio.domain.AlertSeverity
 import app.itivio.domain.Departure
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.Journey
@@ -19,6 +22,7 @@ import java.time.ZoneId
 import app.itivio.domain.Leg as DomainLeg
 import app.itivio.domain.Stop as DomainStop
 import app.itivio.domain.StopTime as DomainTime
+import app.itivio.domain.TimeRange as DomainRange
 
 internal fun transitMode(mode: String): TransitMode = when (mode) {
     "WALK" -> TransitMode.WALK
@@ -100,7 +104,25 @@ internal fun Leg.toDomain(fromName: String? = null, toName: String? = null): Dom
         alerts.map { it.toDomain() }, directionId, heading.tripCode)
 }
 
-private fun Alert.toDomain() = app.itivio.domain.Alert(headerText, descriptionText, url)
+/**
+ * A value that this app version does not know, and the general values such as `OTHER_EFFECT`,
+ * give null or the unknown severity. A period with a time the app cannot read is dropped.
+ */
+internal fun Alert.toDomain() = app.itivio.domain.Alert(
+    header = headerText,
+    description = descriptionText,
+    url = url?.takeIf { it.isNotBlank() },
+    severity = AlertSeverity.entries.firstOrNull { it.name == severityLevel } ?: AlertSeverity.UNKNOWN,
+    effect = AlertEffect.entries.firstOrNull { it.name == effect },
+    cause = AlertCause.entries.firstOrNull { it.name == cause },
+    impactPeriods = impactPeriod.mapNotNull { range ->
+        try {
+            DomainRange(range.start?.let(Instant::parse), range.end?.let(Instant::parse))
+        } catch (_: DateTimeException) {
+            null
+        }
+    },
+)
 
 internal fun StepInstruction.toDomain(): WalkStep = WalkStep(
     distanceMeters = distance,
@@ -168,5 +190,6 @@ internal fun StopTime.toDomain(): Departure {
                 ?: time(place.scheduledArrival, place.arrival, realTime),
         ),
         cancelled || tripCancelled || place.cancelled, tripId, directionId, heading.tripCode,
+        place.alerts.map { it.toDomain() },
     )
 }

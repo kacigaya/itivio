@@ -59,6 +59,44 @@
     <string name="stop_empty_title">No upcoming departures</string>
     <string name="stop_empty_body">The timetable has no departures from this stop soon, or it does not cover this stop.</string>
 
+    <!-- Navigation bar -->
+    <string name="navigation_map">Map</string>
+
+    <!-- Disruptions -->
+    <string name="disruptions_title">Disruptions</string>
+    <string name="disruptions_scope">Alerts for your saved stops and for stops within 400 m.</string>
+    <string name="disruptions_saved">Your saved stops</string>
+    <string name="disruptions_nearby">Near you</string>
+    <string name="disruptions_empty_title">No disruptions</string>
+    <string name="disruptions_empty_body">There are no alerts for your saved stops or for the stops near you. Some regions publish no alerts.</string>
+    <string name="disruption_show_more">Show the full text</string>
+    <string name="disruption_show_less">Show less text</string>
+    <string name="disruption_more_information">More information</string>
+    <!-- %1$s and %2$s are a date with a time. -->
+    <string name="disruption_until">Until %1$s</string>
+    <string name="disruption_from">From %1$s</string>
+    <string name="disruption_from_to">From %1$s to %2$s</string>
+    <string name="disruption_effect_no_service">No service</string>
+    <string name="disruption_effect_delays">Major delays</string>
+    <string name="disruption_effect_reduced">Reduced service</string>
+    <string name="disruption_effect_detour">Detour</string>
+    <string name="disruption_effect_modified">Changed service</string>
+    <string name="disruption_effect_stop_moved">Stop moved</string>
+    <string name="disruption_effect_accessibility">Accessibility problem</string>
+    <string name="disruption_effect_additional">Extra service</string>
+    <string name="disruption_effect_information">Information</string>
+    <string name="disruption_cause_technical">Technical problem</string>
+    <string name="disruption_cause_strike">Strike</string>
+    <string name="disruption_cause_demonstration">Demonstration</string>
+    <string name="disruption_cause_accident">Accident</string>
+    <string name="disruption_cause_holiday">Holiday</string>
+    <string name="disruption_cause_weather">Weather</string>
+    <string name="disruption_cause_maintenance">Maintenance</string>
+    <string name="disruption_cause_construction">Works</string>
+    <string name="disruption_cause_police">Police activity</string>
+    <string name="disruption_cause_medical">Medical emergency</string>
+    <string name="disruption_cause_event">Special event</string>
+
     <!-- Travel time -->
     <string name="travel_title">Travel time</string>
     <string name="travel_now">Leave now</string>

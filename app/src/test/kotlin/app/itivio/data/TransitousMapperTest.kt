@@ -1,10 +1,15 @@
 package app.itivio.data
 
 import app.itivio.data.transitous.*
+import app.itivio.domain.AlertCause
+import app.itivio.domain.AlertEffect
+import app.itivio.domain.AlertSeverity
 import app.itivio.domain.Leg as DomainLeg
+import app.itivio.domain.TimeRange as DomainRange
 import app.itivio.domain.TransitMode
 import org.junit.Assert.*
 import org.junit.Test
+import java.time.Instant
 import java.time.ZoneId
 
 class TransitousMapperTest {
@@ -105,6 +110,46 @@ class TransitousMapperTest {
         assertNull(dto.place.copy(tz = "invalid/zone").toDomain().zone)
         assertNull(dto.place.copy(tz = null).toDomain().zone)
         assertTrue(dto.copy(tripCancelled = true).toDomain().cancelled)
+    }
+
+    @Test fun stopTimeAlerts() {
+        val departures = fixture<StoptimesResponse>("stoptimes-alerts").stopTimes.map { it.toDomain() }
+        assertEquals(listOf(1, 0, 3, 1), departures.map { it.alerts.size })
+
+        val bus = departures.first().alerts.single()
+        assertEquals("Bus 57 : Travaux - Arrêt(s) non desservi(s)", bus.header)
+        assertEquals(AlertEffect.MODIFIED_SERVICE, bus.effect)
+        assertEquals(AlertCause.CONSTRUCTION, bus.cause)
+        // The feed gives no severity and no link.
+        assertEquals(AlertSeverity.UNKNOWN, bus.severity)
+        assertNull(bus.url)
+        assertEquals(
+            listOf(DomainRange(Instant.parse("2026-08-12T15:36:00Z"), Instant.parse("2027-02-01T02:30:00Z"))),
+            bus.impactPeriods,
+        )
+
+        // The fixture adds a severity and a link to this alert.
+        val metro = departures.last().alerts.single()
+        assertEquals(AlertSeverity.SEVERE, metro.severity)
+        assertEquals(AlertEffect.NO_SERVICE, metro.effect)
+        assertEquals("https://example.org/alerts/metro-6", metro.url)
+    }
+
+    @Test fun unknownAlertValuesFallBack() {
+        val alert = Alert(
+            headerText = "Header", descriptionText = "", url = " ", severityLevel = "CATASTROPHIC", effect = "OTHER_EFFECT",
+            cause = "UNKNOWN_CAUSE",
+            impactPeriod = listOf(TimeRange(start = "not a time"), TimeRange(end = "2026-11-09T10:00:00Z"), TimeRange()),
+        ).toDomain()
+
+        assertEquals(AlertSeverity.UNKNOWN, alert.severity)
+        assertNull(alert.effect)
+        assertNull(alert.cause)
+        assertNull(alert.url)
+        assertEquals(
+            listOf(DomainRange(null, Instant.parse("2026-11-09T10:00:00Z")), DomainRange(null, null)),
+            alert.impactPeriods,
+        )
     }
 
     @Test fun missionCodeHeadsignBecomesFinalStop() {

@@ -44,7 +44,7 @@ class TransitousRoutingRepositoryTest {
             respond(fixture(name), headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
         createHttpClient(engine, "test", "").use { client ->
-            val repo = TransitousRoutingRepository(client, "de-DE")
+            val repo = TransitousRoutingRepository(client, { "de-DE" })
             assertEquals(5, repo.searchLocations("  Alexanderplatz  ", point).size)
             var params = seen.last().url.parameters
             assertEquals("Alexanderplatz", params["text"])
@@ -79,6 +79,8 @@ class TransitousRoutingRepositoryTest {
             assertEquals("12", params["n"])
             assertEquals("true", params["exactRadius"])
             assertEquals("false", params["withAlerts"])
+            repo.nearbyDepartures(point, withAlerts = true)
+            assertEquals("true", seen.last().url.parameters["withAlerts"])
             val board = repo.stopDepartures("stop:board", 25)
             assertEquals(board.sortedBy { it.time.best }, board)
             params = seen.last().url.parameters
@@ -87,6 +89,8 @@ class TransitousRoutingRepositoryTest {
             assertNull(params["center"])
             assertNull(params["time"])
             assertEquals("false", params["withAlerts"])
+            repo.stopDepartures("stop:board", withAlerts = true)
+            assertEquals("true", seen.last().url.parameters["withAlerts"])
             val trip = repo.trip("20261113_00:40_de-VBB_311111895")
             assertEquals(13, trip.stops.size)
             params = seen.last().url.parameters
@@ -108,7 +112,7 @@ class TransitousRoutingRepositoryTest {
             respond(fixture("plan"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
         createHttpClient(engine, "test", "").use { client ->
-            val repo = TransitousRoutingRepository(client, "de-DE")
+            val repo = TransitousRoutingRepository(client, { "de-DE" })
             suspend fun plan(options: JourneyOptions) = repo.planJourneys(JourneyRequest(from, to, options = options))
 
             // MOTIS has no parameter that excludes a mode, so the request lists the modes that stay.
@@ -144,7 +148,7 @@ class TransitousRoutingRepositoryTest {
             respond(fixture("stoptimes"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
         createHttpClient(engine, "test", "").use { client ->
-            val repo = TransitousRoutingRepository(client, "de-DE")
+            val repo = TransitousRoutingRepository(client, { "de-DE" })
             val time = Instant.parse("2026-11-09T01:05:00Z")
             val m5 = Line("M5", id = "de-VBB_17459_900")
             val n65 = Line("N65", id = "de-VBB_17497_700")
@@ -176,7 +180,7 @@ class TransitousRoutingRepositoryTest {
             respond(fixture(name), headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
         createHttpClient(engine, "test", "").use { client ->
-            val repo = TransitousRoutingRepository(client, "fr")
+            val repo = TransitousRoutingRepository(client, { "fr" })
             val time = Instant.parse("2026-11-12T17:35:00Z")
             val idfm = "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM"
             val rerA = Line("A", id = "$idfm:C01742")
@@ -215,7 +219,7 @@ class TransitousRoutingRepositoryTest {
             respond(fixture("geocode"), headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
         createHttpClient(engine, "test", "").use { client ->
-            val repo = TransitousRoutingRepository(client, "en")
+            val repo = TransitousRoutingRepository(client, { "en" })
             assertTrue(repo.searchLocations(" \t ", point).isEmpty())
             assertEquals(0, count)
             val first = repo.searchLocations("Alexanderplatz", point)

@@ -51,7 +51,7 @@ class IgnAddressSearchTest {
         }
         createHttpClient(engine, "test", "https://example.org").use { transit ->
             createHttpClient(engine, "test", "", "https://data.geopf.fr/geocodage/").use { ign ->
-                val repo = TransitousRoutingRepository(transit, "en", IgnAddressSearch(ign))
+                val repo = TransitousRoutingRepository(transit, { "en" }, IgnAddressSearch(ign))
                 val result = repo.searchLocations(" $query ", GeoPoint(48.85, 2.42))
                 assertEquals(3, result.size)
                 val address = result.first()
@@ -77,7 +77,7 @@ class IgnAddressSearchTest {
             respond(matches(country), headers = jsonHeaders)
         }
         createHttpClient(engine, "test", "").use { client ->
-            val repo = TransitousRoutingRepository(client, "fr-FR", IgnAddressSearch(client))
+            val repo = TransitousRoutingRepository(client, { "fr-FR" }, IgnAddressSearch(client))
             repo.searchLocations("71 Hauptstraße Berlin")
             country = "FR"
             repo.searchLocations("Gare de Lyon")
@@ -103,7 +103,7 @@ class IgnAddressSearchTest {
             }
             createHttpClient(engine, "test", "").use { transit ->
                 createHttpClient(engine, "test", "", "https://data.geopf.fr/geocodage/").use { ign ->
-                    val repo = TransitousRoutingRepository(transit, "en", IgnAddressSearch(ign))
+                    val repo = TransitousRoutingRepository(transit, { "en" }, IgnAddressSearch(ign))
                     assertEquals("stop:a", repo.searchLocations(query).last().stopId)
                     assertTrue(repo.searchLocations(query).first().id.startsWith("ign:"))
                     assertEquals(2, ignCalls)
@@ -139,7 +139,7 @@ class IgnAddressSearchTest {
         }
         createHttpClient(engine, "test", "").use { transit ->
             createHttpClient(engine, "test", "", "https://data.geopf.fr/geocodage/").use { ign ->
-                val repo = TransitousRoutingRepository(transit, "en", IgnAddressSearch(ign))
+                val repo = TransitousRoutingRepository(transit, { "en" }, IgnAddressSearch(ign))
                 var returned = false
                 val job = launch { repo.searchLocations(query); returned = true }
                 started.await()

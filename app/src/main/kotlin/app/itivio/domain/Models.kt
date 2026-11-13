@@ -67,7 +67,49 @@ data class Line(
     val id: String? = null,
 )
 
-data class Alert(val header: String, val description: String, val url: String? = null)
+/** How serious the provider rates an alert. Many feeds give no rating. */
+enum class AlertSeverity { UNKNOWN, INFO, WARNING, SEVERE }
+
+/** What an alert does to the service, from the most to the least disruptive. */
+enum class AlertEffect {
+    NO_SERVICE, SIGNIFICANT_DELAYS, REDUCED_SERVICE, DETOUR, MODIFIED_SERVICE, STOP_MOVED,
+    ACCESSIBILITY_ISSUE, ADDITIONAL_SERVICE, NO_EFFECT,
+}
+
+enum class AlertCause {
+    TECHNICAL_PROBLEM, STRIKE, DEMONSTRATION, ACCIDENT, HOLIDAY, WEATHER, MAINTENANCE, CONSTRUCTION,
+    POLICE_ACTIVITY, MEDICAL_EMERGENCY, SPECIAL_EVENT,
+}
+
+/** A period of time. A null [start] or [end] leaves that side open. */
+data class TimeRange(val start: Instant?, val end: Instant?)
+
+/**
+ * A service alert. [description] can contain HTML. [effect] and [cause] are null when the feed
+ * gives none, or a general value such as "other". [impactPeriods] are the times when the service
+ * is affected; an empty list gives no time limit.
+ */
+data class Alert(
+    val header: String,
+    val description: String,
+    val url: String? = null,
+    val severity: AlertSeverity = AlertSeverity.UNKNOWN,
+    val effect: AlertEffect? = null,
+    val cause: AlertCause? = null,
+    val impactPeriods: List<TimeRange> = emptyList(),
+) {
+    /**
+     * The severity to rank and color the alert with. The rating of the provider counts first.
+     * Without one, the effect gives the level, so an alert for "no service" still comes first.
+     */
+    val level: AlertSeverity
+        get() = if (severity != AlertSeverity.UNKNOWN) severity else when (effect) {
+            AlertEffect.NO_SERVICE -> AlertSeverity.SEVERE
+            AlertEffect.SIGNIFICANT_DELAYS, AlertEffect.REDUCED_SERVICE, AlertEffect.DETOUR -> AlertSeverity.WARNING
+            null -> AlertSeverity.UNKNOWN
+            else -> AlertSeverity.INFO
+        }
+}
 
 sealed interface Leg {
     val mode: TransitMode
@@ -257,4 +299,31 @@ data class Departure(
      * when the feed put the code in place of the headsign.
      */
     val tripCode: String? = null,
+    /** Service alerts for this departure at its stop. Empty unless the request asks for them. */
+    val alerts: List<Alert> = emptyList(),
 )
+
+/** A line that a disruption affects. */
+data class AffectedLine(val line: Line, val mode: TransitMode)
+
+/** A service alert, with the stops and the lines where the app found it. */
+data class Disruption(val alert: Alert, val stops: List<String>, val lines: List<AffectedLine>)
+
+/**
+ * The disruptions in [departures]: one for each alert, with all the stops and lines that carry
+ * it. An alert shows only one time, also when it applies to more than one stop. The most severe
+ * disruptions come first. Alerts in [shown] are left out, so a second group does not repeat them.
+ */
+fun disruptionsOf(departures: List<Departure>, shown: Set<Alert> = emptySet()): List<Disruption> =
+    departures.flatMap { departure -> departure.alerts.map { it to departure } }
+        .filterNot { (alert, _) -> alert in shown }
+        .groupBy({ it.first }, { it.second })
+        .map { (alert, carriers) ->
+            Disruption(
+                alert = alert,
+                stops = carriers.map { it.stop.name }.distinct(),
+                lines = carriers.map { AffectedLine(it.line, it.mode) }.distinctBy { it.line.id ?: it.line.name },
+            )
+        }
+        // Sorting is stable: equal disruptions keep the order of the departures.
+        .sortedWith(compareByDescending<Disruption> { it.alert.level }.thenBy { it.alert.effect ?: AlertEffect.NO_EFFECT })

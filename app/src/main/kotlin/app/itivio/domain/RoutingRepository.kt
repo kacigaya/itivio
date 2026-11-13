@@ -19,11 +19,19 @@ interface RoutingRepository {
     /** Plans journeys. Pass a cursor from a previous [JourneyPage] to page in time. */
     suspend fun planJourneys(request: JourneyRequest, cursor: String? = null): JourneyPage
 
-    /** Upcoming departures around [point], sorted by time. */
-    suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int = 400, limit: Int = 20): List<Departure>
+    /** Upcoming departures around [point], sorted by time. [withAlerts] adds the service alerts of each departure. */
+    suspend fun nearbyDepartures(
+        point: GeoPoint,
+        radiusMeters: Int = 400,
+        limit: Int = 20,
+        withAlerts: Boolean = false,
+    ): List<Departure>
 
-    /** Upcoming departures from the stop [stopId] and the other platforms of its station, sorted by time. */
-    suspend fun stopDepartures(stopId: String, limit: Int = 30): List<Departure>
+    /**
+     * Upcoming departures from the stop [stopId] and the other platforms of its station, sorted by
+     * time. [withAlerts] adds the service alerts of each departure.
+     */
+    suspend fun stopDepartures(stopId: String, limit: Int = 30, withAlerts: Boolean = false): List<Departure>
 
     /** The current state of the trip [tripId], with live times where the provider has them. */
     suspend fun trip(tripId: String): Trip

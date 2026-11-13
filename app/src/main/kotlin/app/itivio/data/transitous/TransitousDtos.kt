@@ -39,6 +39,8 @@ internal data class Place(
     val departureTimestampReason: String? = null,
     val cancelled: Boolean = false,
     val modes: List<String> = emptyList(),
+    /** Set on stop times only when the request asks for alerts. */
+    val alerts: List<Alert> = emptyList(),
 )
 
 @Serializable
@@ -120,6 +122,16 @@ internal data class Alert(
     val headerText: String,
     val descriptionText: String,
     val url: String? = null,
+    val severityLevel: String? = null,
+    val effect: String? = null,
+    val cause: String? = null,
+    val impactPeriod: List<TimeRange> = emptyList(),
+)
+
+@Serializable
+internal data class TimeRange(
+    val start: String? = null,
+    val end: String? = null,
 )
 
 @Serializable
