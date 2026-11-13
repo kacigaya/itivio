@@ -84,8 +84,19 @@ fun markedStringResource(@StringRes id: Int, vararg args: String): AnnotatedStri
 fun lineColors(line: Line): Pair<Color, Color> {
     val scheme = MaterialTheme.colorScheme
     val container = line.color?.let(::Color) ?: return scheme.secondaryContainer to scheme.onSecondaryContainer
-    val content = line.textColor?.let(::Color) ?: if (container.luminance() > 0.5f) Color.Black else Color.White
+    val content = readableLineText(container, line.textColor?.let(::Color))
     return container to content
+}
+
+/** Keep a feed's text color only when normal-sized text remains readable. */
+internal fun readableLineText(container: Color, provided: Color?): Color {
+    fun contrast(content: Color): Float {
+        val light = maxOf(container.luminance(), content.luminance())
+        val dark = minOf(container.luminance(), content.luminance())
+        return (light + 0.05f) / (dark + 0.05f)
+    }
+    if (provided != null && contrast(provided) >= 4.5f) return provided
+    return if (contrast(Color.Black) >= contrast(Color.White)) Color.Black else Color.White
 }
 
 @Composable

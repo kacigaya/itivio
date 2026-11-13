@@ -25,7 +25,7 @@ import app.itivio.R
 
 // Fallback schemes for devices without dynamic color (API < 31). Generated with
 // material-color-utilities (tonal spot, 2021 spec) from seed #1B6B5A.
-private val LightColors = lightColorScheme(
+internal val LightColors = lightColorScheme(
     primary = Color(0xFF0C6B59),
     onPrimary = Color(0xFFFFFFFF),
     primaryContainer = Color(0xFFA1F2DB),
@@ -63,7 +63,7 @@ private val LightColors = lightColorScheme(
     surfaceContainerLowest = Color(0xFFFFFFFF),
     surfaceDim = Color(0xFFD5DBD8),
 )
-private val DarkColors = darkColorScheme(
+internal val DarkColors = darkColorScheme(
     primary = Color(0xFF85D6BF),
     onPrimary = Color(0xFF00382D),
     primaryContainer = Color(0xFF005142),
