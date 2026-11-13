@@ -5,16 +5,23 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import app.itivio.ui.common.LocalTimeFormatter
 import app.itivio.ui.common.rememberTimeFormatter
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.font.FontWeight
+import app.itivio.R
 
 // Fallback schemes for devices without dynamic color (API < 31). Generated with
 // material-color-utilities (tonal spot, 2021 spec) from seed #1B6B5A.
@@ -95,6 +102,29 @@ private val DarkColors = darkColorScheme(
     surfaceDim = Color(0xFF0E1513),
 )
 
+/**
+ * Google Sans Flex with round terminals. One variable font file gives all weights. The UI pairs
+ * a heavy weight for numbers and names with a light weight for units and secondary text.
+ */
+private val GoogleSansFlex = FontFamily(
+    listOf(FontWeight.Light, FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold, FontWeight.ExtraBold)
+        .map { weight ->
+            Font(
+                R.font.google_sans_flex,
+                weight = weight,
+                variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight), FontVariation.Setting("ROND", 100f)),
+            )
+        },
+)
+
+/**
+ * True when the app shows its dark theme. The user can set the theme in the app, so this can
+ * differ from the setting of the device. The map reads it to pick its style.
+ */
+val LocalDarkTheme = staticCompositionLocalOf { false }
+
+private val ItivioTypography = Typography(fontFamily = GoogleSansFlex)
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ItivioTheme(
@@ -113,6 +143,13 @@ fun ItivioTheme(
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
         motionScheme = MotionScheme.expressive(),
-        content = { CompositionLocalProvider(LocalTimeFormatter provides rememberTimeFormatter(), content = content) },
+        typography = ItivioTypography,
+        content = {
+            CompositionLocalProvider(
+                LocalTimeFormatter provides rememberTimeFormatter(),
+                LocalDarkTheme provides darkTheme,
+                content = content,
+            )
+        },
     )
 }
