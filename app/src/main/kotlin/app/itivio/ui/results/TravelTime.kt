@@ -20,6 +20,7 @@ import androidx.compose.material3.TimePickerDisplayMode
 import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,14 +35,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.ui.common.formatTime
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 /** Trips can be planned this many days ahead; longer ranges rarely have reliable timetables. */
 private const val DAYS_AHEAD = 7
+
+/** The device clock in the app; screenshot tests supply a fixed date and time. */
+internal val LocalTravelClock = staticCompositionLocalOf<Clock?> { null }
 
 /** Shows when the trip starts or ends. Selected when the user picked a time other than now. */
 @Composable
@@ -59,8 +63,9 @@ fun TravelTimeChip(time: Instant?, arriveBy: Boolean, onClick: () -> Unit, modif
 @Composable
 private fun travelTimeLabel(time: Instant?, arriveBy: Boolean): String {
     if (time == null) return stringResource(R.string.travel_now)
-    val zone = ZoneId.systemDefault()
-    val days = ChronoUnit.DAYS.between(LocalDate.now(zone), time.atZone(zone).toLocalDate()).toInt()
+    val wallClock = LocalTravelClock.current ?: Clock.systemDefaultZone()
+    val zone = wallClock.zone
+    val days = ChronoUnit.DAYS.between(LocalDate.now(wallClock), time.atZone(zone).toLocalDate()).toInt()
     val clock = formatTime(time, zone)
     val moment = if (days == 0) clock else stringResource(R.string.travel_day_time, dayLabel(days), clock)
     return stringResource(if (arriveBy) R.string.travel_arrive_by else R.string.travel_leave_at, moment)
@@ -73,7 +78,7 @@ private fun dayLabel(offset: Int): String = when (offset) {
     else -> {
         val locale = LocalConfiguration.current.locales[0]
         val pattern = DateFormat.getBestDateTimePattern(locale, "EEEd")
-        DateTimeFormatter.ofPattern(pattern, locale).format(LocalDate.now().plusDays(offset.toLong()))
+        DateTimeFormatter.ofPattern(pattern, locale).format(LocalDate.now(LocalTravelClock.current ?: Clock.systemDefaultZone()).plusDays(offset.toLong()))
     }
 }
 
@@ -89,9 +94,10 @@ fun TravelTimeDialog(
     onDismiss: () -> Unit,
     onConfirm: (time: Instant?, arriveBy: Boolean) -> Unit,
 ) {
-    val zone = ZoneId.systemDefault()
-    val today = LocalDate.now(zone)
-    val initial = (time ?: Instant.now()).atZone(zone)
+    val wallClock = LocalTravelClock.current ?: Clock.systemDefaultZone()
+    val zone = wallClock.zone
+    val today = LocalDate.now(wallClock)
+    val initial = (time ?: Instant.now(wallClock)).atZone(zone)
     var arrive by rememberSaveable { mutableStateOf(arriveBy) }
     var day by rememberSaveable {
         mutableIntStateOf(ChronoUnit.DAYS.between(today, initial.toLocalDate()).toInt().coerceIn(0, DAYS_AHEAD - 1))

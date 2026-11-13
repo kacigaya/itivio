@@ -76,8 +76,10 @@ android {
             isReturnDefaultValues = true
             all {
                 it.systemProperty("robolectric.graphicsMode", "NATIVE")
-                // Screenshots are written for review only; nothing compares against goldens yet.
-                it.systemProperty("roborazzi.test.record", "true")
+                // Recording is explicit. Normal test runs compare against committed reference images.
+                val record = providers.gradleProperty("roborazzi.test.record").getOrElse("false")
+                it.systemProperty("roborazzi.test.record", record)
+                it.systemProperty("roborazzi.test.verify", (record != "true").toString())
             }
         }
     }

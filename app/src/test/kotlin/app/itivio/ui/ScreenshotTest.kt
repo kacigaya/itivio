@@ -4,6 +4,12 @@ import android.app.Application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberSearchBarState
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.runtime.LaunchedEffect
+import app.itivio.ui.search.LocationSearchView
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,10 +17,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsNode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import app.itivio.data.transitous.PlanResponse
 import app.itivio.data.transitous.toDomain
 import app.itivio.data.transitousJson
@@ -53,7 +66,11 @@ import app.itivio.ui.stop.StopScreen
 import app.itivio.ui.walk.WalkScreen
 import app.itivio.ui.theme.ItivioTheme
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
+import com.github.takahirom.roborazzi.RoborazziOptions
+import java.time.Clock
 import java.time.Instant
+import app.itivio.ui.results.LocalTravelClock
 import java.time.ZoneId
 import org.junit.After
 import org.junit.Before
@@ -65,17 +82,18 @@ import org.koin.core.context.stopKoin
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Renders each screen's panel (without the native map) in light and dark for design review.
- * Images land in app/build/outputs/roborazzi/.
+ * Compares panels without the native map in light and dark, at normal and 200% text size.
+ * Reference images live in src/test/screenshots; differences go to build/outputs/roborazzi/.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35], qualifiers = "w411dp-h891dp-xxhdpi", application = Application::class)
-class ScreenshotTest {
+@Config(sdk = [35], qualifiers = "en-rUS-w411dp-h891dp-xxhdpi", application = Application::class)
+open class ScreenshotTest {
     @get:Rule val compose = createComposeRule()
 
     private val places = FakePlacesRepository()
@@ -96,21 +114,55 @@ class ScreenshotTest {
     @After
     fun stop() = stopKoin()
 
+    @OptIn(ExperimentalRoborazziApi::class)
     private fun capture(name: String, content: @Composable () -> Unit) {
         var dark by mutableStateOf(false)
+        val fontScale = RuntimeEnvironment.getFontScale()
         compose.mainClock.autoAdvance = false
         compose.setContent {
             ItivioTheme(darkTheme = dark, dynamicColor = false) {
                 // Stands in for the map so sheet edges stay visible.
-                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceDim)) { content() }
+                val density = LocalDensity.current
+                CompositionLocalProvider(
+                    LocalDensity provides Density(density.density, fontScale),
+                    LocalTravelClock provides Clock.fixed(t0, berlin),
+                ) {
+                    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceDim)) { content() }
+                }
             }
         }
         for (theme in listOf("light", "dark")) {
             dark = theme == "dark"
+            val variant = theme + if (fontScale >= 2f) "_large" else ""
             Snapshot.sendApplyNotifications()
             compose.mainClock.advanceTimeBy(1_000)
-            compose.onRoot().captureRoboImage("build/outputs/roborazzi/${name}_$theme.png")
+            assertNamedActions()
+            compose.onRoot().captureRoboImage(
+                "src/test/screenshots/${name}_$variant.png",
+                roborazziOptions = RoborazziOptions(
+                    compareOptions = RoborazziOptions.CompareOptions(outputDirectoryPath = "build/outputs/roborazzi"),
+                ),
+            )
         }
+    }
+
+    private fun assertNamedActions() {
+        fun named(node: SemanticsNode): Boolean =
+            node.config.getOrNull(SemanticsProperties.ContentDescription)?.any { it.isNotBlank() } == true ||
+                node.config.getOrNull(SemanticsProperties.Text)?.any { it.text.isNotBlank() } == true ||
+                node.config.getOrNull(SemanticsProperties.EditableText) != null ||
+                node.children.any(::named)
+        val actions = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick)).fetchSemanticsNodes()
+        actions.forEach { node -> org.junit.Assert.assertTrue("Unnamed action: ${node.config}", named(node)) }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Test
+    fun search() = capture("search") {
+        val state = rememberSearchBarState()
+        val text = rememberTextFieldState()
+        LaunchedEffect(Unit) { state.animateToExpanded() }
+        LocationSearchView(state, text, "Destination", offerMyLocation = true, onPick = {})
     }
 
     @Test
@@ -258,6 +310,26 @@ class ScreenshotTest {
     }
 
     @Test
+    fun trainChoices() = capture("train_choices") {
+        app.itivio.ui.itinerary.TrainDepartures(
+            departures = sampleDepartures.first().departures,
+            selectedTripId = "d1", now = t0,
+            loading = false, canSelect = true, changed = true, failed = false,
+            onSelect = {}, onReset = {},
+        )
+    }
+
+    @Test
+    fun trainChoicesFailed() = capture("train_choices_failed") {
+        app.itivio.ui.itinerary.TrainDepartures(
+            departures = sampleDepartures.first().departures,
+            selectedTripId = "d1", now = t0,
+            loading = false, canSelect = true, changed = false, failed = true,
+            onSelect = {}, onReset = {},
+        )
+    }
+
+    @Test
     fun settings() = capture("settings") {
         SettingsScreen(
             theme = ThemeMode.SYSTEM, options = JourneyOptions(),
@@ -266,7 +338,7 @@ class ScreenshotTest {
     }
 
     @Test
-    fun about() = capture("about") { AboutScreen(version = "0.7.0", onBack = {}) }
+    fun about() = capture("about") { AboutScreen(version = "0.8.0", onBack = {}) }
 
     @Test
     fun walk() = capture("walk") { Walk(position = { it.points[it.points.size / 3] }) }
@@ -382,4 +454,16 @@ class ScreenshotTest {
             ),
         )
     }
+}
+
+/** A separate Android configuration also scales text in dialog windows. */
+@RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(sdk = [35], qualifiers = "en-rUS-w411dp-h891dp-xxhdpi", application = Application::class)
+class LargeScreenshotTest : ScreenshotTest() {
+    @Before
+    fun useLargeText() = RuntimeEnvironment.setFontScale(2f)
+
+    @After
+    fun restoreTextSize() = RuntimeEnvironment.setFontScale(1f)
 }
