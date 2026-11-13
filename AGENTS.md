@@ -39,3 +39,11 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 - Icons are Material Symbols Rounded, filled (`<name>_fill1_24px.xml` in google/material-design-icons, without the `android:tint` attribute), as vector drawables in `res/drawable/` (`ic_<name>.xml`).
 - The typeface is Google Sans Flex, bundled unmodified in `res/font/google_sans_flex.ttf` under the SIL Open Font License 1.1. Keep `licenses/GoogleSansFlex-OFL.txt` with it.
 - A string with `<b>` markup is read with `markedStringResource`. Keep the markup escaped (`&lt;b>`).
+
+## Docker Android accessibility checks
+
+- Container: `velin-android`, image `redroid/redroid:15.0.0_64only-latest`, Android 15 (SDK 35), arm64. Use `sudo -n docker` on this host. Do not restart the container for an app check.
+- ADB target: `127.0.0.1:5555`. Confirm the connected targets with `adb devices -l`.
+- TalkBack test package: `com.android.talkback`, service `com.google.android.marvin.talkback.TalkBackService`. It is a local 16.2 source build without native Braille support. Speech engine: `com.reecedunn.espeak` 1.52.0.
+- Save and restore font scale, accessibility services, and the default speech engine. Leave installed test tools available. See `docs/quality.md` for coverage and limits.
+- Ordinary `adb input` events bypass TalkBack navigation. Use a real input device or a virtual Linux keyboard exposed to the container. Send accessibility actions only when the node lists them.

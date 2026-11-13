@@ -6,9 +6,21 @@ import app.itivio.ui.common.LocalTimeFormatter
 import java.time.format.DateTimeFormatter
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import app.itivio.ui.itinerary.ItineraryScreen
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import app.itivio.domain.Stop
+import app.itivio.domain.GeoPoint
+import app.itivio.domain.Leg
+import app.itivio.domain.Journey
+import app.itivio.domain.TransitMode
+import app.itivio.ui.common.LegChain
+import app.itivio.domain.Departure
+import app.itivio.domain.Line
+import app.itivio.ui.nearby.DeparturesCard
 import app.itivio.domain.StopTime
 import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.TimeText
@@ -47,4 +59,60 @@ class AccessibilitySemanticsTest {
         compose.setContent { ItivioTheme(dynamicColor = false) { LoadingState() } }
         compose.onNodeWithContentDescription("Loading").assertIsDisplayed()
     }
+
+    @Test
+    fun `walking badge speaks minutes once`() {
+        val start = StopTime(Instant.parse("2026-11-09T10:00:00Z"))
+        val end = StopTime(start.scheduled.plusSeconds(300))
+        val stop = Stop("Station", GeoPoint(52.5, 13.4), stopId = "stop")
+        val leg = Leg.Street(TransitMode.WALK, stop, stop, start, end, emptyList(), 400.0)
+        val journey = Journey("walk", listOf(leg), start, end, 0)
+        compose.setContent { ItivioTheme(dynamicColor = false) { LegChain(journey) } }
+        compose.onNodeWithContentDescription("Walk, 5 min").assertIsDisplayed()
+        compose.onAllNodesWithText("5").assertCountEquals(0)
+    }
+
+
+
+
+
+
+    @Test
+    fun `a departure due now does not say in now`() {
+        val now = Instant.parse("2026-11-09T10:00:00Z")
+        val stop = Stop("Station", GeoPoint(52.5, 13.4), zone = ZoneId.of("UTC"))
+        val departure = Departure(stop, Line("R"), TransitMode.RAIL, "Destination", StopTime(now, now), false, "trip")
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                CompositionLocalProvider(LocalTimeFormatter provides DateTimeFormatter.ofPattern("HH:mm")) {
+                    DeparturesCard(listOf(departure), now)
+                }
+            }
+        }
+        compose.onNodeWithContentDescription("Now, 10:00, Live", substring = true).assertIsDisplayed()
+        compose.onAllNodesWithText("Now").assertCountEquals(0)
+    }
+
+
+    @Test
+    fun `walking directions has one spoken name and keeps its action`() {
+        val start = StopTime(Instant.parse("2026-11-09T10:00:00Z"))
+        val end = StopTime(start.scheduled.plusSeconds(300))
+        val from = Stop("Start", GeoPoint(52.5, 13.4))
+        val to = Stop("End", GeoPoint(52.501, 13.4))
+        val leg = Leg.Street(TransitMode.WALK, from, to, start, end, listOf(from.point, to.point), 120.0)
+        var picked = -1
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                ItineraryScreen(
+                    wide = true, journey = Journey("walk", listOf(leg), start, end, 0),
+                    now = start.scheduled, lineTimes = emptyMap(), onBack = {}, onWalk = { picked = it },
+                )
+            }
+        }
+        compose.onNodeWithContentDescription("Walking directions").performScrollTo().performClick()
+        compose.onAllNodesWithText("Directions").assertCountEquals(0)
+        org.junit.Assert.assertEquals(0, picked)
+    }
+
 }

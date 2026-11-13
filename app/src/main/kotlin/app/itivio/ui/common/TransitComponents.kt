@@ -189,11 +189,12 @@ fun LegChain(journey: Journey, modifier: Modifier = Modifier) {
                 is Leg.Street -> {
                     val label = stringResource(leg.mode.label())
                     if (leg.mode == TransitMode.WALK) {
+                        val description = "$label, ${stringResource(R.string.duration_min, ((leg.duration.seconds + 30) / 60).toInt())}"
                         Tag(
                             icon = leg.mode.icon(),
                             text = ((leg.duration.seconds + 30) / 60).toString(),
                             // The icon alone names the mode; a screen reader needs the word.
-                            modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = label },
+                            modifier = Modifier.clearAndSetSemantics { contentDescription = description },
                         )
                     } else {
                         Tag(icon = leg.mode.icon(), text = label)

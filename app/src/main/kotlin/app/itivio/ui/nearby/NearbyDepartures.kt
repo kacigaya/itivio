@@ -246,11 +246,11 @@ private fun Countdown(departure: Departure, minutes: Long) {
     val live = departure.time.isRealtime
     val countdown = if (minutes <= 0) stringResource(R.string.nearby_now) else stringResource(R.string.duration_min, minutes.toInt())
     val clock = formatTime(departure.time.best, departure.stop.zone)
-    val description = stringResource(
-        R.string.nearby_countdown_description,
-        countdown,
-        clock,
-        stringResource(if (live) R.string.live else R.string.scheduled),
-    )
+    val status = stringResource(if (live) R.string.live else R.string.scheduled)
+    val description = if (minutes <= 0) {
+        stringResource(R.string.nearby_departing_now_description, clock, status)
+    } else {
+        stringResource(R.string.nearby_countdown_description, countdown, clock, status)
+    }
     CountdownText(minutes, live, Modifier.clearAndSetSemantics { contentDescription = description })
 }

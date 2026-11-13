@@ -49,6 +49,7 @@
     <string name="nearby_then_minutes">then %1$s min</string>
     <!-- %1$s is a clock time. -->
     <string name="nearby_then">then %1$s</string>
+    <string name="nearby_departing_now_description">Now, %1$s, %2$s</string>
     <string name="nearby_countdown_description">In %1$s, %2$s, %3$s</string>
     <string name="nearby_empty_title">No departures nearby</string>
     <string name="nearby_empty_body">There are no stops within 400 m, or no timetable data covers this area.</string>

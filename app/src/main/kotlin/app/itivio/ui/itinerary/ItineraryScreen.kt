@@ -519,7 +519,7 @@ private fun StreetLegItem(leg: Leg.Street, onWalk: (() -> Unit)?) {
                 modifier = Modifier.semantics { contentDescription = open },
             ) {
                 Icon(painterResource(R.drawable.ic_navigation), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-                Text(stringResource(R.string.walk_open_short), modifier = Modifier.padding(start = ButtonDefaults.IconSpacing))
+                Text(stringResource(R.string.walk_open_short), modifier = Modifier.padding(start = ButtonDefaults.IconSpacing).clearAndSetSemantics {})
             }
         }
     }

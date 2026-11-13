@@ -132,6 +132,10 @@ Transitous asks each app to send contact details with every request. The app put
 
 Read the [Transitous usage policy](https://transitous.org/api/) before you publish a fork. The service is for open-source, non-commercial apps only.
 
+## Contributing and security
+
+Read [Contributing](CONTRIBUTING.md) for setup and checks. See the [changelog](CHANGELOG.md) for version history and the [security policy](SECURITY.md) to report a vulnerability.
+
 ## License
 
 itivio is free software. You can redistribute it and change it under the terms of the [GNU General Public License](LICENSE), version 3 or any later version.

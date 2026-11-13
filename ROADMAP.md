@@ -132,7 +132,7 @@ All items are done.
 
 This is the first beta release. The code and automated checks are ready. The manual TalkBack check remains open.
 
-- [ ] Test each screen with TalkBack. Fix the problems. Neither connected test device has TalkBack installed. See `docs/quality.md` for the manual check.
+- [ ] Finish the TalkBack check. Docker tests found and fixed repeated labels. Train choices, dynamic error states, the full theme/text-size matrix, and physical touch and audio checks remain. See `docs/quality.md`.
 - [x] Check accessible names on visible click actions. Prevent duplicate announcements for times and loading states.
 - [x] Test each screen at 200% text size. Fix the theme controls and walking text layout. Test dialog windows with Android's font scale too.
 - [x] Check text contrast in light, dark, and system dynamic palettes. Fix unreadable agency line colors.
@@ -156,7 +156,7 @@ Feature work stops here. Only fixes go in after this release.
 - [ ] Tell users that the key change needs one reinstall.
 - [ ] Add a release workflow that builds, signs, and publishes the APKs with checksums.
 - [ ] Add F-Droid metadata and send the app to F-Droid.
-- [ ] Add `CHANGELOG.md`, `CONTRIBUTING.md`, and `SECURITY.md`.
+- [x] Add `CHANGELOG.md`, `CONTRIBUTING.md`, and `SECURITY.md`.
 - [x] Add a privacy policy file.
 - [x] Add screenshots to the README.
 

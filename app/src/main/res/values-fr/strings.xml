@@ -47,6 +47,7 @@
     <string name="nearby_then_minutes">puis %1$s min</string>
     <!-- %1$s is a clock time. -->
     <string name="nearby_then">puis %1$s</string>
+    <string name="nearby_departing_now_description">Maintenant, %1$s, %2$s</string>
     <string name="nearby_countdown_description">Dans %1$s, %2$s, %3$s</string>
     <string name="nearby_empty_title">Aucun départ à proximité</string>
     <string name="nearby_empty_body">Il n’y a aucun arrêt à moins de 400 m, ou aucune donnée horaire ne couvre cette zone.</string>
