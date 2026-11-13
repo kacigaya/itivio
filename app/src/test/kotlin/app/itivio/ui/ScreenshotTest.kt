@@ -140,7 +140,11 @@ open class ScreenshotTest {
             compose.onRoot().captureRoboImage(
                 "src/test/screenshots/${name}_$variant.png",
                 roborazziOptions = RoborazziOptions(
-                    compareOptions = RoborazziOptions.CompareOptions(outputDirectoryPath = "build/outputs/roborazzi"),
+                    compareOptions = RoborazziOptions.CompareOptions(
+                        outputDirectoryPath = "build/outputs/roborazzi",
+                        // ARM64 and x86_64 differ at a few antialiased clock-hand edge pixels.
+                        changeThreshold = if (name == "travel_time") 0.00005f else 0f,
+                    ),
                 ),
             )
         }

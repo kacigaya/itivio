@@ -21,6 +21,8 @@ To accept an intentional visual change:
 3. Run the normal local checks again. They compare images without changing the references.
 4. Commit the accepted references with the change.
 
+The time-picker images allow up to 0.005% differing pixels for clock-hand rasterization differences between ARM64 and x86_64. All other images require an exact match.
+
 Do not record new references to hide an unexplained failure. Rendering can differ across host architectures. Check the reference configuration before accepting a difference on another host.
 
 ## Manual accessibility check
