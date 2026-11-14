@@ -45,7 +45,7 @@ class TransitousRoutingRepository(
     // again. A screen that opens again, or a restart after new live times, shows the last answer at once.
     private data class Cached<T>(val at: Instant, val value: T)
     private data class LineKey(
-        val stopId: String, val line: Line, val directionId: String?, val minute: Instant, val limit: Int,
+        val stopId: String, val line: Line, val directionId: String?, val from: Instant, val limit: Int,
         val alightStop: String?, val alightStation: String?, val language: String,
     )
     private val lineCache = lru<LineKey, Cached<List<Departure>>>(32)
@@ -189,8 +189,7 @@ class TransitousRoutingRepository(
         limit: Int,
         alightAt: Stop?,
     ): List<Departure> {
-        // One entry for each minute; a later call in that minute drops the departures it no longer wants.
-        val key = LineKey(stopId, line, directionId, from.truncatedTo(ChronoUnit.MINUTES), limit,
+        val key = LineKey(stopId, line, directionId, from, limit,
             alightAt?.stopId, alightAt?.stationId, language())
         return lineCache.cached(key) { lineRequest(stopId, line, directionId, from, limit, alightAt) }.filter { it.time.best >= from }
     }

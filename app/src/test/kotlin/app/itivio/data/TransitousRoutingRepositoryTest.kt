@@ -164,12 +164,14 @@ class TransitousRoutingRepositoryTest {
             val requests = paths.size
 
             now = time.plusSeconds(29)
-            assertEquals(first.filter { it.time.best >= now }, repo.lineDepartures("stop:a", m5, "0", now))
+            assertEquals(first, repo.lineDepartures("stop:a", m5, "0", time))
             assertEquals(trip, repo.trip("t1"))
             assertEquals(requests, paths.size)
 
             // Another stop, or a later minute, is another request.
             suspend fun asks(call: suspend () -> Unit): Boolean { val before = paths.size; call(); return paths.size > before }
+            assertTrue(asks { repo.lineDepartures("stop:a", m5, "0", time.plusSeconds(45)) })
+            assertTrue(asks { repo.lineDepartures("stop:a", m5, "0", time.plusSeconds(10)) })
             assertTrue(asks { repo.lineDepartures("stop:b", m5, "0", now) })
             assertTrue(asks { repo.lineDepartures("stop:a", m5, "0", time.plusSeconds(60)) })
 

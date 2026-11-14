@@ -154,7 +154,7 @@ Limits: the projection picks the nearest part of the route, so a route that pass
 - `/map/stops` runs only on the home screen, at zoom 15 or closer, 0.5 seconds after the camera stops. The request asks for the view rounded out to a 0.01° grid. A view inside the area already loaded sends no request. A view wider than 0.05° sends no request.
 - The walking view sends no request. "Plan a new route" sends one `/plan` request.
 - Geocode results are cached in memory.
-- Journey pages, departure boards (one stop or nearby), line times, and trips are cached in memory for 30 seconds: less than the shortest refresh (one minute), so each refresh asks again. A screen that opens again shows the last answer with no request. The disruptions read the same boards. A journey page is for one request, page cursor, and language. A nearby board is for the position rounded as sent (4 decimals). A line-times entry is for one stop, line, direction, alighting stop, language, and minute. A failure is not cached, so "Try again" always asks.
+- Journey pages, departure boards (one stop or nearby), line times, and trips are cached in memory for 30 seconds: less than the shortest refresh (one minute), so each refresh asks again. A screen that opens again shows the last answer with no request. The disruptions read the same boards. A journey page is for one request, page cursor, and language. A nearby board is for the position rounded as sent (4 decimals). A line-times entry is for one stop, line, direction, alighting stop, language, and exact start time. A failure is not cached, so "Try again" always asks.
 
 ## Privacy
 
