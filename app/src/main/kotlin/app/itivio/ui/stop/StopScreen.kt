@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.domain.Departure
-import app.itivio.ui.common.AttributionFooter
 import app.itivio.ui.common.FailureState
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.LoadingState
@@ -93,7 +92,6 @@ fun StopScreen(
                     }
                 }
             }
-            item(key = "attribution") { AttributionFooter() }
         }
     }
 }

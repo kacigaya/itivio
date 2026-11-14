@@ -76,7 +76,6 @@ import app.itivio.domain.Journey
 import app.itivio.domain.Leg
 import app.itivio.domain.Stop
 import app.itivio.domain.TransitMode
-import app.itivio.ui.common.AttributionFooter
 import app.itivio.ui.common.IconTile
 import app.itivio.ui.common.LegChain
 import app.itivio.ui.common.LineBadge
@@ -163,7 +162,6 @@ fun ItineraryScreen(
                 val last = journey.legs.last()
                 Step(current = false, card = false) { Arrival(last) }
             }
-            item(key = "attribution") { AttributionFooter() }
         }
     }
 }

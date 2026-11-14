@@ -64,7 +64,6 @@ import app.itivio.domain.Location
 import app.itivio.domain.SavedPlaces
 import app.itivio.domain.Shortcut
 import app.itivio.domain.savedKey
-import app.itivio.ui.common.AttributionFooter
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.MapPanel
 import app.itivio.ui.nearby.StopDepartures
@@ -154,7 +153,6 @@ fun ExploreScreen(
                 } else {
                     item(key = "intro") { Intro(onRequestLocation) }
                 }
-                item(key = "attribution") { AttributionFooter() }
             }
         } else {
             // Two pages in place of a navigation bar. A swipe on the list or a tap on a title changes the page.
@@ -175,7 +173,6 @@ fun ExploreScreen(
                         }
                         HomePage.DISRUPTIONS -> disruptions(disruptions, now, onRetryDisruptions)
                     }
-                    item(key = "attribution") { AttributionFooter() }
                 }
             }
         }

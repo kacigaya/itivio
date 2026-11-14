@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
 import app.itivio.R
 import app.itivio.domain.JourneyOptions
-import app.itivio.ui.common.AttributionFooter
 import app.itivio.ui.common.FailureState
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.LoadingState
@@ -249,7 +248,6 @@ private fun ResultsList(
                 }
             }
         }
-        item(key = "attribution") { AttributionFooter() }
     }
 }
 

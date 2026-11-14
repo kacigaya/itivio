@@ -44,7 +44,7 @@ A query goes to IGN only when it looks like an address and the first Transitous 
 
 IGN receives the query text, with no location bias or contact details. It returns up to five address matches. Results below score 0.5 are omitted. IGN addresses lead the merged list. Nearby address duplicates are removed; transit stops remain separate. The list keeps at most ten results. IGN has a five-second request timeout. A failure keeps the Transitous results and is not cached, so a later search can retry. Cancellation still propagates. Successful merged results use the existing memory cache.
 
-The app footer links to IGN and credits BAN. No new library is needed.
+Settings → About links to IGN and credits BAN. It also contains the French address search privacy notice. No new library is needed.
 
 ## Saved places
 
@@ -141,7 +141,7 @@ Limits: the projection picks the nearest part of the route, so a route that pass
 ## Transitous usage policy
 
 - Every request sends `User-Agent: itivio/<version> (+<contact>)`. Set the contact with the `itivio.contact` Gradle property.
-- The UI shows a link to `https://transitous.org/sources/`. The info button on the map opens the OpenStreetMap, OpenMapTiles, and OpenFreeMap credits. The credits start closed, the same as the default MapLibre Android control.
+- Settings → About shows the Transitous and IGN/BAN credits and links to `https://transitous.org/sources/`. Other screens have no provider footer. The info button on the map opens the OpenStreetMap, OpenMapTiles, and OpenFreeMap credits. The credits start closed, the same as the default MapLibre Android control.
 - Autocomplete waits for typing to pause, needs 2 or more characters, and cancels stale requests.
 - `/plan` runs only on explicit user action. No background polling. The journey options dialog sends one request when the user confirms, not one for each change.
 - `/stoptimes` refreshes once a minute, only while the nearby list is on screen and the app is in the foreground. A move of less than 150 m does not send a new request.

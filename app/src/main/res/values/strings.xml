@@ -327,10 +327,7 @@
     <string name="allow_location">Allow location</string>
 
     <!-- Attribution -->
-    <string name="attribution_routing">Routing by Transitous</string>
-    <string name="attribution_sources">Data sources</string>
     <string name="attribution_url" translatable="false">https://transitous.org/sources/</string>
-    <string name="attribution_ign">French addresses: IGN · BAN</string>
     <string name="attribution_ign_url" translatable="false">https://cartes.gouv.fr/aide/fr/guides-utilisateur/utiliser-les-services-de-la-geoplateforme/geocodage/</string>
     <string name="privacy_ign">French address searches also go to IGN. Your location is not sent to IGN.</string>
     <string name="itinerary_your_train">Your train</string>

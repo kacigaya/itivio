@@ -318,9 +318,6 @@
     <string name="allow_location">Autoriser la localisation</string>
 
     <!-- Attribution -->
-    <string name="attribution_routing">Itinéraires par Transitous</string>
-    <string name="attribution_sources">Sources des données</string>
-    <string name="attribution_ign">Adresses françaises : IGN · BAN</string>
     <string name="privacy_ign">Les recherches d’adresses françaises vont aussi à l’IGN. Votre position n’est pas envoyée à l’IGN.</string>
     <string name="itinerary_your_train">Votre train</string>
     <string name="itinerary_train_arrival">→ %1$s · %2$s</string>
