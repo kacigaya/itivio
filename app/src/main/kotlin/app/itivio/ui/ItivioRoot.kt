@@ -39,7 +39,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.itivio.BuildConfig
 import app.itivio.R
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -49,6 +52,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import app.itivio.domain.Departure
 import app.itivio.domain.GeoPoint
+import app.itivio.domain.JourneyOptions
 import app.itivio.domain.Journey
 import app.itivio.domain.BoardingHint
 import app.itivio.domain.BoardingRepository
@@ -79,6 +83,7 @@ import app.itivio.ui.map.MapStop
 import app.itivio.ui.map.MapStopsViewModel
 import app.itivio.ui.map.TransitMap
 import app.itivio.ui.map.toFix
+import app.itivio.ui.walk.WalkRerouteViewModel
 import app.itivio.ui.nearby.NearbyViewModel
 import app.itivio.ui.nearby.rememberNow
 import app.itivio.ui.planner.Endpoint
@@ -101,6 +106,7 @@ import org.maplibre.compose.location.HeadingProvider
 import org.maplibre.compose.location.HeadingRequest
 import org.maplibre.compose.location.LocationAccuracy
 import org.maplibre.compose.location.LocationRequest
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.emptyFlow
 import kotlin.time.Duration.Companion.milliseconds
 import org.maplibre.spatialk.units.extensions.meters
@@ -129,6 +135,7 @@ fun ItivioRoot(
     planner: PlannerViewModel = koinViewModel(),
     nearby: NearbyViewModel = koinViewModel(),
     mapStops: MapStopsViewModel = koinViewModel(),
+    rerouter: WalkRerouteViewModel = koinViewModel(),
 ) {
     val backStack = rememberNavBackStack(ExploreRoute)
     val state by planner.state.collectAsStateWithLifecycle()
@@ -175,9 +182,12 @@ fun ItivioRoot(
     val now by rememberNow()
 
     var trackedJourney by remember { mutableStateOf<Journey?>(null) }
-    val walkLeg = (top as? WalkRoute)?.let { route ->
+    val reroute by rerouter.reroute.collectAsStateWithLifecycle()
+    val plannedWalkLeg = (top as? WalkRoute)?.let { route ->
         (trackedJourney?.takeIf { it.id == route.journeyId } ?: state.journey(route.journeyId))?.legs?.getOrNull(route.legIndex) as? Leg.Street
     }
+    val walkKey = (top as? WalkRoute)?.let { route -> plannedWalkLeg?.let { rerouteKey(route, it, state.options) } }
+    val walkLeg = plannedWalkLeg?.rerouted(walkKey, reroute)
     val mapJourney = when (top) {
         is ItineraryRoute -> trackedJourney?.takeIf { it.id == top.journeyId } ?: state.journey(top.journeyId)
         ResultsRoute -> state.highlighted
@@ -191,6 +201,24 @@ fun ItivioRoot(
         val path = walkPath ?: return@LaunchedEffect
         snapshotFlow { locationState.lastLocation?.toFix() }.collect { fix ->
             walkProgress = fix?.let { path.progress(it, wasOffRoute = walkProgress?.isOffRoute == true) }
+        }
+    }
+    val offRoute = walkProgress?.isOffRoute == true
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(offRoute, walkKey, walkLeg, lifecycle) {
+        val key = walkKey ?: return@LaunchedEffect
+        val leg = walkLeg ?: return@LaunchedEffect
+        if (!offRoute) return@LaunchedEffect
+        val options = state.options
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            try {
+                while (true) {
+                    locationState.lastLocation?.position?.let { rerouter.reroute(key, leg, GeoPoint(it.latitude, it.longitude), options) }
+                    delay(WalkRerouteViewModel.MIN_INTERVAL.toMillis())
+                }
+            } finally {
+                rerouter.cancel()
+            }
         }
     }
     val peek = when (top) {
@@ -391,7 +419,8 @@ fun ItivioRoot(
                             }
                         }
                         entry<WalkRoute> { route ->
-                            val leg = (trackedJourney?.takeIf { it.id == route.journeyId } ?: state.journey(route.journeyId))?.legs?.getOrNull(route.legIndex) as? Leg.Street
+                            val leg = ((trackedJourney?.takeIf { it.id == route.journeyId } ?: state.journey(route.journeyId))?.legs?.getOrNull(route.legIndex) as? Leg.Street)
+                                ?.let { it.rerouted(rerouteKey(route, it, state.options), reroute) }
                             if (leg == null) {
                                 SessionFallback(wide, state.results) { backStack.pop(planner) }
                             } else {
@@ -490,6 +519,12 @@ private val WalkLocationRequest = LocationRequest(LocationRequest.Standard) {
 }
 
 private val WalkHeadingRequest = HeadingRequest(HeadingRequest.Standard) { minimumInterval = 200.milliseconds }
+
+private fun rerouteKey(route: WalkRoute, planned: Leg.Street, options: JourneyOptions): Any =
+    listOf(route, planned.to.stopId, planned.to.point, options)
+
+private fun Leg.Street.rerouted(key: Any?, reroute: WalkRerouteViewModel.Reroute?): Leg.Street =
+    reroute?.takeIf { key != null && it.key == key }?.leg ?: this
 
 /** Gives no heading, so the compass sensor stays off outside the walking view. */
 private object NoHeading : HeadingProvider {

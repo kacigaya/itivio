@@ -203,9 +203,9 @@ fun TransitMap(
             (heading ?: walk?.directionAt(walkedMeters.toDouble()) ?: 0.0).roundToInt()
         }
     }
-    // The arrow and the camera of the walking view use the nearest point of the route when it is
-    // near, so position noise does not move them off the line.
-    val puckPosition by rememberUpdatedState(walkProgress?.markerPoint?.let { Position(longitude = it.longitude, latitude = it.latitude) })
+    // The arrow shows the measured position, as walking navigation does: a snap to the route can
+    // move the walker to the other side of the street.
+    val puckPosition by remember(locationState) { derivedStateOf { locationState.lastLocation?.position } }
     val puck = navigationPuck(fill = scheme.primary, border = scheme.surface, arrow = scheme.onPrimary)
     val mapState = rememberMapState(baseStyle = BaseStyle.Uri(style), initialCameraPosition = InitialCamera) {
         // Layers declared here render above the base style and follow recomposition.

@@ -48,7 +48,6 @@ data class WalkProgress(
     /** Distance from the position to the nearest point of the route. */
     val offRouteMeters: Double,
     val limitMeters: Double = WalkRoute.OFF_ROUTE_METERS,
-    val markerPoint: GeoPoint? = null,
 ) {
     val isOffRoute: Boolean get() = offRouteMeters > limitMeters
 }
@@ -94,9 +93,7 @@ class WalkRoute(val points: List<GeoPoint>, val instructions: List<WalkInstructi
         } else {
             fix.accuracyMeters?.coerceIn(MIN_OFF_ROUTE_METERS, OFF_ROUTE_METERS) ?: OFF_ROUTE_METERS
         }
-        val off = progress.offRouteMeters > limit
-        val marker = if (off || points.size < 2) fix.point else pointAt(progress.alongMeters)
-        return progress.copy(limitMeters = limit, markerPoint = marker)
+        return progress.copy(limitMeters = limit)
     }
 
     private fun isLeaving(fix: LocationFix, alongMeters: Double): Boolean {

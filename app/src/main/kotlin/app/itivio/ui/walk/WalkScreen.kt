@@ -65,7 +65,8 @@ val WalkPeekHeight = 156.dp
 private const val DEFAULT_METERS_PER_SECOND = 1.2
 
 /**
- * Turn-by-turn directions for one walk. [progress] is the device position on the walk, or null without a fix. The view never plans a new route by itself: [onReplan] runs only from its button.
+ * Turn-by-turn directions for one walk. [progress] is the device position on the walk, or null without a fix. The app root replaces
+ * the walk when the walker leaves it. [onReplan] plans the whole journey again, from its button only.
  */
 @Composable
 fun WalkScreen(

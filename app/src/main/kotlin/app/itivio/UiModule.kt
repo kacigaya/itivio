@@ -11,6 +11,7 @@ import app.itivio.ui.search.SavedPlacesViewModel
 import app.itivio.ui.search.SearchViewModel
 import app.itivio.ui.settings.SettingsViewModel
 import app.itivio.ui.stop.StopDeparturesViewModel
+import app.itivio.ui.walk.WalkRerouteViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -28,4 +29,5 @@ val uiModule = module {
     viewModelOf(::MapStopsViewModel)
     viewModelOf(::DisruptionsViewModel)
     viewModelOf(::SettingsViewModel)
+    viewModel { WalkRerouteViewModel(get()) }
 }
