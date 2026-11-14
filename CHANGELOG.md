@@ -5,6 +5,11 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.10.1
+
+- Show your real position in the walking view. The arrow no longer jumps to the route line, so it stays on your side of the street.
+- Plan a new walk from your position when you leave the route, at most once every 20 seconds while the app is open. Your position goes to Transitous for this request. The rest of the journey does not change.
+
 ## 0.10.0
 
 - Keep the walking arrow on the route line while you are on the route. The off-route limit follows the GPS accuracy, from 15 m to 50 m.
