@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.8.3
+
 - Match station IDs for supported Metro-to-RER boarding guidance, including Metro 9 to RER A at Nation.
 - Show shared RER station exits when the arrival platform is unknown. Keep the train position hidden in this case.
 - Keep Transitous and IGN/BAN credits and the French address privacy notice in Settings → About only.
