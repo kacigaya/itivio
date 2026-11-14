@@ -5,11 +5,15 @@ import androidx.lifecycle.viewModelScope
 import app.itivio.domain.Departure
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
+import app.itivio.domain.Line
 import app.itivio.domain.RoutingException
 import app.itivio.domain.RoutingRepository
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,29 +34,33 @@ class LineTimesViewModel(
     private val journey = MutableStateFlow<Pair<Journey?, Instant?>>(null to null)
 
     // Kept across collector restarts, so a return from the background does not blank the times.
-    private var shownFor: Journey? = null
+    private var shownFor: List<Triple<Int, String?, Line>>? = null
     private var shown = emptyMap<Int, List<Departure>>()
 
-    /** An eligible leg has no entry until its first request completes, including an empty or failed result. */
+    /** An eligible leg has no entry until the first round completes, including an empty or failed result. All legs get their entry together. */
     val times: StateFlow<Map<Int, List<Departure>>> = journey
         .transformLatest { (journey, notBefore) ->
-            if (journey != shownFor) {
-                shownFor = journey
+            val legs = journey?.legs.orEmpty().mapIndexedNotNull { index, leg ->
+                (leg as? Leg.Transit)?.takeIf { it.from.stopId != null }?.let { index to it }
+            }
+            // Live times change the journey each minute. Only other boarding stops or lines start over.
+            val key = legs.map { (index, leg) -> Triple(index, leg.from.stopId, leg.line) }
+            if (key != shownFor) {
+                shownFor = key
                 shown = emptyMap()
             }
             emit(shown)
-            if (journey == null) return@transformLatest
-            val legs = journey.legs.mapIndexedNotNull { index, leg ->
-                (leg as? Leg.Transit)?.takeIf { it.from.stopId != null }?.let { index to it }
-            }
-            if (legs.isEmpty()) return@transformLatest
+            if (journey == null || legs.isEmpty()) return@transformLatest
             while (true) {
                 val now = clock()
-                for ((index, leg) in legs) {
-                    val times = load(leg, readyAt(journey, index, maxOf(now, notBefore ?: now)))
-                    shown = shown + (index to (times ?: shown[index].orEmpty()))
-                    emit(shown)
+                // All legs at once: the lists appear together, after the slowest request instead of the sum.
+                val loaded = coroutineScope {
+                    legs.map { (index, leg) ->
+                        async { index to load(leg, readyAt(journey, index, maxOf(now, notBefore ?: now))) }
+                    }.awaitAll()
                 }
+                shown = loaded.associate { (index, times) -> index to (times ?: shown[index].orEmpty()) }
+                emit(shown)
                 delay(REFRESH_MILLIS)
             }
         }

@@ -11,6 +11,9 @@ import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.asStateFlow
@@ -61,16 +64,22 @@ class TripTrackerViewModel(
             while (true) {
                 val now = clock()
                 var current = shown ?: plan
-                for ((index, leg) in legs) {
-                    // A trip that ended a while ago cannot change the tracker any more.
-                    if (current.legs[index].end.best < now.minus(ENDED_MARGIN)) continue
-                    val trip = try {
-                        repository.trip((leg as Leg.Transit).tripId ?: continue)
-                    } catch (_: RoutingException) {
-                        continue
-                    }
-                    current = current.withTrip(index, trip)
+                // A trip that ended a while ago cannot change the tracker any more.
+                val active = legs.filter { (index, _) -> current.legs[index].end.best >= now.minus(ENDED_MARGIN) }
+                // All trips at once, so the live times land in one update.
+                val trips = coroutineScope {
+                    active.map { (index, leg) ->
+                        async {
+                            val tripId = (leg as Leg.Transit).tripId ?: return@async null
+                            try {
+                                index to repository.trip(tripId)
+                            } catch (_: RoutingException) {
+                                null
+                            }
+                        }
+                    }.awaitAll()
                 }
+                trips.filterNotNull().forEach { (index, trip) -> current = current.withTrip(index, trip) }
                 shown = current
                 emit(current)
                 delay(REFRESH_MILLIS)

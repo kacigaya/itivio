@@ -55,22 +55,39 @@ class LineTimesViewModelTest {
     }
 
     @Test
-    fun `each leg stays pending until its first request completes`() = runTest(main.dispatcher) {
+    fun `all legs stay pending until every first request completes`() = runTest(main.dispatcher) {
         val first = CompletableDeferred<List<Departure>>()
         val second = CompletableDeferred<List<Departure>>()
         repository.lineResult = { if (it == "a") first.await() else second.await() }
         viewModel.times.launchIn(backgroundScope)
         viewModel.show(journey(ride("a", 8), ride("b", 20)))
         runCurrent()
-        assertTrue(viewModel.times.value.isEmpty())
+        // Both requests start at once.
+        assertEquals(listOf("a", "b"), repository.lineCalls.map { it.first })
 
         first.complete(listOf(departure(8)))
         runCurrent()
-        assertEquals(mapOf(0 to listOf(departure(8))), viewModel.times.value)
+        assertTrue(viewModel.times.value.isEmpty())
 
         second.complete(emptyList())
         runCurrent()
         assertEquals(mapOf(0 to listOf(departure(8)), 1 to emptyList()), viewModel.times.value)
+    }
+
+    @Test
+    fun `live times of the same journey keep the shown departures`() = runTest(main.dispatcher) {
+        repository.lineResult = { listOf(departure(8)) }
+        viewModel.times.launchIn(backgroundScope)
+        val planned = journey(ride("a", 8))
+        viewModel.show(planned)
+        runCurrent()
+
+        val pending = CompletableDeferred<List<Departure>>()
+        repository.lineResult = { pending.await() }
+        val late = planned.copy(legs = listOf((planned.legs[0] as Leg.Transit).copy(start = StopTime(at(8).scheduled, at(10).scheduled))))
+        viewModel.show(late)
+        runCurrent()
+        assertEquals(mapOf(0 to listOf(departure(8))), viewModel.times.value)
     }
 
     @Test
