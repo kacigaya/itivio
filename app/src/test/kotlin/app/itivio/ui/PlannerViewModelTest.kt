@@ -26,6 +26,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -44,6 +46,22 @@ class PlannerViewModelTest {
 
         assertEquals(LoadState.Failed(Failure.NO_LOCATION), viewModel.state.value.results)
         assertTrue(repository.plans.isEmpty())
+    }
+
+    @Test
+    fun `an answer that is ready at once skips the loading state`() = runTest(main.dispatcher) {
+        userLocation.point.value = GeoPoint(52.52, 13.405)
+        viewModel.setDestination(Endpoint.Place(location("Zoo")))
+        advanceUntilIdle()
+
+        // As a cached plan: the repository answers with no wait, so no skeleton frame shows.
+        val seen = mutableListOf<LoadState<*>>()
+        val watcher = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.state.collect { seen += it.results } }
+        viewModel.swap()
+        assertEquals(2, repository.plans.size)
+        assertTrue(viewModel.state.value.results is LoadState.Ready)
+        assertTrue(seen.none { it == LoadState.Loading })
+        watcher.cancel()
     }
 
     @Test

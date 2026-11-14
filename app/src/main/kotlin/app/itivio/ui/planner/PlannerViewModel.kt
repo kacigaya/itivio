@@ -18,6 +18,7 @@ import app.itivio.ui.common.UserLocation
 import app.itivio.ui.common.toFailure
 import java.time.Instant
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -254,10 +255,9 @@ class PlannerViewModel(
             }
             return
         }
-        _state.update {
-            it.copy(results = LoadState.Loading, selectedId = null, canLoadEarlier = false, canLoadLater = false, loadingPage = null)
-        }
-        planJob = viewModelScope.launch {
+        _state.update { it.copy(selectedId = null, canLoadEarlier = false, canLoadLater = false, loadingPage = null) }
+        // Runs at once up to the first wait: a cached plan shows its results with no skeleton frame.
+        planJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             // The first plan can start before the read of the stored options ends.
             storedOptions.join()
             val request = JourneyRequest(from, to, current.time, current.arriveBy, _state.value.options)
@@ -277,6 +277,7 @@ class PlannerViewModel(
                 _state.update { it.copy(results = LoadState.Failed(error.toFailure())) }
             }
         }
+        if (planJob?.isActive == true) _state.update { it.copy(results = LoadState.Loading) }
     }
 
     fun loadEarlier() = loadPage(Paging.EARLIER)
