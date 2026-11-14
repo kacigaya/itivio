@@ -11,7 +11,7 @@ idfm.tsv: platform, line, target (transfer stop ID or exit:<access ID>), part
 (F/M/R), lift flag (L or empty).
 exits.tsv: access ID, exit number (may be empty), name, latitude, longitude.
 Only referenced exits with coordinates enter exits.tsv.
-stations.tsv: transfer platform, stop area, parent station.
+stations.tsv: boarding or transfer platform, stop area, parent station.
 """
 import csv
 import io
@@ -95,7 +95,7 @@ def main() -> None:
         lat, lon = point
         exits[access_id] = (access_id, row["accshortname"], row["accname"], f"{lat:.6f}", f"{lon:.6f}")
 
-    platforms = {row[2] for row in rows if not row[2].startswith("exit:")}
+    platforms = {row[0] for row in rows} | {row[2] for row in rows if not row[2].startswith("exit:")}
     stations = platform_stations(platforms)
     write_table(OUTPUT, list(rows))
     write_table(EXITS_OUTPUT, list(exits.values()))

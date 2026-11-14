@@ -23,23 +23,43 @@ class IdfmBoardingRepository(
     private val openStations: () -> InputStream,
 ) : BoardingRepository {
     private val lock = Mutex()
-    private var table: Map<Pair<String, String>, List<BoardingPosition>>? = null
+    private data class Tables(
+        val platforms: Map<Pair<String, String>, List<BoardingPosition>>,
+        val stationExits: Map<Pair<String, String>, List<BoardingPosition>>,
+    )
+
+    private var table: Tables? = null
 
     override suspend fun positions(leg: Leg.Transit): List<BoardingPosition> {
         val platform = idfmId(leg.to.stopId) ?: return emptyList()
         val line = idfmId(leg.line.id) ?: return emptyList()
-        return table()[platform to line].orEmpty()
+        val tables = table()
+        return tables.platforms[platform to line] ?: tables.stationExits[platform to line].orEmpty()
     }
 
     private suspend fun table() = lock.withLock {
         table ?: withContext(Dispatchers.IO) {
             val exits = openExits().bufferedReader().use { parseExits(it.readLines()) }
             val stations = openStations().bufferedReader().use { parseStations(it.readLines()) }
-            open().bufferedReader().use { parse(it.readLines(), exits, stations) }
+            val platforms = open().bufferedReader().use { parse(it.readLines(), exits, stations) }
+            Tables(platforms, stationExits(platforms, stations))
         }.also { table = it }
     }
 
     internal companion object {
+        private fun stationExits(
+            platforms: Map<Pair<String, String>, List<BoardingPosition>>,
+            stations: Map<String, Set<String>>,
+        ): Map<Pair<String, String>, List<BoardingPosition>> = platforms.entries.flatMap { (key, positions) ->
+            stations[key.first].orEmpty().map { (it to key.second) to positions }
+        }.groupBy({ it.first }, { it.second }).mapValues { (_, platformPositions) ->
+            // With no arrival platform, use only exits listed for every platform of this line.
+            val commonExits = platformPositions.map { positions -> positions.mapNotNull { it.exit?.id }.toSet() }
+                .reduce { common, exits -> common intersect exits }
+            platformPositions.flatten().filter { it.exit?.id in commonExits }
+                .map { it.copy(part = null) }.distinct()
+        }
+
         /** IDFM IDs keep their own part after the prefix of the feed: "…_IDFM:22194" gives "22194". */
         fun idfmId(id: String?): String? = id?.substringAfterLast("IDFM:", "")?.takeIf { it.isNotEmpty() }
 

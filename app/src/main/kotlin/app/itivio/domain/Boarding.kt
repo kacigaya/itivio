@@ -8,10 +8,10 @@ data class StationExit(val id: String, val number: String?, val name: String, va
 /** part: null when the data has no single part for this target; exit: the chosen exit, or null for a transfer. */
 data class BoardingHint(val part: TrainPart?, val transfer: Leg.Transit?, val exit: StationExit? = null)
 
-/** A position near a transfer platform, or an exit. Exit details need known coordinates. */
+/** A position near a transfer platform, or an exit. A station-level exit has no train part. */
 data class BoardingPosition(
     val transferStop: String?,
-    val part: TrainPart,
+    val part: TrainPart?,
     val lift: Boolean,
     val exit: StationExit? = null,
     /** Stop area and parent station of the transfer platform, without feed prefixes. */
@@ -21,7 +21,7 @@ data class BoardingPosition(
 
 /** The boarding positions of the stations that publish them. */
 fun interface BoardingRepository {
-    /** The positions on the platform where [leg] gets off. Empty when nobody publishes them. */
+    /** Arrival platform positions, or shared station exits without a train part. Empty when unknown. */
     suspend fun positions(leg: Leg.Transit): List<BoardingPosition>
 }
 

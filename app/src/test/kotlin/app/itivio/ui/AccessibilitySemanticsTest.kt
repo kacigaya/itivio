@@ -16,6 +16,8 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import app.itivio.domain.Stop
+import app.itivio.domain.BoardingHint
+import app.itivio.domain.StationExit
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.Leg
 import app.itivio.domain.Journey
@@ -154,6 +156,29 @@ class AccessibilitySemanticsTest {
         compose.onNodeWithContentDescription("Walking directions").performScrollTo().performClick()
         compose.onAllNodesWithText("Directions").assertCountEquals(0)
         org.junit.Assert.assertEquals(0, picked)
+    }
+
+    @Test
+    fun `a station exit stays visible without a train part`() {
+        val start = StopTime(Instant.parse("2026-11-16T09:00:00Z"))
+        val end = StopTime(start.scheduled.plusSeconds(960))
+        val from = Stop("Nation", GeoPoint(48.8482, 2.3960))
+        val to = Stop("La Défense", GeoPoint(48.8916, 2.2383))
+        val leg = Leg.Transit(
+            TransitMode.RAIL, from, to, start, end, emptyList(), Line("A"), null, null, emptyList(),
+        )
+        val exit = StationExit("50148846", "6", "Coupole - Regnault", GeoPoint(48.891989, 2.242296))
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                ItineraryScreen(
+                    wide = true, journey = Journey("rer", listOf(leg), start, end, 0),
+                    now = start.scheduled, lineTimes = emptyMap(), onBack = {}, onWalk = {},
+                    boarding = mapOf(0 to BoardingHint(null, null, exit)),
+                )
+            }
+        }
+        compose.onNodeWithContentDescription("Best exit: 6 – Coupole - Regnault").performScrollTo().assertIsDisplayed()
+        compose.onAllNodesWithText("Where to board").assertCountEquals(0)
     }
 
 }

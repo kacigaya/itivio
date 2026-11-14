@@ -186,6 +186,78 @@ class BoardingTest {
     }
 
     @Test
+    fun `station arrivals use shared exits without guessing a train part`() = runTest {
+        val rows = """
+            1	C1	exit:near	F
+            1	C1	exit:far	R
+            2	C1	exit:near	F
+            2	C1	exit:far	M
+            3	C2	exit:far	R
+        """.trimIndent()
+        val stations = "1\tarea\tstation\n2\tarea\tstation\n3\tarea\tstation\n"
+        val repo = IdfmBoardingRepository(
+            { rows.byteInputStream() }, { exits.byteInputStream() }, { stations.byteInputStream() },
+        )
+        for (id in listOf("area", "station")) {
+            for (wheelchair in listOf(false, true)) {
+                val hint = repo.hints(journey(ride(id), destinationWalk()), wheelchair)[0]
+                assertEquals("near", hint?.exit?.id)
+                assertNull(hint?.part)
+            }
+            val farWalk = walk().let { it.copy(to = it.to.copy(point = GeoPoint(48.85, 2.38))) }
+            assertEquals("far", repo.hints(journey(ride(id), farWalk), false)[0]?.exit?.id)
+            assertEquals("far", repo.hints(journey(ride(id, line = "C2"), destinationWalk()), false)[0]?.exit?.id)
+            assertTrue(repo.hints(journey(ride(id), ride("5", from = "9")), false).isEmpty())
+        }
+        assertEquals(TrainPart.FRONT, repo.hints(journey(ride("1"), destinationWalk()), false)[0]?.part)
+        assertTrue(repo.hints(journey(ride("station", line = "unknown")), false).isEmpty())
+        assertTrue(repo.hints(journey(ride("station", line = null)), false).isEmpty())
+        assertTrue(repo.hints(journey(ride("unknown")), false).isEmpty())
+        val unknown = ride("unknown").let { it.copy(to = it.to.copy(stationId = "$idfm:station")) }
+        assertTrue(repo.hints(journey(unknown), false).isEmpty())
+    }
+
+    @Test
+    fun `station arrivals exclude exits missing from another platform`() = runTest {
+        val rows = """
+            1	C1	exit:near	F
+            1	C1	exit:far	F
+            2	C1	exit:far	R
+            3	C2	exit:near	M
+            4	C2	9	M
+            5	C3	exit:missing	F
+        """.trimIndent()
+        val stations = (1..5).joinToString("\n") { "$it\tarea\tstation" }
+        val repo = IdfmBoardingRepository(
+            { rows.byteInputStream() }, { exits.byteInputStream() }, { stations.byteInputStream() },
+        )
+        val hint = repo.hints(journey(ride("station"), destinationWalk()), false)[0]
+        assertEquals("far", hint?.exit?.id)
+        assertNull(hint?.part)
+        assertTrue(repo.hints(journey(ride("station", line = "C2")), false).isEmpty())
+        assertTrue(repo.hints(journey(ride("station", line = "C3")), false).isEmpty())
+    }
+
+    @Test
+    fun `RER A station arrivals at La Defense give an exit towards Place des Reflets`() = runTest {
+        val repo = IdfmBoardingRepository(
+            { java.io.File("src/main/assets/boarding/idfm.tsv").inputStream() },
+            { java.io.File("src/main/assets/boarding/exits.tsv").inputStream() },
+            { java.io.File("src/main/assets/boarding/stations.tsv").inputStream() },
+        )
+        // IGN/BAN coordinates for 17bis Place des Reflets, Courbevoie. No live request in tests.
+        val destination = walk().let { it.copy(to = it.to.copy(point = GeoPoint(48.890332, 2.247596))) }
+        for (id in listOf("71517", "470549", "473934", "473935", "473936", "473937")) {
+            val rer = ride(id, from = "71673", line = "C01742").copy(mode = TransitMode.RAIL)
+            val hint = repo.hints(journey(rer, destination), false)[0]
+            assertEquals("50148846", hint?.exit?.id)
+            assertEquals("6", hint?.exit?.number)
+            assertEquals("Coupole - Regnault", hint?.exit?.name)
+            if (id in listOf("71517", "470549")) assertNull(hint?.part)
+        }
+    }
+
+    @Test
     fun `Metro 9 at Nation gives middle guidance for an RER station ID`() = runTest {
         val repo = IdfmBoardingRepository(
             { java.io.File("src/main/assets/boarding/idfm.tsv").inputStream() },
