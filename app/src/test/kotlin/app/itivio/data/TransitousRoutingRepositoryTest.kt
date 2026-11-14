@@ -159,7 +159,8 @@ class TransitousRoutingRepositoryTest {
             val m5 = Line("M5", id = "de-VBB_17459_900")
             val n65 = Line("N65", id = "de-VBB_17497_700")
 
-            val departures = repo.lineDepartures("stop:a", m5, "0", time)
+            // A clock time with microseconds made MOTIS start at the beginning of the service day.
+            val departures = repo.lineDepartures("stop:a", m5, "0", time.plusNanos(62_073_000))
             assertEquals("stop:a", params["stopId"])
             assertEquals("2026-11-09T01:05:00Z", params["time"])
             assertNull(params["radius"])

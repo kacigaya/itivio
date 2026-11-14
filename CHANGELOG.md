@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Fix the next departures of itinerary legs, which stayed empty on recent Android versions. The request time had microseconds, so Transitous started at the beginning of the service day.
+
 ## 0.9.0
 
 - Show skeleton placeholders while the journey results, nearby departures, stop board, disruptions, and place suggestions load.

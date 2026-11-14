@@ -28,6 +28,7 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 - `ui` must not import `app.itivio.data`. Use `domain` types.
 - Do not log request URLs, coordinates, or journeys.
 - Every Transitous request goes through the shared `HttpClient`, which sets the User-Agent.
+- Send each time to Transitous with whole seconds (`motisTime()` in `TransitousRoutingRepository`). With microseconds, which `Instant.now()` gives on Android 15, MOTIS starts at the beginning of the service day.
 - French address search uses `https://data.geopf.fr/geocodage/search` only for address-like queries whose first Transitous match has country `FR`. IGN uses a separate client with no contact details and receives no location bias.
 - IGN fixtures are in `app/src/test/resources/ign/`. Tests never call the live IGN API.
 - Screenshot tests compare against `app/src/test/screenshots/` by default. To update references, run `./gradlew :app:testDebugUnitTest --tests 'app.itivio.ui.*ScreenshotTest' -Proborazzi.test.record=true`, inspect the images, then run the normal checks. See `docs/quality.md`.

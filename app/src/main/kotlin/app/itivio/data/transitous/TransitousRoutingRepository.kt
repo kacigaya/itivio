@@ -27,6 +27,7 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import java.io.IOException
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 class TransitousRoutingRepository(
@@ -91,7 +92,7 @@ class TransitousRoutingRepository(
         get<PlanResponse>("v6/plan") {
             parameter("fromPlace", request.from.stopId ?: request.from.point.coordinates())
             parameter("toPlace", request.to.stopId ?: request.to.point.coordinates())
-            request.time?.let { parameter("time", it.toString()) }
+            request.time?.let { parameter("time", it.motisTime()) }
             parameter("arriveBy", request.arriveBy)
             cursor?.let { parameter("pageCursor", it) }
             val options = request.options
@@ -158,7 +159,7 @@ class TransitousRoutingRepository(
             val page = try {
                 mapped { get<StoptimesResponse>("v6/stoptimes") {
                     parameter("stopId", stopId)
-                    parameter("time", from.toString())
+                    parameter("time", from.motisTime())
                     parameter("n", LINE_SCAN)
                     parameter("withAlerts", false)
                     parameter("language", language())
@@ -256,6 +257,12 @@ private fun WalkingSpeed.metersPerSecond(): Double? = when (this) {
 }
 
 private fun Line.sameAs(other: Line) = if (id != null && other.id != null) id == other.id else name == other.name
+
+/**
+ * MOTIS reads a time with whole seconds or milliseconds. With microseconds, as `Instant.now()` gives
+ * on recent Android versions, it starts at the beginning of the service day instead.
+ */
+private fun Instant.motisTime() = truncatedTo(ChronoUnit.SECONDS).toString()
 
 private fun GeoPoint.coordinates() = "$latitude,$longitude"
 private fun GeoPoint.rounded(decimals: Int) = String.format(Locale.ROOT, "%.${decimals}f,%.${decimals}f", latitude, longitude)
