@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -34,9 +35,11 @@ import app.itivio.domain.Departure
 import app.itivio.ui.common.CountdownText
 import app.itivio.ui.common.FailureState
 import app.itivio.ui.common.LoadState
-import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.LineBadge
 import app.itivio.ui.common.MessageState
+import app.itivio.ui.common.Skeleton
+import app.itivio.ui.common.SkeletonBlock
+import app.itivio.ui.common.SkeletonText
 import app.itivio.ui.common.TimeText
 import app.itivio.ui.common.clockMinutesUntil
 import app.itivio.ui.common.formatDistance
@@ -68,7 +71,12 @@ fun LazyListScope.nearbyDepartures(state: LoadState<List<StopDepartures>>, now: 
     }
     when (state) {
         // Idle means the first location fix has not arrived yet.
-        LoadState.Idle, LoadState.Loading -> item(key = "nearby-loading") { LoadingState() }
+        LoadState.Idle, LoadState.Loading -> item(key = "nearby-loading") {
+            Skeleton(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), spacing = 8.dp) {
+                DeparturesCardSkeleton(rows = 3, header = true)
+                DeparturesCardSkeleton(rows = 2, header = true)
+            }
+        }
         is LoadState.Failed -> item(key = "nearby-error") { FailureState(state.failure, onRetry) }
         is LoadState.Ready -> {
             val groups = state.value.upcoming(now)
@@ -132,6 +140,49 @@ internal fun DeparturesCard(
             lines.forEachIndexed { index, line ->
                 if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 LineRow(line, now)
+            }
+        }
+    }
+}
+
+/** The placeholder of a [DeparturesCard] with [rows] lines. It goes in a [Skeleton]. */
+@Composable
+internal fun DeparturesCardSkeleton(rows: Int, header: Boolean, modifier: Modifier = Modifier) {
+    val type = MaterialTheme.typography
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = MaterialTheme.shapes.largeIncreased,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            if (header) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
+                ) {
+                    SkeletonText(type.titleMedium, Modifier.fillMaxWidth(0.5f))
+                    SkeletonText(type.labelLarge, Modifier.width(48.dp))
+                }
+            }
+            repeat(rows) { index ->
+                if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                ) {
+                    SkeletonBlock(Modifier.size(width = 56.dp, height = 28.dp))
+                    Column(Modifier.weight(1f)) {
+                        // Headsigns have different lengths; equal bars would read as a table.
+                        SkeletonText(type.bodyLarge, Modifier.fillMaxWidth(if (index % 2 == 0) 0.7f else 0.5f))
+                        SkeletonText(type.bodySmall, Modifier.fillMaxWidth(0.35f))
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        SkeletonText(type.titleLarge, Modifier.width(56.dp))
+                        SkeletonText(type.bodySmall, Modifier.width(72.dp))
+                    }
+                }
             }
         }
     }

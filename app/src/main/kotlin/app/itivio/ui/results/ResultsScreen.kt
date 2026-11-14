@@ -24,6 +24,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,16 +42,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.clickable
 import app.itivio.R
 import app.itivio.domain.JourneyOptions
 import app.itivio.ui.common.FailureState
 import app.itivio.ui.common.LoadState
-import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.MapPanel
 import app.itivio.ui.common.MessageState
+import app.itivio.ui.common.Skeleton
 import app.itivio.ui.planner.Endpoint
+import app.itivio.ui.planner.Paging
 import app.itivio.ui.planner.PlannerState
 import app.itivio.ui.planner.RouteSort
 import app.itivio.ui.search.LocationSearchView
@@ -212,7 +217,9 @@ private fun ResultsList(
     ) {
         item(key = "filters") { FilterChips(state, onPickTime, onPickOptions, onSort) }
         when (val results = state.results) {
-            LoadState.Idle, LoadState.Loading -> item(key = "loading") { LoadingState() }
+            LoadState.Idle, LoadState.Loading -> item(key = "loading") {
+                Skeleton(spacing = 8.dp) { repeat(3) { RouteCardSkeleton() } }
+            }
             is LoadState.Failed -> item(key = "error") { FailureState(results.failure, onRetry) }
             is LoadState.Ready -> if (results.value.isEmpty()) {
                 item(key = "empty") {
@@ -227,7 +234,7 @@ private fun ResultsList(
             } else {
                 if (state.canLoadEarlier) {
                     item(key = "earlier") {
-                        PageButton(R.drawable.ic_arrow_upward, R.string.results_earlier, enabled = state.loadingPage == null, onClick = onEarlier)
+                        PageButton(R.drawable.ic_arrow_upward, R.string.results_earlier, state.loadingPage, Paging.EARLIER, onEarlier)
                     }
                 }
                 items(state.sortedJourneys, key = { it.id }) { journey ->
@@ -243,7 +250,7 @@ private fun ResultsList(
                 }
                 if (state.canLoadLater) {
                     item(key = "later") {
-                        PageButton(R.drawable.ic_arrow_downward, R.string.results_later, enabled = state.loadingPage == null, onClick = onLater)
+                        PageButton(R.drawable.ic_arrow_downward, R.string.results_later, state.loadingPage, Paging.LATER, onLater)
                     }
                 }
             }
@@ -251,11 +258,27 @@ private fun ResultsList(
     }
 }
 
-/** Loads the page of journeys before or after the list. A text button, so the route cards stay the main content. */
+/**
+ * Loads the [page] of journeys before or after the list. A text button, so the route cards stay
+ * the main content. The two buttons are disabled while a page loads, and the button of the page
+ * in [loading] shows a loading indicator in place of its arrow.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun PageButton(@DrawableRes icon: Int, @StringRes label: Int, enabled: Boolean, onClick: () -> Unit) {
-    TextButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
-        Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+private fun PageButton(@DrawableRes icon: Int, @StringRes label: Int, loading: Paging?, page: Paging, onClick: () -> Unit) {
+    val busy = loading == page
+    val busyLabel = stringResource(R.string.loading)
+    TextButton(
+        onClick = onClick,
+        enabled = loading == null,
+        modifier = Modifier.fillMaxWidth().semantics { if (busy) stateDescription = busyLabel },
+    ) {
+        // The indicator is as large as the arrow, so the label does not move.
+        if (busy) {
+            LoadingIndicator(Modifier.size(ButtonDefaults.IconSize).clearAndSetSemantics {})
+        } else {
+            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+        }
         Spacer(Modifier.width(ButtonDefaults.IconSpacing))
         Text(stringResource(label))
     }

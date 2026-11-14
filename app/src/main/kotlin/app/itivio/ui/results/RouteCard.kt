@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,6 +30,8 @@ import app.itivio.domain.Alert
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
 import app.itivio.ui.common.LegChain
+import app.itivio.ui.common.SkeletonBlock
+import app.itivio.ui.common.SkeletonText
 import app.itivio.ui.common.TimeText
 import app.itivio.ui.common.amountText
 import app.itivio.ui.common.formatDistance
@@ -98,6 +101,31 @@ fun RouteCard(journey: Journey, selected: Boolean, onClick: () -> Unit, modifier
                 color = if (journey.isCancelled) scheme.error else secondary,
             )
             AlertLine(journey.alerts)
+        }
+    }
+}
+
+/** The placeholder of a [RouteCard]. It goes in a [Skeleton]. */
+@Composable
+fun RouteCardSkeleton(modifier: Modifier = Modifier) {
+    val type = MaterialTheme.typography
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shape = MaterialTheme.shapes.large,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                SkeletonText(type.titleMedium, Modifier.fillMaxWidth(0.4f))
+                SkeletonText(type.titleLarge, Modifier.width(72.dp))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                SkeletonBlock(Modifier.size(width = 40.dp, height = 28.dp))
+                SkeletonBlock(Modifier.size(width = 64.dp, height = 28.dp))
+                SkeletonBlock(Modifier.size(width = 56.dp, height = 28.dp))
+            }
+            SkeletonText(type.bodyMedium, Modifier.fillMaxWidth(0.6f))
+            SkeletonText(type.bodySmall, Modifier.fillMaxWidth(0.45f))
         }
     }
 }

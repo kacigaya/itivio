@@ -2,6 +2,7 @@ package app.itivio.ui.search
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -52,9 +53,11 @@ import app.itivio.domain.SavedPlaces
 import app.itivio.domain.Shortcut
 import app.itivio.domain.savedKey
 import app.itivio.ui.common.LoadState
-import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.FailureState
 import app.itivio.ui.common.MessageState
+import app.itivio.ui.common.Skeleton
+import app.itivio.ui.common.SkeletonBlock
+import app.itivio.ui.common.SkeletonText
 import app.itivio.ui.common.icon
 import app.itivio.ui.planner.Endpoint
 import kotlinx.coroutines.launch
@@ -219,7 +222,9 @@ fun LocationSearchView(
                         modifier = Modifier.padding(16.dp),
                     )
                 }
-                LoadState.Loading -> item(key = "loading") { LoadingState() }
+                LoadState.Loading -> item(key = "loading") {
+                    Skeleton { repeat(5) { SuggestionRowSkeleton(wide = it % 2 == 0) } }
+                }
                 is LoadState.Failed -> item(key = "error") { FailureState(state.failure, onRetry = viewModel::retry) }
                 is LoadState.Ready -> if (state.value.isEmpty()) {
                     item(key = "empty") {
@@ -326,6 +331,23 @@ private fun SuggestionRow(
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         Text(title, maxLines = 1)
+    }
+}
+
+/** The placeholder of a [SuggestionRow] with a title and a subtitle. Rows differ in width with [wide]. */
+@Composable
+private fun SuggestionRowSkeleton(wide: Boolean) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        // The height and the margins of a two-line list item.
+        modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        SkeletonBlock(Modifier.size(40.dp))
+        Column {
+            SkeletonText(MaterialTheme.typography.bodyLarge, Modifier.fillMaxWidth(if (wide) 0.6f else 0.45f))
+            SkeletonText(MaterialTheme.typography.bodyMedium, Modifier.fillMaxWidth(if (wide) 0.35f else 0.5f))
+        }
     }
 }
 

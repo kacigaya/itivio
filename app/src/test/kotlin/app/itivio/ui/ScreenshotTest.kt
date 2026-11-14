@@ -25,6 +25,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasStateDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.SemanticsMatcher
@@ -60,6 +63,7 @@ import app.itivio.ui.itinerary.ItineraryScreen
 import app.itivio.ui.nearby.NearbyViewModel
 import app.itivio.ui.nearby.StopDepartures
 import app.itivio.ui.planner.Endpoint
+import app.itivio.ui.planner.Paging
 import app.itivio.ui.planner.PlannerState
 import app.itivio.ui.results.JourneyOptionsDialog
 import app.itivio.ui.results.ResultsScreen
@@ -233,6 +237,15 @@ open class ScreenshotTest {
     }
 
     @Test
+    fun nearbyLoading() = capture("nearby_loading") {
+        ExploreScreen(
+            wide = false, locationGranted = true, nearby = LoadState.Loading, now = t0,
+            disruptions = LoadState.Loading,
+            onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {}, onSettings = {},
+        )
+    }
+
+    @Test
     fun resultsArriveBy() = capture("results_arrive_by") {
         ResultsScreen(
             wide = false,
@@ -295,6 +308,41 @@ open class ScreenshotTest {
     }
 
     @Test
+    fun resultsLoading() = capture("results_loading") {
+        ResultsScreen(
+            wide = false,
+            state = PlannerState(
+                optionsLoaded = true,
+                destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
+                results = LoadState.Loading,
+            ),
+            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
+            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
+        )
+    }
+
+    /** The button of the page that loads shows the indicator and says so. The two buttons are disabled. */
+    @Test
+    fun resultsPageLoading() = capture(
+        "results_page_loading",
+        prepare = { compose.onNode(hasStateDescription("Loading") and hasText("Earlier departures")).assertIsNotEnabled() },
+    ) {
+        ResultsScreen(
+            wide = false,
+            state = PlannerState(
+                optionsLoaded = true,
+                destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
+                results = LoadState.Ready(sampleJourneys),
+                canLoadEarlier = true,
+                canLoadLater = true,
+                loadingPage = Paging.EARLIER,
+            ),
+            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
+            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
+        )
+    }
+
+    @Test
     fun itinerary() = capture("itinerary") { Itinerary(wide = false) }
 
     // The pane shows the steps below the sheet fold: the line times and the later legs.
@@ -346,6 +394,19 @@ open class ScreenshotTest {
             now = t0,
             onBack = {}, onDirections = {}, onRetry = {},
         )
+    }
+
+    @Test
+    fun stopLoading() = capture("stop_loading") {
+        StopScreen(
+            wide = false, name = "S+U Alexanderplatz", departures = LoadState.Loading, now = t0,
+            onBack = {}, onDirections = {}, onRetry = {},
+        )
+    }
+
+    @Test
+    fun disruptionsLoading() = capture("disruptions_loading") {
+        DisruptionsScreen(state = LoadState.Loading, now = t0, onRetry = {})
     }
 
     @Test

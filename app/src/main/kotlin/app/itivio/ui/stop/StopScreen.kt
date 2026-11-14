@@ -20,11 +20,12 @@ import app.itivio.R
 import app.itivio.domain.Departure
 import app.itivio.ui.common.FailureState
 import app.itivio.ui.common.LoadState
-import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.MapPanel
 import app.itivio.ui.common.MessageState
+import app.itivio.ui.common.Skeleton
 import app.itivio.ui.common.clockMinutesUntil
 import app.itivio.ui.nearby.DeparturesCard
+import app.itivio.ui.nearby.DeparturesCardSkeleton
 import java.time.Instant
 
 val StopPeekHeight = 360.dp
@@ -74,7 +75,9 @@ fun StopScreen(
                 )
             }
             when (departures) {
-                LoadState.Idle, LoadState.Loading -> item(key = "loading") { LoadingState() }
+                LoadState.Idle, LoadState.Loading -> item(key = "loading") {
+                    Skeleton(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { DeparturesCardSkeleton(rows = 4, header = false) }
+                }
                 is LoadState.Failed -> item(key = "error") { FailureState(departures.failure, onRetry) }
                 is LoadState.Ready -> {
                     // The board refreshes once a minute; a departure from a past minute must not read "Now".

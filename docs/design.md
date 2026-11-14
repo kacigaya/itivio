@@ -38,7 +38,7 @@ Material Symbols Rounded, filled, as vector drawables. A row without a line colo
 
 ## Motion
 
-`MotionScheme.expressive()`. Sheet and card changes use the theme springs. The search view opens and closes with the default spatial spring, not the slow one. Screen changes use shared-axis fades. Loading uses the Expressive `LoadingIndicator`.
+`MotionScheme.expressive()`. Sheet and card changes use the theme springs. The search view opens and closes with the default spatial spring, not the slow one. Screen changes use shared-axis fades. A list that loads shows a skeleton. An action in progress shows the Expressive `LoadingIndicator`. See "States".
 
 ## Screens
 
@@ -91,7 +91,7 @@ The dialog edits a copy. "Done" applies all changes with one new search. "Reset"
 
 ## Earlier and later departures
 
-"Earlier departures" and "Later departures" are text buttons with an arrow icon at the two ends of the route cards. They are text buttons so the route cards stay the main content. Each one shows only when the provider gives a cursor for that direction. Both are disabled while a page loads. The map keeps its route when a new page arrives.
+"Earlier departures" and "Later departures" are text buttons with an arrow icon at the two ends of the route cards. They are text buttons so the route cards stay the main content. Each one shows only when the provider gives a cursor for that direction. Both are disabled while a page loads. The button of the page that loads shows a loading indicator in place of its arrow, and a screen reader gets "Loading" as its state. The map keeps its route when a new page arrives.
 
 ## Itinerary
 

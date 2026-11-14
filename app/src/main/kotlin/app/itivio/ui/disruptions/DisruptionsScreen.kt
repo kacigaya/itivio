@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ButtonDefaults
@@ -48,9 +49,11 @@ import app.itivio.domain.TimeRange
 import app.itivio.ui.common.FailureState
 import app.itivio.ui.common.LineBadge
 import app.itivio.ui.common.LoadState
-import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.MessageState
 import app.itivio.ui.common.Page
+import app.itivio.ui.common.Skeleton
+import app.itivio.ui.common.SkeletonBlock
+import app.itivio.ui.common.SkeletonText
 import app.itivio.ui.common.Tag
 import app.itivio.ui.common.formatTime
 import java.time.Instant
@@ -84,7 +87,15 @@ fun DisruptionsScreen(state: LoadState<DisruptionGroups>, now: Instant, onRetry:
  */
 fun LazyListScope.disruptions(state: LoadState<DisruptionGroups>, now: Instant, onRetry: () -> Unit) {
     when (state) {
-        LoadState.Idle, LoadState.Loading -> item(key = "loading") { LoadingState() }
+        LoadState.Idle, LoadState.Loading -> item(key = "loading") {
+            Skeleton {
+                SkeletonText(
+                    MaterialTheme.typography.titleMedium,
+                    Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 4.dp).width(144.dp),
+                )
+                repeat(2) { DisruptionCardSkeleton(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
+            }
+        }
         is LoadState.Failed -> item(key = "error") { FailureState(state.failure, onRetry) }
         is LoadState.Ready -> if (state.value.isEmpty) {
             item(key = "empty") {
@@ -113,6 +124,31 @@ private fun LazyListScope.group(key: String, title: Int, disruptions: List<Disru
     }
     items(disruptions, key = { "$key-${it.alert.hashCode()}" }) { disruption ->
         DisruptionCard(disruption, now, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+    }
+}
+
+/** The placeholder of a [DisruptionCard]: the tag, the header, the time period, and the description. */
+@Composable
+private fun DisruptionCardSkeleton(modifier: Modifier = Modifier) {
+    val type = MaterialTheme.typography
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = MaterialTheme.shapes.largeIncreased,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(16.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                SkeletonBlock(Modifier.size(width = 120.dp, height = 28.dp))
+                SkeletonBlock(Modifier.size(width = 56.dp, height = 28.dp))
+            }
+            SkeletonText(type.titleMedium, Modifier.fillMaxWidth(0.8f))
+            SkeletonText(type.bodySmall, Modifier.fillMaxWidth(0.5f))
+            Column {
+                SkeletonText(type.bodyMedium, Modifier.fillMaxWidth())
+                SkeletonText(type.bodyMedium, Modifier.fillMaxWidth())
+                SkeletonText(type.bodyMedium, Modifier.fillMaxWidth(0.6f))
+            }
+        }
     }
 }
 

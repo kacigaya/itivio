@@ -29,6 +29,9 @@ import app.itivio.ui.nearby.DeparturesCard
 import app.itivio.ui.itinerary.TrainDepartures
 import app.itivio.domain.StopTime
 import app.itivio.ui.common.LoadingState
+import app.itivio.ui.common.Skeleton
+import app.itivio.ui.nearby.DeparturesCardSkeleton
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import app.itivio.ui.common.TimeText
 import app.itivio.ui.theme.ItivioTheme
 import java.time.Instant
@@ -64,6 +67,16 @@ class AccessibilitySemanticsTest {
     fun `loading has one accessible label`() {
         compose.setContent { ItivioTheme(dynamicColor = false) { LoadingState() } }
         compose.onNodeWithContentDescription("Loading").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a skeleton has one accessible label`() {
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                Skeleton { repeat(3) { DeparturesCardSkeleton(rows = 2, header = true) } }
+            }
+        }
+        compose.onAllNodesWithContentDescription("Loading").assertCountEquals(1)
     }
 
     @Test
