@@ -147,6 +147,79 @@ class TransitousRoutingRepositoryTest {
         engine.close()
     }
 
+    @Test fun liveDataIsCachedForLessThanARefresh() = runTest {
+        val paths = mutableListOf<String>()
+        val engine = MockEngine { request ->
+            paths += request.url.encodedPath
+            val name = if (request.url.encodedPath == "/api/v6/trip") "trip" else "stoptimes"
+            respond(fixture(name), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val time = Instant.parse("2026-11-09T01:05:00Z")
+        var now = time
+        createHttpClient(engine, "test", "").use { client ->
+            val repo = TransitousRoutingRepository(client, { "de-DE" }, clock = { now })
+            val m5 = Line("M5", id = "de-VBB_17459_900")
+            val first = repo.lineDepartures("stop:a", m5, "0", time)
+            val trip = repo.trip("t1")
+            val requests = paths.size
+
+            now = time.plusSeconds(29)
+            assertEquals(first.filter { it.time.best >= now }, repo.lineDepartures("stop:a", m5, "0", now))
+            assertEquals(trip, repo.trip("t1"))
+            assertEquals(requests, paths.size)
+
+            // Another stop, or a later minute, is another request.
+            suspend fun asks(call: suspend () -> Unit): Boolean { val before = paths.size; call(); return paths.size > before }
+            assertTrue(asks { repo.lineDepartures("stop:b", m5, "0", now) })
+            assertTrue(asks { repo.lineDepartures("stop:a", m5, "0", time.plusSeconds(60)) })
+
+            // After 30 seconds, the next refresh asks again.
+            now = time.plusSeconds(30)
+            assertTrue(asks { repo.lineDepartures("stop:a", m5, "0", time) })
+            assertTrue(asks { repo.trip("t1") })
+        }
+        engine.close()
+    }
+
+    @Test fun plansAndBoardsAreCachedForLessThanARefresh() = runTest {
+        var requests = 0
+        val engine = MockEngine { request ->
+            requests++
+            val name = if (request.url.encodedPath == "/api/v6/plan") "plan" else "stoptimes"
+            respond(fixture(name), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        val start = Instant.parse("2026-11-09T01:05:00Z")
+        var now = start
+        createHttpClient(engine, "test", "").use { client ->
+            val repo = TransitousRoutingRepository(client, { "de-DE" }, clock = { now })
+            val request = JourneyRequest(from, to, start, false)
+            suspend fun all() {
+                repo.planJourneys(request)
+                repo.stopDepartures("stop:a")
+                repo.nearbyDepartures(point, 500, 20, false)
+            }
+            all()
+            assertEquals(3, requests)
+
+            // A move of a few meters gives the same rounded position.
+            now = start.plusSeconds(29)
+            all()
+            repo.nearbyDepartures(GeoPoint(point.latitude + 0.00001, point.longitude), 500, 20, false)
+            assertEquals(3, requests)
+
+            // Another page, stop, or option is another request.
+            repo.planJourneys(request, "cursor")
+            repo.stopDepartures("stop:b")
+            repo.stopDepartures("stop:a", withAlerts = true)
+            assertEquals(6, requests)
+
+            now = start.plusSeconds(30)
+            all()
+            assertEquals(9, requests)
+        }
+        engine.close()
+    }
+
     @Test fun lineDeparturesKeepOneLineAndDirection() = runTest {
         var params = Parameters.Empty
         val engine = MockEngine { request ->
@@ -186,8 +259,10 @@ class TransitousRoutingRepositoryTest {
             params = request.url.parameters
             respond(fixture(name), headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
+        // The response changes below; each step starts after the live cache expired.
+        var now = Instant.parse("2026-11-12T17:35:00Z")
         createHttpClient(engine, "test", "").use { client ->
-            val repo = TransitousRoutingRepository(client, { "fr" })
+            val repo = TransitousRoutingRepository(client, { "fr" }, clock = { now })
             val time = Instant.parse("2026-11-12T17:35:00Z")
             val idfm = "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM"
             val rerA = Line("A", id = "$idfm:C01742")
@@ -204,9 +279,11 @@ class TransitousRoutingRepositoryTest {
 
             // QOKA52 skips Nation and leaves the list. NOTE54 is cancelled and stays as cancelled.
             name = "stoptimes-idfm-cancelled"
+            now = now.plusSeconds(30)
             val changed = repo.lineDepartures("$idfm:473935", rerA, "0", time, alightAt = nation)
             assertEquals(listOf("NOTE54" to true, "ORKA54" to false), changed.map { it.tripCode to it.cancelled })
             name = "stoptimes-idfm"
+            now = now.plusSeconds(30)
 
             repo.lineDepartures("$idfm:473935", rerA, "0", time)
             assertNull(params["fetchStops"])
@@ -252,10 +329,12 @@ class TransitousRoutingRepositoryTest {
             else respond(JsonObject(mapOf("stopTimes" to JsonArray(listOf(event)), "nextPageCursor" to JsonPrimitive("same"))).toString(),
                 headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }
+        var now = Instant.parse("2026-11-09T01:00:00Z")
         createHttpClient(engine, "test", "").use { client ->
-            val repo = TransitousRoutingRepository(client)
+            val repo = TransitousRoutingRepository(client, clock = { now })
             assertEquals(1, repo.lineDepartures("stop:a", Line("M5"), "0", Instant.parse("2026-11-09T01:00:00Z")).size)
             assertEquals(2, calls)
+            now = now.plusSeconds(30)
             fail = true
             calls = 0
             assertEquals(1, repo.lineDepartures("stop:a", Line("M5"), "0", Instant.parse("2026-11-09T01:00:00Z")).size)

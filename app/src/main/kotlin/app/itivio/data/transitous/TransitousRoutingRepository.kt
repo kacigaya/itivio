@@ -26,6 +26,7 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import java.io.IOException
+import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Locale
@@ -35,10 +36,33 @@ class TransitousRoutingRepository(
     // Read for each request: the user can change the app language while the app runs.
     private val language: () -> String = { Locale.getDefault().toLanguageTag() },
     private val frenchAddresses: IgnAddressSearch? = null,
+    private val clock: () -> Instant = Instant::now,
 ) : RoutingRepository {
     private data class SearchKey(val query: String, val bias: String?, val language: String)
-    private val cache = object : LinkedHashMap<SearchKey, List<Location>>(64, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<SearchKey, List<Location>>) = size > 64
+    private val cache = lru<SearchKey, List<Location>>(64)
+
+    // Live data: kept for less than the shortest refresh (one minute), so a refresh always asks
+    // again. A screen that opens again, or a restart after new live times, shows the last answer at once.
+    private data class Cached<T>(val at: Instant, val value: T)
+    private data class LineKey(
+        val stopId: String, val line: Line, val directionId: String?, val minute: Instant, val limit: Int,
+        val alightStop: String?, val alightStation: String?, val language: String,
+    )
+    private val lineCache = lru<LineKey, Cached<List<Departure>>>(32)
+    private val tripCache = lru<Pair<String, String>, Cached<Trip>>(32)
+    private val planCache = lru<Triple<JourneyRequest, String?, String>, Cached<JourneyPage>>(16)
+
+    /** A departure board: one stop ([stopId]), or the stops around [center]. Disruptions read the same boards. */
+    private data class BoardKey(
+        val stopId: String?, val center: String?, val radius: Int?, val limit: Int, val withAlerts: Boolean, val language: String,
+    )
+    private val boardCache = lru<BoardKey, Cached<List<Departure>>>(32)
+
+    private suspend fun <K : Any, V> MutableMap<K, Cached<V>>.cached(key: K, load: suspend () -> V): V {
+        val now = clock()
+        synchronized(this) { this[key] }?.takeIf { Duration.between(it.at, now) < LIVE_CACHE }?.let { return it.value }
+        // A failure throws before the put, so the next call asks again.
+        return load().also { synchronized(this) { this[key] = Cached(now, it) } }
     }
 
     override suspend fun searchLocations(query: String, near: GeoPoint?): List<Location> {
@@ -88,7 +112,10 @@ class TransitousRoutingRepository(
         }.firstOrNull()?.toDomain()
     }
 
-    override suspend fun planJourneys(request: JourneyRequest, cursor: String?): JourneyPage = mapped {
+    override suspend fun planJourneys(request: JourneyRequest, cursor: String?): JourneyPage =
+        planCache.cached(Triple(request, cursor, language())) { planRequest(request, cursor) }
+
+    private suspend fun planRequest(request: JourneyRequest, cursor: String?): JourneyPage = mapped {
         get<PlanResponse>("v6/plan") {
             parameter("fromPlace", request.from.stopId ?: request.from.point.coordinates())
             parameter("toPlace", request.to.stopId ?: request.to.point.coordinates())
@@ -112,9 +139,17 @@ class TransitousRoutingRepository(
         }.toDomain(request.from.name, request.to.name)
     }
 
-    override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int, withAlerts: Boolean): List<Departure> = mapped {
+    override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int, withAlerts: Boolean): List<Departure> {
+        // The key has the position as sent, so small moves of the user still share one entry.
+        val center = point.rounded(4)
+        return boardCache.cached(BoardKey(null, center, radiusMeters, limit, withAlerts, language())) {
+            nearbyRequest(center, radiusMeters, limit, withAlerts)
+        }
+    }
+
+    private suspend fun nearbyRequest(center: String, radiusMeters: Int, limit: Int, withAlerts: Boolean): List<Departure> = mapped {
         get<StoptimesResponse>("v6/stoptimes") {
-            parameter("center", point.rounded(4))
+            parameter("center", center)
             parameter("radius", radiusMeters)
             parameter("exactRadius", true)
             parameter("n", limit)
@@ -123,7 +158,10 @@ class TransitousRoutingRepository(
         }.stopTimes.map { it.toDomain() }.sortedBy { it.time.best }
     }
 
-    override suspend fun stopDepartures(stopId: String, limit: Int, withAlerts: Boolean): List<Departure> = mapped {
+    override suspend fun stopDepartures(stopId: String, limit: Int, withAlerts: Boolean): List<Departure> =
+        boardCache.cached(BoardKey(stopId, null, null, limit, withAlerts, language())) { stopRequest(stopId, limit, withAlerts) }
+
+    private suspend fun stopRequest(stopId: String, limit: Int, withAlerts: Boolean): List<Departure> = mapped {
         get<StoptimesResponse>("v6/stoptimes") {
             parameter("stopId", stopId)
             parameter("n", limit)
@@ -132,7 +170,9 @@ class TransitousRoutingRepository(
         }.stopTimes.map { it.toDomain() }.sortedBy { it.time.best }
     }
 
-    override suspend fun trip(tripId: String): Trip = mapped {
+    override suspend fun trip(tripId: String): Trip = tripCache.cached(tripId to language()) { tripRequest(tripId) }
+
+    private suspend fun tripRequest(tripId: String): Trip = mapped {
         get<Itinerary>("v6/trip") {
             parameter("tripId", tripId)
             // The tracker needs the times, not the shape of the route.
@@ -148,6 +188,15 @@ class TransitousRoutingRepository(
         from: Instant,
         limit: Int,
         alightAt: Stop?,
+    ): List<Departure> {
+        // One entry for each minute; a later call in that minute drops the departures it no longer wants.
+        val key = LineKey(stopId, line, directionId, from.truncatedTo(ChronoUnit.MINUTES), limit,
+            alightAt?.stopId, alightAt?.stationId, language())
+        return lineCache.cached(key) { lineRequest(stopId, line, directionId, from, limit, alightAt) }.filter { it.time.best >= from }
+    }
+
+    private suspend fun lineRequest(
+        stopId: String, line: Line, directionId: String?, from: Instant, limit: Int, alightAt: Stop?,
     ): List<Departure> = mapped {
         val target = alightAt?.takeIf { it.stopId != null || it.stationId != null }
         if (limit <= 0) return@mapped emptyList()
@@ -230,6 +279,12 @@ class TransitousRoutingRepository(
 // Bound each refresh at busy stations and on lines with little service.
 private const val LINE_SCAN = 80
 private const val LINE_MAX_PAGES = 8
+private val LIVE_CACHE: Duration = Duration.ofSeconds(30)
+
+/** A map that keeps the [max] most recently used entries. Read and write it under its lock. */
+private fun <K : Any, V> lru(max: Int): MutableMap<K, V> = object : LinkedHashMap<K, V>(max, 0.75f, true) {
+    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>) = size > max
+}
 
 /** A trip can stop at another platform of the same station as the planned one. */
 private fun Place.isAt(stop: Stop) =
