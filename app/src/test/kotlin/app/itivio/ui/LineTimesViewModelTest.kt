@@ -12,6 +12,7 @@ import app.itivio.domain.TransitMode
 import app.itivio.ui.itinerary.LineTimesViewModel
 import app.itivio.ui.itinerary.LineTimesViewModel.Companion.REFRESH_MILLIS
 import java.time.Instant
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.test.advanceTimeBy
@@ -51,6 +52,44 @@ class LineTimesViewModelTest {
 
         assertEquals(mapOf(1 to listOf(departure(8))), viewModel.times.value)
         assertEquals(listOf("a"), repository.lineCalls.map { it.first })
+    }
+
+    @Test
+    fun `each leg stays pending until its first request completes`() = runTest(main.dispatcher) {
+        val first = CompletableDeferred<List<Departure>>()
+        val second = CompletableDeferred<List<Departure>>()
+        repository.lineResult = { if (it == "a") first.await() else second.await() }
+        viewModel.times.launchIn(backgroundScope)
+        viewModel.show(journey(ride("a", 8), ride("b", 20)))
+        runCurrent()
+        assertTrue(viewModel.times.value.isEmpty())
+
+        first.complete(listOf(departure(8)))
+        runCurrent()
+        assertEquals(mapOf(0 to listOf(departure(8))), viewModel.times.value)
+
+        second.complete(emptyList())
+        runCurrent()
+        assertEquals(mapOf(0 to listOf(departure(8)), 1 to emptyList()), viewModel.times.value)
+    }
+
+    @Test
+    fun `an initial failure completes the leg and a new journey starts pending`() = runTest(main.dispatcher) {
+        repository.lineResult = { throw RoutingException.Offline() }
+        viewModel.times.launchIn(backgroundScope)
+        viewModel.show(journey(ride("a", 8)))
+        runCurrent()
+        assertEquals(mapOf(0 to emptyList<Departure>()), viewModel.times.value)
+
+        val pending = CompletableDeferred<List<Departure>>()
+        repository.lineResult = { pending.await() }
+        viewModel.show(journey(ride("b", 20)))
+        runCurrent()
+        assertTrue(viewModel.times.value.isEmpty())
+
+        pending.complete(listOf(departure(20)))
+        runCurrent()
+        assertEquals(mapOf(0 to listOf(departure(20))), viewModel.times.value)
     }
 
     @Test

@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.itivio.domain.*
 import app.itivio.ui.itinerary.TrainDepartures
+import app.itivio.ui.itinerary.ItineraryScreen
 import app.itivio.ui.theme.ItivioTheme
 import java.time.Instant
 import org.junit.Assert.assertEquals
@@ -86,5 +87,28 @@ class TrainDeparturesTest {
         compose.onNodeWithText("Boissy").assertIsNotEnabled()
         compose.onNodeWithText("Reset").assertIsNotEnabled()
         compose.onNodeWithText("Updating train…").assertExists()
+    }
+
+    @Test fun `initial departures show a loading message until times arrive`() {
+        var times by mutableStateOf<Map<Int, List<Departure>>>(emptyMap())
+        val end = StopTime(now.plusSeconds(1200))
+        val leg = Leg.Transit(
+            TransitMode.RAIL, stop, stop.copy(name = "Destination"), StopTime(now), end, emptyList(),
+            first.line, "Destination", first.tripId, emptyList(),
+        )
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                ItineraryScreen(
+                    wide = true, journey = Journey("j", listOf(leg), leg.start, end, 0),
+                    now = now, lineTimes = times, onBack = {}, onWalk = {},
+                )
+            }
+        }
+        compose.onNodeWithText("Next departures").assertExists()
+        compose.onNodeWithText("Loading departures…").assertExists()
+        compose.onNodeWithText("Updating train…").assertDoesNotExist()
+        compose.runOnIdle { times = mapOf(0 to listOf(first)) }
+        compose.onNodeWithText("Loading departures…").assertDoesNotExist()
+        compose.onNodeWithText("Chessy").assertIsSelected()
     }
 }

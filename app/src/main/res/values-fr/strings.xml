@@ -337,6 +337,7 @@
     <string name="about_boarding_body">RATP, via Île-de-France Mobilités. Licence Ouverte 2.0. Métro et RER à Paris.</string>
     <string name="itinerary_reset_train">Réinitialiser</string>
     <string name="itinerary_changing_train">Mise à jour du train…</string>
+    <string name="itinerary_loading_departures">Chargement des départs…</string>
     <string name="itinerary_change_train_failed">Impossible de changer de train. Réessayez.</string>
     <string name="itinerary_missed_connection">Cette correspondance n’est plus possible. Choisissez un autre départ pour la prochaine étape.</string>
     <string name="itinerary_platform_changed">Le quai a changé. Suivez les panneaux dans la gare.</string>

@@ -350,6 +350,7 @@
     <string name="about_boarding_url" translatable="false">https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/positionnement-dans-la-rame</string>
     <string name="itinerary_reset_train">Reset</string>
     <string name="itinerary_changing_train">Updating train…</string>
+    <string name="itinerary_loading_departures">Loading departures…</string>
     <string name="itinerary_change_train_failed">Could not change the train. Try again.</string>
     <string name="itinerary_missed_connection">This connection no longer works. Choose another departure for the next leg.</string>
     <string name="itinerary_platform_changed">Platform changed. Follow the signs at the station.</string>

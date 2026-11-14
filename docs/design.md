@@ -107,6 +107,8 @@ When the data knows the exits of the alighting platform, a "Best exit" row sits 
 
 The rail and the stop dots draw on the same whole pixel, so the rail has no step below a dot.
 
+The itinerary shows a Material 3 loading indicator and "Loading departures…" while each eligible leg waits for its first departure response. Completed legs show their times without waiting for other legs. Refreshes keep the displayed times. An empty or failed first response removes the loading state.
+
 ## Disruptions
 
 The list shows the service alerts in two groups: "Your saved stops" (Home, Work, and favorites that are stops), then "Near you" (stops within 400 m). An alert shows only one time, also when it applies to more than one stop or to both groups. The most severe disruptions come first in each group. The rating of the provider gives the severity. Without a rating, the effect gives it: "no service" is severe.

@@ -33,6 +33,7 @@ class LineTimesViewModel(
     private var shownFor: Journey? = null
     private var shown = emptyMap<Int, List<Departure>>()
 
+    /** An eligible leg has no entry until its first request completes, including an empty or failed result. */
     val times: StateFlow<Map<Int, List<Departure>>> = journey
         .transformLatest { (journey, notBefore) ->
             if (journey != shownFor) {
@@ -47,8 +48,11 @@ class LineTimesViewModel(
             if (legs.isEmpty()) return@transformLatest
             while (true) {
                 val now = clock()
-                shown = legs.associate { (index, leg) -> index to (load(leg, readyAt(journey, index, maxOf(now, notBefore ?: now))) ?: shown[index].orEmpty()) }
-                emit(shown)
+                for ((index, leg) in legs) {
+                    val times = load(leg, readyAt(journey, index, maxOf(now, notBefore ?: now)))
+                    shown = shown + (index to (times ?: shown[index].orEmpty()))
+                    emit(shown)
+                }
                 delay(REFRESH_MILLIS)
             }
         }

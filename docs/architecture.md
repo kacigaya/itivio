@@ -175,6 +175,8 @@ The itinerary tracker uses the clock and the leg times. It does not use the devi
 
 `/stoptimes` has no line filter. The line times scan pages of 80 departures from the boarding stop, filtered by route ID. A refresh stops after four matching departures, the last page, or eight pages. This bound can still leave fewer than four times at very busy stations or on lines with little service. Duplicate events and repeated cursors do not extend the scan. A later page failure keeps the matches already found.
 
+The line times publish each leg as its request completes. An eligible leg with no entry is still waiting for its first response. A present but empty entry means the first request completed without times, including a failed request. The itinerary uses this distinction for its initial loading indicator. Refreshes keep the last times visible. A leg without a boarding stop ID makes no request and shows no loading state.
+
 The first leg lists departures after the remaining initial walk, starting now. It does not inherit the wait that the planner put before that walk. Later legs start after the previous transit arrival and the transfer walk.
 
 The line times keep only trips that stop at the alighting stop, or at another platform of its station. The request sets `fetchStops` to get the next stops of each trip. The direction ID is not enough: IDFM gives direction 0 to RER A trains in both directions. `fetchStops` is experimental in MOTIS. If the response has no next stops, the direction ID filters the list. The next stops make each refresh about 5 times larger (about 40 kB compressed at La Défense).

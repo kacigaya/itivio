@@ -147,6 +147,7 @@ fun ItineraryScreen(
                         is Leg.Transit -> TransitLegItem(
                             leg, lineTimes[index].orEmpty(), now, boarding[index],
                             loading = selection.loadingLeg == index,
+                            departuresLoading = leg.from.stopId != null && index !in lineTimes,
                             canSelect = selection.loadingLeg == null,
                             changed = index in selection.changedLegs,
                             platformChanged = index in selection.platformChangedLegs,
@@ -257,7 +258,7 @@ private fun Summary(journey: Journey, now: Instant) {
 @Composable
 private fun TransitLegItem(
     leg: Leg.Transit, departures: List<Departure>, now: Instant, boarding: BoardingHint?,
-    loading: Boolean, canSelect: Boolean, changed: Boolean, platformChanged: Boolean, failed: Boolean,
+    loading: Boolean, departuresLoading: Boolean, canSelect: Boolean, changed: Boolean, platformChanged: Boolean, failed: Boolean,
     onSelect: (Departure) -> Unit, onReset: () -> Unit,
 ) {
     val (lineColor, _) = lineColors(leg.line)
@@ -302,8 +303,9 @@ private fun TransitLegItem(
                 }
                 // Line times refresh once a minute; drop the ones that left since.
                 val upcoming = departures.filter { clockMinutesUntil(now, it.time.best) >= 0 }
-                if (upcoming.isNotEmpty() || loading || failed || changed) {
-                    TrainDepartures(upcoming, leg.tripId, now, loading, canSelect, changed, failed, onSelect, onReset)
+                if (upcoming.isNotEmpty() || loading || departuresLoading || failed || changed) {
+                    TrainDepartures(upcoming, leg.tripId, now, loading, canSelect, changed, failed, onSelect, onReset,
+                        departuresLoading = departuresLoading)
                 }
                 val stops = leg.intermediateStops
                 FlowRow(
@@ -428,17 +430,23 @@ internal fun TrainDepartures(
     departures: List<Departure>, selectedTripId: String?, now: Instant,
     loading: Boolean, canSelect: Boolean, changed: Boolean, failed: Boolean,
     onSelect: (Departure) -> Unit, onReset: () -> Unit,
+    departuresLoading: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.itinerary_next_departures), style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f).padding(vertical = 6.dp))
-            if (loading) LoadingIndicator(Modifier.size(32.dp).clearAndSetSemantics {})
+            if (loading || departuresLoading) LoadingIndicator(Modifier.size(32.dp).clearAndSetSemantics {})
             if (changed) TextButton(onClick = onReset, enabled = canSelect) { Text(stringResource(R.string.itinerary_reset_train)) }
         }
-        if (loading || failed) {
-            Text(stringResource(if (failed) R.string.itinerary_change_train_failed else R.string.itinerary_changing_train),
+        if (loading || departuresLoading || failed) {
+            val status = when {
+                failed -> R.string.itinerary_change_train_failed
+                loading -> R.string.itinerary_changing_train
+                else -> R.string.itinerary_loading_departures
+            }
+            Text(stringResource(status),
                 style = MaterialTheme.typography.bodySmall, color = if (failed) scheme.error else scheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 4.dp, bottom = 6.dp).semantics { liveRegion = LiveRegionMode.Polite })
         }

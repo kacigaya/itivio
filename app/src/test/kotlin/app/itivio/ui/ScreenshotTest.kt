@@ -311,7 +311,7 @@ open class ScreenshotTest {
             journey = sampleJourneys.first(),
             // Two minutes after the departure: the walk is the step in progress.
             now = t0.plusSeconds(120),
-            lineTimes = mapOf(1 to listOf(u2(6, 2, "t1"), u2(11, null, "t4"), u2(16, null, "t5"))),
+            lineTimes = mapOf(1 to listOf(u2(6, 2, "t1"), u2(11, null, "t4"), u2(16, null, "t5")), 3 to emptyList()),
             onBack = {},
             onWalk = {},
             boarding = mapOf(
@@ -373,6 +373,15 @@ open class ScreenshotTest {
             selectedTripId = "d1", now = t0,
             loading = false, canSelect = true, changed = true, failed = false,
             onSelect = {}, onReset = {},
+        )
+    }
+
+    @Test
+    fun trainChoicesLoading() = capture("train_choices_loading") {
+        app.itivio.ui.itinerary.TrainDepartures(
+            departures = emptyList(), selectedTripId = "d1", now = t0,
+            loading = false, canSelect = true, changed = false, failed = false,
+            onSelect = {}, onReset = {}, departuresLoading = true,
         )
     }
 
