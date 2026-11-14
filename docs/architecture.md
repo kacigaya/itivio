@@ -135,8 +135,10 @@ MOTIS returns walk-only journeys in `direct`, apart from `itineraries`. The mapp
 - The street name of an instruction is the name that covers at least a third of it. Without one, the text names only the maneuver ("Turn left"). The start names the compass direction ("Head northwest").
 - The position is projected on the nearest part of the route. More than 50 m from the route counts as off the route. The app does not plan a new route by itself.
 - The remaining time uses the speed of the walk in the plan: its distance divided by its duration.
+- The map cuts the walk at the projected position (`WalkRoute.split`): the part walked and the part ahead. Off the route, nothing counts as walked.
+- The arrow and the camera turn to the heading or the course that MapLibre measures. Without one, they turn to the route ahead of the position (`WalkRoute.directionAt`). One camera update sets the center, zoom, bearing, and pitch, because a second animation cancels the first.
 
-Limits: the projection picks the nearest part of the route, so a route that passes the same place twice can jump. The view keeps the screen on and works only while the app is on screen. The app asks for no background location.
+Limits: the projection picks the nearest part of the route, so a route that passes the same place twice can jump. Within 20 m of the route (`WalkRoute.SNAP_METERS`), the arrow and the camera use the nearest point of the route. Farther away, they show the measured position, so the walker sees a wrong turn. Near a parallel street, a snapped arrow can show the wrong part of the route. The view keeps the screen on and works only while the app is on screen. The app asks for no background location.
 
 ## Transitous usage policy
 

@@ -5,6 +5,9 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Show the walking view as a navigation map: tilted, turned with you, and with your position as an arrow low on the screen. Near the route, the arrow stays on the route line. The part of the walk that is done is gray.
+- Add a compass button that turns the walking map between north up and "turn with you", and a button that shows the full route.
+- Show the next maneuver of the walking view on a "Then" tab below the instruction card.
 - Change the app icon to a destination pin that walks, in flat colors.
 
 ## 0.8.3

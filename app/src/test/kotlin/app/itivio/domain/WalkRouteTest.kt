@@ -98,6 +98,33 @@ class WalkRouteTest {
     }
 
     @Test
+    fun `split cuts the route at the walker and keeps both parts joined`() {
+        val route = WalkRoute.of(emptyList(), listOf(at(0.0, 0.0), at(0.0, 100.0), at(100.0, 100.0)))
+        val (walked, ahead) = route.split(150.0)
+        assertEquals(3, walked.size)
+        assertEquals(walked.last(), ahead.first())
+        assertEquals(50.0, WalkRoute.distance(at(0.0, 100.0), walked.last()), 0.5)
+        assertEquals(at(100.0, 100.0), ahead.last())
+
+        // Before the start, nothing is walked. Past the end, nothing is ahead.
+        val (none, all) = route.split(-5.0)
+        assertEquals(listOf(route.points.first(), route.points.first()), none)
+        assertEquals(route.points, all)
+        val (whole, rest) = route.split(500.0)
+        assertEquals(3, whole.size)
+        assertEquals(0.0, WalkRoute.distance(rest.first(), rest.last()), 0.01)
+    }
+
+    @Test
+    fun `a position near the route snaps to it, a far one stays`() {
+        val route = WalkRoute.of(emptyList(), listOf(at(0.0, 0.0), at(0.0, 100.0)))
+        val near = route.snap(at(15.0, 40.0))
+        assertEquals(0.0, WalkRoute.distance(at(0.0, 40.0), near), 0.5)
+        val far = at(30.0, 40.0)
+        assertEquals(far, route.snap(far))
+    }
+
+    @Test
     fun `turn angles map to maneuvers on both sides`() {
         assertEquals(Maneuver.STRAIGHT, WalkRoute.turn(20.0))
         assertEquals(Maneuver.SLIGHT_LEFT, WalkRoute.turn(-45.0))

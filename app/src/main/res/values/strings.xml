@@ -246,6 +246,10 @@
     <string name="walk_close">Close walking directions</string>
     <string name="walk_recenter">Recenter</string>
     <string name="walk_then">Then</string>
+    <string name="walk_then_instruction">Then: %1$s</string>
+    <string name="walk_north_up">Show north up</string>
+    <string name="walk_heading_up">Turn the map with you</string>
+    <string name="walk_overview">Show the full route</string>
     <!-- The <b> part shows in bold, the rest in light. Keep the markup escaped. -->
     <string name="walk_arrival">Arrive &lt;b>%1$s&lt;/b></string>
     <string name="walk_progress">Part of the walk done</string>

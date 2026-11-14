@@ -13,7 +13,7 @@ Material 3 Expressive on Jetpack Compose. The map is the canvas. The UI floats o
 
 - Dynamic color on Android 12+. Fallback scheme: tonal spot from seed `#1B6B5A`.
 - Map style: OpenFreeMap Liberty in the light theme. The dark theme uses `assets/map/dark.json`: the Liberty layers with dark colors, so both themes show the same roads, stops, and places. `tools/dark-map-style.py` builds this file.
-- Route lines on the map: transit legs in the line color with a `surface` casing. Walking legs are dotted in `onSurfaceVariant`. A walk that the map draws alone, as in the walking view, is dotted in `primary`.
+- Route lines on the map: transit legs in the line color with a `surface` casing. Walking legs are dotted in `onSurfaceVariant`. A walk that the map draws alone is dotted in `primary`. The walking view draws round dots: the part ahead in `primary` with `surface` rings, the part walked in `outline`.
 - The position dot on the map uses `primary` with a `surface` border, the same as the casing of the stop pins. A white border merges with the dot in a dark scheme that has a light `primary`.
 
 ## Type
@@ -163,7 +163,18 @@ The card of the route on the map uses `secondaryContainer`. It has no outline.
 
 ## States
 
-Each list has a loading, empty, offline, and error state. Offline and error states give a retry button. Loading uses the Expressive loading indicator, not skeleton boxes.
+Each list has a loading, empty, offline, and error state. Offline and error states give a retry button.
+
+The loading state of a list is a skeleton (`Skeleton`): placeholders with the layout of the content to come, so the list does not jump when the content arrives.
+
+- The results show three route cards. The nearby departures show two stop cards. The stop shows one departure board. The disruptions show a group title and two cards. The search shows five place rows.
+- A placeholder card has the container color and the shape of the real card. Its blocks use `onSurface` at 8% to 16% opacity, on all card colors.
+- A text block has the line height of its text style, so the skeleton grows with the text size.
+- The blocks of one list pulse in step, 900 ms for each direction. They do not pulse when system animations are off.
+- A screen reader gets one "Loading" label for the list, not one for each block.
+- The skeleton of a component is next to the component in the source. Change the two together.
+
+The Expressive loading indicator is for an action in progress on content that is on screen: the first departures of an itinerary leg, a train change, and a page of earlier or later journeys. It is also the loading state when the layout to come is not known, as when the session plans again after process death.
 
 ## Accessibility
 

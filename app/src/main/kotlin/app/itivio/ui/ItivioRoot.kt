@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -85,6 +86,7 @@ import app.itivio.ui.stop.StopPeekHeight
 import app.itivio.ui.stop.StopScreen
 import app.itivio.ui.walk.WalkPeekHeight
 import app.itivio.ui.walk.WalkScreen
+import app.itivio.domain.WalkRoute as WalkPath
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
@@ -147,6 +149,10 @@ fun ItivioRoot(
     }
     var recenterRequest by rememberSaveable { mutableIntStateOf(0) }
     var following by rememberSaveable { mutableStateOf(true) }
+    // The walking view: the map turns with the walker unless the user asks for north up.
+    var northUp by rememberSaveable { mutableStateOf(false) }
+    var overviewRequest by remember { mutableIntStateOf(0) }
+    var mapBearing by remember { mutableFloatStateOf(0f) }
     // Collected only while Explore is on top, so departures refresh only while they are visible.
     val nearbyState = if (top == ExploreRoute && locationGranted) {
         nearby.departures.collectAsStateWithLifecycle().value
@@ -167,6 +173,7 @@ fun ItivioRoot(
         is WalkRoute -> walkLeg?.let { Journey("${top.journeyId}-walk-${top.legIndex}", listOf(it), it.start, it.end, 0) }
         else -> null
     }
+    val walkPath = remember(walkLeg) { walkLeg?.let { WalkPath.of(it.steps, it.geometry) } }
     val peek = when (top) {
         ResultsRoute -> ResultsPeekHeight
         is ItineraryRoute -> ItineraryPeekHeight
@@ -201,6 +208,10 @@ fun ItivioRoot(
             areaStops = areaStops,
             focus = stopPoint,
             follow = top is WalkRoute && following,
+            walk = walkPath,
+            northUp = northUp,
+            overviewRequest = overviewRequest,
+            onBearing = { mapBearing = it.toFloat() },
             onStop = ::openStop,
             onFollowStopped = { following = false },
             onCameraIdle = { box, zoom -> if (backStack.last() == ExploreRoute) mapStops.onCameraIdle(box, zoom) },
@@ -371,6 +382,16 @@ fun ItivioRoot(
                                     now = now,
                                     onClose = { backStack.pop(planner) },
                                     onRecenter = { following = true },
+                                    northUp = northUp,
+                                    bearing = { mapBearing },
+                                    onNorthUp = {
+                                        northUp = !northUp
+                                        following = true
+                                    },
+                                    onOverview = {
+                                        following = false
+                                        overviewRequest++
+                                    },
                                     onRequestLocation = locationState::requestPermission,
                                     onReplan = {
                                         planner.replanFromHere()

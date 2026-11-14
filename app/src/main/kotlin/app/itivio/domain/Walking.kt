@@ -87,6 +87,33 @@ class WalkRoute(val points: List<GeoPoint>, val instructions: List<WalkInstructi
         return if (next >= 0) next else instructions.lastIndex
     }
 
+    /**
+     * The route cut at [alongMeters]: the part walked and the part ahead. Both parts contain the
+     * point of the cut, so the map draws them without a gap.
+     */
+    fun split(alongMeters: Double): Pair<List<GeoPoint>, List<GeoPoint>> {
+        if (points.size < 2) return emptyList<GeoPoint>() to points
+        val target = alongMeters.coerceIn(0.0, lengthMeters)
+        val cut = pointAt(target)
+        val index = cumulative.indexOfFirst { it >= target }.coerceAtLeast(1)
+        val walked = points.subList(0, index) + cut
+        val ahead = listOf(cut) + points.subList(index, points.size)
+        return walked to ahead
+    }
+
+    /**
+     * The point of the route nearest to [position] when it is within [SNAP_METERS], else
+     * [position]. Farther away, the walker must see that they left the route.
+     */
+    fun snap(position: GeoPoint): GeoPoint {
+        if (points.size < 2) return position
+        val progress = progress(position)
+        return if (progress.offRouteMeters <= SNAP_METERS) pointAt(progress.alongMeters) else position
+    }
+
+    /** The direction of the route ahead of [meters], in degrees clockwise from north. Null on a zero-length part. */
+    fun directionAt(meters: Double): Double? = bearing(meters.coerceIn(0.0, lengthMeters), ahead = true)
+
     private fun pointAt(meters: Double): GeoPoint {
         val target = meters.coerceIn(0.0, lengthMeters)
         val index = cumulative.indexOfFirst { it >= target }.coerceAtLeast(1)
@@ -120,6 +147,12 @@ class WalkRoute(val points: List<GeoPoint>, val instructions: List<WalkInstructi
     companion object {
         /** A position farther than this from the route counts as off the route. */
         const val OFF_ROUTE_METERS = 50.0
+
+        /**
+         * A position nearer to the route than this shows on the route. City GPS errors are often
+         * 10 to 20 m. A larger value hides a wrong turn for longer.
+         */
+        const val SNAP_METERS = 20.0
 
         /** Until the walker is this far along, the view shows the start instruction. */
         const val START_RADIUS_METERS = 15.0

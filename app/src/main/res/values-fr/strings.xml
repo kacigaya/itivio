@@ -237,6 +237,10 @@
     <string name="walk_close">Fermer l’itinéraire à pied</string>
     <string name="walk_recenter">Recentrer</string>
     <string name="walk_then">Puis</string>
+    <string name="walk_then_instruction">Puis\u00A0: %1$s</string>
+    <string name="walk_north_up">Afficher le nord en haut</string>
+    <string name="walk_heading_up">Tourner la carte avec vous</string>
+    <string name="walk_overview">Afficher tout l’itinéraire</string>
     <!-- The <b> part shows in bold, the rest in light. Keep the markup escaped. -->
     <string name="walk_arrival">Arrivée &lt;b>%1$s&lt;/b></string>
     <string name="walk_progress">Partie de la marche effectuée</string>
