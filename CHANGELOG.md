@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Change the app icon to a destination pin that walks, in flat colors.
+
 ## 0.8.3
 
 - Match station IDs for supported Metro-to-RER boarding guidance, including Metro 9 to RER A at Nation.
