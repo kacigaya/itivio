@@ -34,7 +34,11 @@ class LineTimesViewModel(
     private val journey = MutableStateFlow<Pair<Journey?, Instant?>>(null to null)
 
     // Kept across collector restarts, so a return from the background does not blank the times.
-    private var shownFor: List<Triple<Int, String?, Line>>? = null
+    private data class LegKey(
+        val index: Int, val from: String?, val line: Line, val direction: String?,
+        val toStop: String?, val toStation: String?,
+    )
+    private var shownFor: List<LegKey>? = null
     private var shown = emptyMap<Int, List<Departure>>()
 
     /** An eligible leg has no entry until the first round completes, including an empty or failed result. All legs get their entry together. */
@@ -43,8 +47,7 @@ class LineTimesViewModel(
             val legs = journey?.legs.orEmpty().mapIndexedNotNull { index, leg ->
                 (leg as? Leg.Transit)?.takeIf { it.from.stopId != null }?.let { index to it }
             }
-            // Live times change the journey each minute. Only other boarding stops or lines start over.
-            val key = legs.map { (index, leg) -> Triple(index, leg.from.stopId, leg.line) }
+            val key = legs.map { (index, leg) -> LegKey(index, leg.from.stopId, leg.line, leg.directionId, leg.to.stopId, leg.to.stationId) }
             if (key != shownFor) {
                 shownFor = key
                 shown = emptyMap()

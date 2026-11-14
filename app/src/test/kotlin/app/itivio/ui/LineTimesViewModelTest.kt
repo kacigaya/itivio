@@ -91,6 +91,29 @@ class LineTimesViewModelTest {
     }
 
     @Test
+    fun `changed direction or alighting stop clears old choices`() = runTest(main.dispatcher) {
+        viewModel.times.launchIn(backgroundScope)
+        val original = ride("a", 8)
+        for (changed in listOf(
+            original.copy(directionId = "other"),
+            original.copy(to = original.to.copy(stopId = "other")),
+            original.copy(to = original.to.copy(stationId = "other")),
+        )) {
+            repository.lineResult = { listOf(departure(8)) }
+            viewModel.show(journey(original))
+            runCurrent()
+            assertTrue(viewModel.times.value.isNotEmpty())
+            val pending = CompletableDeferred<List<Departure>>()
+            repository.lineResult = { pending.await() }
+            viewModel.show(journey(changed))
+            runCurrent()
+            assertTrue(viewModel.times.value.isEmpty())
+            pending.complete(emptyList())
+            runCurrent()
+        }
+    }
+
+    @Test
     fun `an initial failure completes the leg and a new journey starts pending`() = runTest(main.dispatcher) {
         repository.lineResult = { throw RoutingException.Offline() }
         viewModel.times.launchIn(backgroundScope)
