@@ -21,7 +21,7 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 
 ## Release packaging
 
-- The v0.9.x prereleases use debug-signed APKs for `arm64-v8a`, `armeabi-v7a`, `x86_64`, and universal, plus `SHA256SUMS.txt`. Build with `:app:assembleDebug`; APKs are in `app/build/outputs/apk/debug/`.
+- The v0.9.x and v0.10.x prereleases use debug-signed APKs for `arm64-v8a`, `armeabi-v7a`, `x86_64`, and universal, plus `SHA256SUMS.txt`. Build with `:app:assembleDebug`; APKs are in `app/build/outputs/apk/debug/`.
 
 ## Rules
 

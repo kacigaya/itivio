@@ -5,6 +5,14 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.10.0
+
+- Keep the walking arrow on the route line while you are on the route. The off-route limit follows the GPS accuracy, from 15 m to 50 m.
+- Show a wrong turn after 10 m when you walk away from the route. The off-route banner stays until you are back within 10 m.
+- Update the walking position twice a second and the compass five times a second, so the arrow follows your steps.
+- Zoom the walking map closer to your position.
+- Move the compass and "Recenter" buttons of the walking view to the bottom left, above the sheet.
+
 ## 0.9.1
 
 - Keep train choices correct when the requested time, direction, or arrival platform changes.
