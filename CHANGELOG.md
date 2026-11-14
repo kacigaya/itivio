@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Match station IDs for supported Metro-to-RER boarding guidance, including Metro 9 to RER A at Nation.
+
 ## 0.8.2
 
 - Show the best exit of the station below the alighting stop, with its number and name. Pick the exit nearest to the destination, so the boarding hint also shows at large stations.

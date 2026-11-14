@@ -48,6 +48,7 @@ val dataModule = module {
         IdfmBoardingRepository(
             open = { assets.open("boarding/idfm.tsv") },
             openExits = { assets.open("boarding/exits.tsv") },
+            openStations = { assets.open("boarding/stations.tsv") },
         )
     }
 }

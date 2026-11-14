@@ -14,6 +14,9 @@ data class BoardingPosition(
     val part: TrainPart,
     val lift: Boolean,
     val exit: StationExit? = null,
+    /** Stop area and parent station of the transfer platform, without feed prefixes. */
+    val transferStations: Set<String> = emptySet(),
+    val transferLines: Set<String> = emptySet(),
 )
 
 /** The boarding positions of the stations that publish them. */
@@ -40,9 +43,15 @@ suspend fun BoardingRepository.hints(journey: Journey, wheelchair: Boolean): Map
         val next = legs.drop(index + 1).firstOrNull { it is Leg.Transit } as Leg.Transit?
         val nextStop = next?.from?.stopId
         if (next != null && nextStop == null) return@forEachIndexed
-        val known = positions(leg).filter { position ->
+        val positions = positions(leg)
+        val exact = positions.filter { position ->
             val stop = position.transferStop
             if (nextStop == null) stop == null else stop != null && nextStop.endsWith(":$stop")
+        }
+        // A station ID can stand for either RER platform. Keep an exact platform match first.
+        val known = if (nextStop == null || exact.isNotEmpty()) exact else positions.filter { position ->
+            position.transferStations.any { nextStop.endsWith(":$it") } &&
+                position.transferLines.any { next.line.id?.endsWith(":$it") == true }
         }
         val exit = if (next == null) {
             known.mapNotNull { it.exit }.distinctBy { it.id }

@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""Build the offline boarding tables from two IDFM CSV exports.
+"""Build the offline boarding tables from IDFM CSV exports.
 
 Run from the repository root: python3 tools/boarding-positions.py
 
-Sources: IDFM "Positionnement dans la rame" (RATP) and "Accès".
+Sources: IDFM "Positionnement dans la rame" (RATP), "Accès", "Arrêts",
+and "Zones d'arrêts".
 License: Licence Ouverte 2.0, Île-de-France Mobilités.
 
 idfm.tsv: platform, line, target (transfer stop ID or exit:<access ID>), part
 (F/M/R), lift flag (L or empty).
 exits.tsv: access ID, exit number (may be empty), name, latitude, longitude.
 Only referenced exits with coordinates enter exits.tsv.
+stations.tsv: transfer platform, stop area, parent station.
 """
 import csv
 import io
@@ -21,6 +23,9 @@ SOURCE = BASE + "positionnement-dans-la-rame/exports/csv?delimiter=%3B"
 EXITS_SOURCE = BASE + "acces/exports/csv?delimiter=%3B"
 OUTPUT = "app/src/main/assets/boarding/idfm.tsv"
 EXITS_OUTPUT = "app/src/main/assets/boarding/exits.tsv"
+STOPS_SOURCE = BASE + "arrets/exports/csv?delimiter=%3B&select=arrid,zdaid"
+AREAS_SOURCE = BASE + "zones-d-arrets/exports/csv?delimiter=%3B&select=zdaid,zdcid"
+STATIONS_OUTPUT = "app/src/main/assets/boarding/stations.tsv"
 PARTS = {"Avant": "F", "Milieu": "M", "Arrière": "R"}
 
 
@@ -49,6 +54,15 @@ def write_table(path: str, rows: list[tuple[str, ...]]) -> None:
     with open(path, "w", encoding="utf-8", newline="\n") as out:
         for row in sorted(rows):
             out.write("\t".join(" ".join(field.split()) for field in row) + "\n")
+
+
+def platform_stations(platforms: set[str]) -> list[tuple[str, ...]]:
+    areas = {row["zdaid"]: row["zdcid"] for row in download(AREAS_SOURCE) if row["zdcid"]}
+    return sorted({
+        (row["arrid"], row["zdaid"], areas[row["zdaid"]])
+        for row in download(STOPS_SOURCE)
+        if row["arrid"] in platforms and row["zdaid"] in areas
+    })
 
 
 def main() -> None:
@@ -81,10 +95,14 @@ def main() -> None:
         lat, lon = point
         exits[access_id] = (access_id, row["accshortname"], row["accname"], f"{lat:.6f}", f"{lon:.6f}")
 
+    platforms = {row[2] for row in rows if not row[2].startswith("exit:")}
+    stations = platform_stations(platforms)
     write_table(OUTPUT, list(rows))
     write_table(EXITS_OUTPUT, list(exits.values()))
+    write_table(STATIONS_OUTPUT, stations)
     print(f"{len(rows)} rows written to {OUTPUT}, {skipped} skipped")
     print(f"{len(exits)} exits written to {EXITS_OUTPUT}")
+    print(f"{len(stations)} platforms written to {STATIONS_OUTPUT}")
     print(f"{len(referenced - exits.keys())} referenced exits have no coordinates (including missing access records)")
 
 

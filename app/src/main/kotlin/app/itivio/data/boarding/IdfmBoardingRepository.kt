@@ -15,11 +15,12 @@ import java.io.InputStream
 /**
  * The boarding positions of the RATP metro and RER platforms, from the IDFM dataset
  * "Positionnement dans la rame". The app ships the table (see `tools/boarding-positions.py`),
- * so this sends no request. Both files load once, off the main thread, on the first call.
+ * so this sends no request. The files load once, off the main thread, on the first call.
  */
 class IdfmBoardingRepository(
     private val open: () -> InputStream,
     private val openExits: () -> InputStream,
+    private val openStations: () -> InputStream,
 ) : BoardingRepository {
     private val lock = Mutex()
     private var table: Map<Pair<String, String>, List<BoardingPosition>>? = null
@@ -33,7 +34,8 @@ class IdfmBoardingRepository(
     private suspend fun table() = lock.withLock {
         table ?: withContext(Dispatchers.IO) {
             val exits = openExits().bufferedReader().use { parseExits(it.readLines()) }
-            open().bufferedReader().use { parse(it.readLines(), exits) }
+            val stations = openStations().bufferedReader().use { parseStations(it.readLines()) }
+            open().bufferedReader().use { parse(it.readLines(), exits, stations) }
         }.also { table = it }
     }
 
@@ -45,6 +47,7 @@ class IdfmBoardingRepository(
         fun parse(
             lines: List<String>,
             exits: Map<String, StationExit> = emptyMap(),
+            stations: Map<String, Set<String>> = emptyMap(),
         ): Map<Pair<String, String>, List<BoardingPosition>> = lines.mapNotNull { line ->
             val fields = line.split('\t')
             if (fields.size < 4) return@mapNotNull null
@@ -61,8 +64,23 @@ class IdfmBoardingRepository(
                 part = part,
                 lift = fields.getOrNull(4) == "L",
                 exit = if (isExit) exits[target.removePrefix("exit:")] else null,
+                transferStations = if (isExit) emptySet() else stations[target].orEmpty(),
             )
-        }.groupBy({ it.first }, { it.second })
+        }.groupBy({ it.first }, { it.second }).let { table ->
+            val linesByPlatform = table.keys.groupBy({ it.first }, { it.second })
+            table.mapValues { (_, positions) ->
+                positions.map { position ->
+                    position.copy(transferLines = linesByPlatform[position.transferStop].orEmpty().toSet())
+                }
+            }
+        }
+
+        /** Platform, stop area, and parent station from the IDFM stop reference. */
+        fun parseStations(lines: List<String>): Map<String, Set<String>> = lines.mapNotNull { line ->
+            val fields = line.split('\t')
+            if (fields.size != 3 || fields.any { it.isBlank() }) return@mapNotNull null
+            fields[0] to setOf(fields[1], fields[2])
+        }.toMap()
 
         /** Access ID, optional number, name, latitude, longitude. Invalid coordinates give no exit. */
         fun parseExits(lines: List<String>): Map<String, StationExit> = lines.mapNotNull { line ->

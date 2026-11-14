@@ -26,7 +26,7 @@ class BoardingTest {
         bad line
         4	C1	exit	7	
     """.trimIndent()
-    private val repository = IdfmBoardingRepository({ table.byteInputStream() }, { byteArrayOf().inputStream() })
+    private val repository = IdfmBoardingRepository({ table.byteInputStream() }, { byteArrayOf().inputStream() }, { byteArrayOf().inputStream() })
 
     private fun stop(id: String?) = Stop("Stop", GeoPoint(48.8, 2.3), stopId = id?.let { "$idfm:$it" })
     private fun ride(to: String?, from: String? = "0", line: String? = "C1") = Leg.Transit(
@@ -83,7 +83,7 @@ class BoardingTest {
     """.trimIndent()
 
     private fun exitRepository(rows: String) = IdfmBoardingRepository(
-        { rows.trimIndent().byteInputStream() }, { exits.byteInputStream() },
+        { rows.trimIndent().byteInputStream() }, { exits.byteInputStream() }, { byteArrayOf().inputStream() },
     )
 
     private fun destinationWalk() = walk().let { it.copy(to = it.to.copy(point = GeoPoint(48.8460, 2.3736))) }
@@ -143,10 +143,74 @@ class BoardingTest {
     }
 
     @Test
-    fun `both files load once off the caller thread even with concurrent requests`() = runTest {
+    fun `station transfers require agreement and exact platforms keep priority`() = runTest {
+        val rows = """
+            1	C1	9	M
+            1	C1	10	M
+            1	C1	exit:near	R
+            2	C1	9	F
+            2	C1	10	R
+            3	C1	9	F
+            3	C1	9	R	L
+            3	C1	10	F
+            3	C1	10	R	L
+            9	C2	exit	F
+            10	C2	exit	F
+        """.trimIndent()
+        val stations = "9\tarea\tstation\n10\tarea\tstation\n"
+        val repo = IdfmBoardingRepository(
+            { rows.byteInputStream() }, { exits.byteInputStream() }, { stations.byteInputStream() },
+        )
+        for (id in listOf("area", "station")) {
+            val next = ride("5", from = id, line = "C2")
+            assertEquals(BoardingHint(TrainPart.MIDDLE, next), repo.hints(journey(ride("1"), walk(), next), false)[0])
+            assertNull(repo.hints(journey(ride("2"), next), false)[0])
+            assertEquals(TrainPart.FRONT, repo.hints(journey(ride("3"), next), false)[0]?.part)
+            assertEquals(TrainPart.REAR, repo.hints(journey(ride("3"), next), true)[0]?.part)
+        }
+        val exact = ride("5", from = "9")
+        assertEquals(BoardingHint(TrainPart.FRONT, exact), repo.hints(journey(ride("2"), exact), false)[0])
+        assertNull(repo.hints(journey(ride("1"), ride("5", from = "unknown")), false)[0])
+        val unmapped = ride("5", from = "11").let { it.copy(from = it.from.copy(stationId = "$idfm:station")) }
+        assertNull(repo.hints(journey(ride("1"), unmapped), false)[0])
+        assertNull(repo.hints(journey(ride("1"), ride("5", from = "station", line = "C3")), false)[0])
+        assertNull(repo.hints(journey(ride("1"), ride("5", from = "station", line = null)), false)[0])
+    }
+
+    @Test
+    fun `station table skips incomplete rows`() {
+        assertEquals(
+            mapOf("9" to setOf("area", "station")),
+            IdfmBoardingRepository.parseStations(listOf("9\tarea\tstation", "bad", "10\t\tstation", "\tarea\tstation")),
+        )
+    }
+
+    @Test
+    fun `Metro 9 at Nation gives middle guidance for an RER station ID`() = runTest {
+        val repo = IdfmBoardingRepository(
+            { java.io.File("src/main/assets/boarding/idfm.tsv").inputStream() },
+            { java.io.File("src/main/assets/boarding/exits.tsv").inputStream() },
+            { java.io.File("src/main/assets/boarding/stations.tsv").inputStream() },
+        )
+        for (platform in listOf("21919", "462942")) {
+            for (target in listOf("71673", "473875", "473919", "473920")) {
+                val metro = ride(platform, line = "C01379")
+                val rer = ride("71517", from = target, line = "C01742").copy(mode = TransitMode.RAIL)
+                val hint = repo.hints(journey(metro, walk(), rer), false)[0]
+                assertEquals(BoardingHint(TrainPart.MIDDLE, rer), hint)
+                assertNull(hint?.exit)
+            }
+        }
+        val rer = ride("71517", from = "71673", line = "C01742")
+        assertNull(repo.hints(journey(ride("22073", line = "C01376"), walk(), rer), false)[0])
+    }
+
+    @Test
+    fun `all files load once off the caller thread even with concurrent requests`() = runTest {
         val caller = Thread.currentThread()
         var positionLoads = 0
         var exitLoads = 0
+        var stationLoads = 0
         val repo = IdfmBoardingRepository(
             open = {
                 assertTrue(Thread.currentThread() != caller)
@@ -158,12 +222,19 @@ class BoardingTest {
                 exitLoads++
                 exits.byteInputStream()
             },
+            openStations = {
+                assertTrue(Thread.currentThread() != caller)
+                stationLoads++
+                byteArrayOf().inputStream()
+            },
         )
+        assertEquals(0, stationLoads)
         assertEquals(0, positionLoads)
         assertEquals(0, exitLoads)
         List(4) { async { repo.positions(ride("1")) } }.awaitAll()
         assertEquals(1, positionLoads)
         assertEquals(1, exitLoads)
+        assertEquals(1, stationLoads)
     }
 
     @Test
@@ -178,7 +249,10 @@ class BoardingTest {
         assertTrue(parsed.size > 500)
         // Line 14 at Madeleine: the front is nearest to the exits.
         assertEquals(TrainPart.FRONT, parsed["463064" to "C01384"]?.filter { it.transferStop == null }?.onePart(false))
-        val repo = IdfmBoardingRepository({ positionsFile.inputStream() }, { exitsFile.inputStream() })
+        val repo = IdfmBoardingRepository(
+            { positionsFile.inputStream() }, { exitsFile.inputStream() },
+            { java.io.File("src/main/assets/boarding/stations.tsv").inputStream() },
+        )
         val hint = repo.hints(journey(ride("463197", line = "C01371"), destinationWalk()), false)[0]
         assertEquals("3", hint?.exit?.number)
         assertEquals("r. M. Chasles", hint?.exit?.name)
