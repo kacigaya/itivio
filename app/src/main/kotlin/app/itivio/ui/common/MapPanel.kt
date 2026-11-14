@@ -71,7 +71,8 @@ fun panelInsets(wide: Boolean, peekHeight: Dp, headerHeight: Dp, navigation: Dp 
 /**
  * Screen content over the map. Compact windows get a bottom sheet that peeks at [peekHeight];
  * wider windows get a side pane so the map stays visible. [header] floats above the map in both;
- * the home screen has none, because its search bar sits on the panel.
+ * the home screen has none, because its search bar sits on the panel. [controls] float at the
+ * bottom start of the map, above the sheet or beside the pane.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,21 +80,29 @@ fun MapPanel(
     wide: Boolean,
     peekHeight: Dp,
     header: @Composable ColumnScope.() -> Unit = {},
+    controls: @Composable ColumnScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     if (wide) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.width(PaneWidth + PaneMargin * 2).fillMaxHeight().safeDrawingPadding().padding(PaneMargin),
-        ) {
-            header()
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = RoundedCornerShape(PaneCorner),
-                modifier = Modifier.fillMaxWidth().weight(1f),
+        Box(Modifier.fillMaxSize().safeDrawingPadding()) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.width(PaneWidth + PaneMargin * 2).fillMaxHeight().padding(PaneMargin),
             ) {
-                Column(Modifier.padding(top = 8.dp)) { content() }
+                header()
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shape = RoundedCornerShape(PaneCorner),
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                ) {
+                    Column(Modifier.padding(top = 8.dp)) { content() }
+                }
             }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.align(Alignment.BottomStart).padding(start = PaneWidth + PaneMargin * 2, bottom = PaneMargin),
+                content = controls,
+            )
         }
     } else {
         Box(Modifier.fillMaxSize()) {
@@ -119,6 +128,11 @@ fun MapPanel(
                                 .statusBarsPadding()
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                         ) { header() }
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = peekHeight + 16.dp),
+                            content = controls,
+                        )
                     }
                 },
             )

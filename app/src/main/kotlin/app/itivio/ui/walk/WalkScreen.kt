@@ -43,10 +43,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.domain.CompassDirection
-import app.itivio.domain.GeoPoint
 import app.itivio.domain.Leg
 import app.itivio.domain.Maneuver
 import app.itivio.domain.WalkInstruction
+import app.itivio.domain.WalkProgress
 import app.itivio.domain.WalkRoute
 import app.itivio.ui.common.IconTile
 import app.itivio.ui.common.MapPanel
@@ -65,14 +65,13 @@ val WalkPeekHeight = 156.dp
 private const val DEFAULT_METERS_PER_SECOND = 1.2
 
 /**
- * Turn-by-turn directions for one walk. [position] is the device position, or null without a
- * fix. The view never plans a new route by itself: [onReplan] runs only from its button.
+ * Turn-by-turn directions for one walk. [progress] is the device position on the walk, or null without a fix. The view never plans a new route by itself: [onReplan] runs only from its button.
  */
 @Composable
 fun WalkScreen(
     wide: Boolean,
     leg: Leg.Street,
-    position: GeoPoint?,
+    progress: WalkProgress?,
     locationGranted: Boolean,
     following: Boolean,
     now: Instant,
@@ -86,7 +85,6 @@ fun WalkScreen(
     onOverview: () -> Unit = {},
 ) {
     val route = remember(leg) { WalkRoute.of(leg.steps, leg.geometry) }
-    val progress = position?.let(route::progress)
     // Off the route, the position on it means nothing; the view keeps the start then.
     val along = progress?.takeUnless { it.isOffRoute }?.alongMeters ?: 0.0
     val index = route.nextInstructionIndex(along)
@@ -111,18 +109,14 @@ fun WalkScreen(
                 !locationGranted -> Banner(stringResource(R.string.walk_no_location), stringResource(R.string.allow_location), onRequestLocation)
                 progress?.isOffRoute == true -> Banner(stringResource(R.string.walk_off_route), stringResource(R.string.walk_replan), onReplan)
             }
+        },
+        controls = {
             if (locationGranted) {
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.align(Alignment.End),
-                ) {
-                    CompassButton(northUp, bearing, onNorthUp)
-                    if (!following) {
-                        FilledTonalButton(onClick = onRecenter) {
-                            Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
-                            Text(stringResource(R.string.walk_recenter), modifier = Modifier.padding(start = 8.dp))
-                        }
+                CompassButton(northUp, bearing, onNorthUp)
+                if (!following) {
+                    FilledTonalButton(onClick = onRecenter) {
+                        Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
+                        Text(stringResource(R.string.walk_recenter), modifier = Modifier.padding(start = 8.dp))
                     }
                 }
             }

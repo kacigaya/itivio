@@ -34,7 +34,9 @@ import app.itivio.domain.GeoPoint
 import app.itivio.domain.Journey
 import app.itivio.domain.Leg
 import app.itivio.domain.Line
+import app.itivio.domain.LocationFix
 import app.itivio.domain.TransitMode
+import app.itivio.domain.WalkProgress
 import app.itivio.domain.WalkRoute
 import app.itivio.R
 import androidx.compose.ui.geometry.Size
@@ -49,9 +51,11 @@ import org.maplibre.compose.expressions.ast.Expression
 import org.maplibre.compose.expressions.value.ImageValue
 import org.maplibre.compose.expressions.value.IconPitchAlignment
 import org.maplibre.compose.expressions.value.IconRotationAlignment
+import org.maplibre.compose.location.LocationMeasurement
 import org.maplibre.compose.location.mostAccurateBearing
 import org.maplibre.spatialk.units.Bearing
 import org.maplibre.spatialk.units.extensions.inDegrees
+import org.maplibre.spatialk.units.extensions.inMeters
 import kotlin.math.roundToInt
 import app.itivio.ui.common.icon
 import app.itivio.ui.common.lineColors
@@ -68,10 +72,12 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import org.maplibre.compose.camera.CameraAnimation
 import org.maplibre.compose.camera.CameraFit
 import org.maplibre.compose.camera.CameraMoveReason
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.CameraUpdate
+import org.maplibre.compose.camera.CubicBezier
 import org.maplibre.compose.interaction.ClickResult
 import org.maplibre.compose.location.BearingUpdate
 import org.maplibre.compose.location.LocationTrackingEffect
@@ -135,12 +141,14 @@ data class MapStop(
 /** Stops load only at this zoom and closer, where a screen shows a few streets. */
 const val MAP_STOPS_MIN_ZOOM = 15.0
 
-/** Walking view: the camera looks ahead, over a few streets, with the map tilted. */
-private const val NAVIGATION_ZOOM = 18.0
+/** Walking view: the camera looks ahead, over the next street or two, with the map tilted. */
+private const val NAVIGATION_ZOOM = 19.0
 private const val NAVIGATION_PITCH = 50.0
 
 /** Walking view: the share of the free map height that sits above the position, under the header. */
 private const val NAVIGATION_LOOK_AHEAD = 0.3f
+
+private val NavigationCameraMove = CameraAnimation.Ease(CameraAnimation.Ease.Standard) { easing = CubicBezier.Linear }
 
 /**
  * The persistent map behind every screen. Draws the device position, nearby [stops], the stops
@@ -170,6 +178,7 @@ fun TransitMap(
     focus: GeoPoint? = null,
     follow: Boolean = false,
     walk: WalkRoute? = null,
+    walkProgress: WalkProgress? = null,
     northUp: Boolean = false,
     overviewRequest: Int = 0,
     onBearing: (Double) -> Unit = {},
@@ -185,13 +194,7 @@ fun TransitMap(
         StopPin(stop, container, content)
     }
     // The position on the walk, in metres along it. Rounded, so the route redraws only once the walker has moved.
-    val walkedMeters by remember(walk, locationState) {
-        derivedStateOf {
-            val here = locationState.lastLocation?.position ?: return@derivedStateOf 0
-            val progress = walk?.progress(GeoPoint(here.latitude, here.longitude)) ?: return@derivedStateOf 0
-            if (progress.isOffRoute) 0 else progress.alongMeters.toInt()
-        }
-    }
+    val walkedMeters by rememberUpdatedState(walkProgress?.takeUnless { it.isOffRoute }?.alongMeters?.toInt() ?: 0)
     // The direction of the arrow in the walking view, in whole degrees: the heading of the device,
     // else the route ahead. Without a compass, as on many tablets, the arrow still points the way.
     val puckRotation by remember(walk, locationState) {
@@ -202,14 +205,7 @@ fun TransitMap(
     }
     // The arrow and the camera of the walking view use the nearest point of the route when it is
     // near, so position noise does not move them off the line.
-    val puckPosition by remember(walk, locationState) {
-        derivedStateOf {
-            val here = locationState.lastLocation?.position ?: return@derivedStateOf null
-            val route = walk ?: return@derivedStateOf here
-            val point = route.snap(GeoPoint(here.latitude, here.longitude))
-            Position(longitude = point.longitude, latitude = point.latitude)
-        }
-    }
+    val puckPosition by rememberUpdatedState(walkProgress?.markerPoint?.let { Position(longitude = it.longitude, latitude = it.latitude) })
     val puck = navigationPuck(fill = scheme.primary, border = scheme.surface, arrow = scheme.onPrimary)
     val mapState = rememberMapState(baseStyle = BaseStyle.Uri(style), initialCameraPosition = InitialCamera) {
         // Layers declared here render above the base style and follow recomposition.
@@ -311,7 +307,7 @@ fun TransitMap(
                 } else {
                     CameraUpdate(center = here, zoom = NAVIGATION_ZOOM, bearing = rotation.toDouble(), pitch = NAVIGATION_PITCH)
                 }
-                mapState.animateCamera(update)
+                mapState.animateCamera(update, NavigationCameraMove)
             }
     }
     val currentOnBearing by rememberUpdatedState(onBearing)
@@ -343,6 +339,13 @@ fun TransitMap(
         if (journey == null && !follow) mapState.animateCamera(CameraUpdate(center = here, zoom = 15.0))
     }
 }
+
+internal fun LocationMeasurement.toFix() = LocationFix(
+    point = GeoPoint(position.latitude, position.longitude),
+    accuracyMeters = horizontalAccuracy?.inMeters,
+    courseDegrees = course?.let { (it - Bearing.North).inDegrees },
+    speedMetersPerSecond = distancePerSecond?.inMeters,
+)
 
 /**
  * The map credits. They stay behind the info button until the user opens them. The library

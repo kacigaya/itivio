@@ -138,7 +138,7 @@ MOTIS returns walk-only journeys in `direct`, apart from `itineraries`. The mapp
 - The map cuts the walk at the projected position (`WalkRoute.split`): the part walked and the part ahead. Off the route, nothing counts as walked.
 - The arrow and the camera turn to the heading or the course that MapLibre measures. Without one, they turn to the route ahead of the position (`WalkRoute.directionAt`). One camera update sets the center, zoom, bearing, and pitch, because a second animation cancels the first.
 
-Limits: the projection picks the nearest part of the route, so a route that passes the same place twice can jump. Within 20 m of the route (`WalkRoute.SNAP_METERS`), the arrow and the camera use the nearest point of the route. Farther away, they show the measured position, so the walker sees a wrong turn. Near a parallel street, a snapped arrow can show the wrong part of the route. The view keeps the screen on and works only while the app is on screen. The app asks for no background location.
+Limits: the projection picks the nearest part of the route, so a route that passes the same place twice can jump. While the walker is on the route, the arrow and the camera use the nearest point of the route. Off the route, they show the measured position and the off-route banner shows. The off-route limit is the accuracy of the fix, from 15 m (`WalkRoute.MIN_OFF_ROUTE_METERS`) to 50 m (`WalkRoute.OFF_ROUTE_METERS`); a fix without accuracy uses 50 m. A walker who moves at 0.5 m/s or faster in a direction more than 60° from the route, both here and 15 m ahead, is off the route after 10 m (`WalkRoute.LEAVING_METERS`). The direction comes from the GPS course of the fix, not the compass. Once off the route, the walker stays off it until they are back within 10 m, so a stop to read the banner does not clear it. The app root computes this state once, and the map and the walking view both use it. A GPS course that is wrong while the walker is 10 m or more from the route shows the banner until the walker is back within 10 m. Near a parallel street, a snapped arrow can show the wrong part of the route. The view keeps the screen on and works only while the app is on screen. The app asks for no background location.
 
 ## Transitous usage policy
 
@@ -166,6 +166,7 @@ Limits: the projection picks the nearest part of the route, so a route that pass
 - The origin of a journey is sent at full precision only when the user plans from their location.
 - The walking view uses the device position on the device. Only "Plan a new route" sends it, as the origin of a new journey.
 - The compass runs only while the walking view is open.
+- The walking view asks for the best fix twice a second and a compass reading five times a second. Other screens use the library standard: one fix a second and one compass reading a second.
 - Favorites and recent searches stay on the device. Backup and device transfer are off.
 - Journey options stay on the device. Transitous gets them only as parameters of a journey request.
 - Location comes from the Android framework provider. Google Play services is not required.

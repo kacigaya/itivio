@@ -499,7 +499,7 @@ open class ScreenshotTest {
         WalkScreen(
             wide = wide,
             leg = leg,
-            position = position(app.itivio.domain.WalkRoute.of(leg.steps, leg.geometry)),
+            progress = app.itivio.domain.WalkRoute.of(leg.steps, leg.geometry).let { it.progress(app.itivio.domain.LocationFix(position(it))) },
             locationGranted = true,
             following = false,
             now = t0,

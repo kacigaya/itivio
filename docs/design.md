@@ -153,10 +153,10 @@ The departure board is one card with the rows of the nearby departures: one row 
 - A "Then" tab hangs below the card, at its start, in the same color. It shows the word and the icon of the next maneuver. Its accessibility label gives the full instruction ("Then: Turn left").
 - The card is a polite live region, so TalkBack reads a new instruction.
 - Off the route, an `errorContainer` banner says so and gives "Plan a new route". Without location access, the banner gives "Allow location".
-- The map is tilted and turns with the walker. The position is an arrow on a `primary` disc that lies flat on the map. The position sits low on the screen, so the walker sees the way ahead. Within 20 m of the route, the arrow sits on the route line.
+- The map is tilted and turns with the walker. The position is an arrow on a `primary` disc that lies flat on the map. The position sits low on the screen, so the walker sees the way ahead. While the walker is on the route, the arrow sits on the route line. With a good GPS fix, a wrong turn shows after 10 to 15 m; with a poor fix, after up to 50 m.
 - The arrow and the map turn to the heading of the device. Without a heading, they turn to the route ahead.
-- A round compass button below the card turns the map between "north up" (flat) and "turn with you". Its arrow points north, in `error` red.
-- A gesture on the map stops the camera, and a "Recenter" button shows.
+- A round compass button at the bottom start of the map, above the sheet, turns the map between "north up" (flat) and "turn with you". Its arrow points north, in `error` red.
+- A gesture on the map stops the camera, and a "Recenter" button shows below the compass button.
 - The summary row in the sheet has the close button at the start, in `errorContainer`. In the middle are the remaining time and, below it, the distance and the arrival time. At the end, a tonal button shows the full route; the "Recenter" button then shows.
 - A wavy progress bar below the summary shows the part of the walk that is done.
 - The walk has markers at its start and its end.

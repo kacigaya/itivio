@@ -47,9 +47,18 @@ data class WalkProgress(
     val alongMeters: Double,
     /** Distance from the position to the nearest point of the route. */
     val offRouteMeters: Double,
+    val limitMeters: Double = WalkRoute.OFF_ROUTE_METERS,
+    val markerPoint: GeoPoint? = null,
 ) {
-    val isOffRoute: Boolean get() = offRouteMeters > WalkRoute.OFF_ROUTE_METERS
+    val isOffRoute: Boolean get() = offRouteMeters > limitMeters
 }
+
+data class LocationFix(
+    val point: GeoPoint,
+    val accuracyMeters: Double? = null,
+    val courseDegrees: Double? = null,
+    val speedMetersPerSecond: Double? = null,
+)
 
 /**
  * The geometry and the instructions of one walk. The turns come from the geometry: providers
@@ -77,6 +86,28 @@ class WalkRoute(val points: List<GeoPoint>, val instructions: List<WalkInstructi
         return WalkProgress(bestAlong, bestOff)
     }
 
+    fun progress(fix: LocationFix, wasOffRoute: Boolean = false): WalkProgress {
+        val progress = progress(fix.point)
+        val held = wasOffRoute || isLeaving(fix, progress.alongMeters)
+        val limit = if (held && progress.offRouteMeters > LEAVING_METERS) {
+            LEAVING_METERS
+        } else {
+            fix.accuracyMeters?.coerceIn(MIN_OFF_ROUTE_METERS, OFF_ROUTE_METERS) ?: OFF_ROUTE_METERS
+        }
+        val off = progress.offRouteMeters > limit
+        val marker = if (off || points.size < 2) fix.point else pointAt(progress.alongMeters)
+        return progress.copy(limitMeters = limit, markerPoint = marker)
+    }
+
+    private fun isLeaving(fix: LocationFix, alongMeters: Double): Boolean {
+        if (points.size < 2) return false
+        val course = fix.courseDegrees ?: return false
+        if ((fix.speedMetersPerSecond ?: 0.0) < MIN_COURSE_SPEED) return false
+        if (abs(normalized(course - bearing(pointAt(alongMeters), fix.point))) >= 90.0) return false
+        val directions = listOfNotNull(directionAt(alongMeters), directionAt(alongMeters + BEARING_WINDOW_METERS))
+        return directions.isNotEmpty() && directions.all { abs(normalized(course - it)) > LEAVING_DEGREES }
+    }
+
     /**
      * The instruction to show at [alongMeters]: the start instruction near the start, then the
      * next maneuver ahead. The arrival is the last one.
@@ -101,18 +132,9 @@ class WalkRoute(val points: List<GeoPoint>, val instructions: List<WalkInstructi
         return walked to ahead
     }
 
-    /**
-     * The point of the route nearest to [position] when it is within [SNAP_METERS], else
-     * [position]. Farther away, the walker must see that they left the route.
-     */
-    fun snap(position: GeoPoint): GeoPoint {
-        if (points.size < 2) return position
-        val progress = progress(position)
-        return if (progress.offRouteMeters <= SNAP_METERS) pointAt(progress.alongMeters) else position
-    }
-
     /** The direction of the route ahead of [meters], in degrees clockwise from north. Null on a zero-length part. */
-    fun directionAt(meters: Double): Double? = bearing(meters.coerceIn(0.0, lengthMeters), ahead = true)
+    fun directionAt(meters: Double): Double? =
+        if (points.size < 2) null else bearing(meters.coerceIn(0.0, lengthMeters), ahead = true)
 
     private fun pointAt(meters: Double): GeoPoint {
         val target = meters.coerceIn(0.0, lengthMeters)
@@ -145,14 +167,16 @@ class WalkRoute(val points: List<GeoPoint>, val instructions: List<WalkInstructi
     internal fun turnAt(meters: Double, end: Double = meters): Maneuver = angleAt(meters, end)?.let(::turn) ?: Maneuver.STRAIGHT
 
     companion object {
-        /** A position farther than this from the route counts as off the route. */
+        /** The off-route limit with a poor or unknown fix: a position farther than this from the route is off the route. */
         const val OFF_ROUTE_METERS = 50.0
 
-        /**
-         * A position nearer to the route than this shows on the route. City GPS errors are often
-         * 10 to 20 m. A larger value hides a wrong turn for longer.
-         */
-        const val SNAP_METERS = 20.0
+        const val MIN_OFF_ROUTE_METERS = 15.0
+
+        const val LEAVING_METERS = 10.0
+
+        private const val LEAVING_DEGREES = 60.0
+
+        private const val MIN_COURSE_SPEED = 0.5
 
         /** Until the walker is this far along, the view shows the start instruction. */
         const val START_RADIUS_METERS = 15.0

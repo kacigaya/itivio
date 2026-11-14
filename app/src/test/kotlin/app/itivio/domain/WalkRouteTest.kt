@@ -116,12 +116,62 @@ class WalkRouteTest {
     }
 
     @Test
-    fun `a position near the route snaps to it, a far one stays`() {
+    fun `a position on the route snaps to it, an off-route one stays`() {
         val route = WalkRoute.of(emptyList(), listOf(at(0.0, 0.0), at(0.0, 100.0)))
-        val near = route.snap(at(15.0, 40.0))
+        val near = route.progress(LocationFix(at(40.0, 40.0))).markerPoint!!
         assertEquals(0.0, WalkRoute.distance(at(0.0, 40.0), near), 0.5)
-        val far = at(30.0, 40.0)
-        assertEquals(far, route.snap(far))
+        val far = at(60.0, 40.0)
+        assertEquals(far, route.progress(LocationFix(far)).markerPoint)
+    }
+
+    @Test
+    fun `the off-route limit follows the accuracy of the fix`() {
+        val route = WalkRoute.of(emptyList(), listOf(at(0.0, 0.0), at(0.0, 100.0)))
+        val side = at(20.0, 40.0)
+        assertTrue(route.progress(LocationFix(side, accuracyMeters = 5.0)).isOffRoute)
+        assertFalse(route.progress(LocationFix(side, accuracyMeters = 35.0)).isOffRoute)
+        assertFalse(route.progress(LocationFix(side)).isOffRoute)
+        assertFalse(route.progress(LocationFix(at(12.0, 40.0), accuracyMeters = 5.0)).isOffRoute)
+        assertTrue(route.progress(LocationFix(at(60.0, 40.0), accuracyMeters = 500.0)).isOffRoute)
+    }
+
+    @Test
+    fun `a walker moving away from the route is off it early`() {
+        val route = WalkRoute.of(emptyList(), listOf(at(0.0, 0.0), at(0.0, 100.0)))
+        val side = at(12.0, 40.0)
+        assertTrue(route.progress(LocationFix(side, accuracyMeters = 40.0, courseDegrees = 90.0, speedMetersPerSecond = 1.3)).isOffRoute)
+        assertFalse(route.progress(LocationFix(side, accuracyMeters = 40.0, courseDegrees = 10.0, speedMetersPerSecond = 1.3)).isOffRoute)
+        assertFalse(route.progress(LocationFix(side, accuracyMeters = 40.0, courseDegrees = 270.0, speedMetersPerSecond = 1.3)).isOffRoute)
+        assertFalse(route.progress(LocationFix(side, accuracyMeters = 40.0, courseDegrees = 90.0, speedMetersPerSecond = 0.1)).isOffRoute)
+        assertFalse(route.progress(LocationFix(at(8.0, 40.0), accuracyMeters = 40.0, courseDegrees = 90.0, speedMetersPerSecond = 1.3)).isOffRoute)
+    }
+
+    @Test
+    fun `a one-point route has no direction and never leaves`() {
+        val route = WalkRoute(listOf(at(0.0, 0.0)), emptyList())
+        assertNull(route.directionAt(0.0))
+        val fix = LocationFix(at(30.0, 0.0), accuracyMeters = 5.0, courseDegrees = 90.0, speedMetersPerSecond = 1.3)
+        assertTrue(route.progress(fix).isOffRoute)
+        assertEquals(fix.point, route.progress(fix).markerPoint)
+    }
+
+    @Test
+    fun `a walker who left the route stays off it until back near it`() {
+        val route = WalkRoute.of(emptyList(), listOf(at(0.0, 0.0), at(0.0, 100.0)))
+        val leaving = route.progress(LocationFix(at(12.0, 40.0), accuracyMeters = 40.0, courseDegrees = 90.0, speedMetersPerSecond = 1.3))
+        assertTrue(leaving.isOffRoute)
+        val stopped = LocationFix(at(12.0, 40.0), accuracyMeters = 40.0)
+        assertFalse(route.progress(stopped).isOffRoute)
+        assertTrue(route.progress(stopped, wasOffRoute = true).isOffRoute)
+        assertEquals(stopped.point, route.progress(stopped, wasOffRoute = true).markerPoint)
+        assertFalse(route.progress(LocationFix(at(8.0, 40.0), accuracyMeters = 40.0), wasOffRoute = true).isOffRoute)
+    }
+
+    @Test
+    fun `a correct turn at a corner is not leaving the route`() {
+        val route = WalkRoute.of(emptyList(), listOf(at(0.0, 0.0), at(0.0, 100.0), at(100.0, 100.0)))
+        val fix = LocationFix(at(11.0, 85.0), accuracyMeters = 40.0, courseDegrees = 90.0, speedMetersPerSecond = 1.3)
+        assertFalse(route.progress(fix).isOffRoute)
     }
 
     @Test

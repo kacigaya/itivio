@@ -78,6 +78,7 @@ import app.itivio.ui.itinerary.TripTrackerViewModel
 import app.itivio.ui.map.MapStop
 import app.itivio.ui.map.MapStopsViewModel
 import app.itivio.ui.map.TransitMap
+import app.itivio.ui.map.toFix
 import app.itivio.ui.nearby.NearbyViewModel
 import app.itivio.ui.nearby.rememberNow
 import app.itivio.ui.planner.Endpoint
@@ -89,6 +90,7 @@ import app.itivio.ui.stop.StopPeekHeight
 import app.itivio.ui.stop.StopScreen
 import app.itivio.ui.walk.WalkPeekHeight
 import app.itivio.ui.walk.WalkScreen
+import app.itivio.domain.WalkProgress
 import app.itivio.domain.WalkRoute as WalkPath
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
@@ -97,7 +99,11 @@ import org.maplibre.compose.location.LocationPermission
 import org.maplibre.compose.location.HeadingMeasurement
 import org.maplibre.compose.location.HeadingProvider
 import org.maplibre.compose.location.HeadingRequest
+import org.maplibre.compose.location.LocationAccuracy
+import org.maplibre.compose.location.LocationRequest
 import kotlinx.coroutines.flow.emptyFlow
+import kotlin.time.Duration.Companion.milliseconds
+import org.maplibre.spatialk.units.extensions.meters
 import org.maplibre.compose.location.rememberDefaultHeadingProvider
 import org.maplibre.compose.location.rememberDefaultLocationProvider
 import org.maplibre.compose.location.rememberLocationState
@@ -140,9 +146,12 @@ fun ItivioRoot(
 
     // The compass runs only in the walking view.
     val heading = rememberDefaultHeadingProvider()
+    val walking = top is WalkRoute
     val locationState = rememberLocationState(
         provider = rememberDefaultLocationProvider(),
-        headingProvider = if (top is WalkRoute) heading else NoHeading,
+        request = if (walking) WalkLocationRequest else LocationRequest.Standard,
+        headingProvider = if (walking) heading else NoHeading,
+        headingRequest = WalkHeadingRequest,
     )
     val locationGranted = locationState.permission is LocationPermission.Granted
     LaunchedEffect(locationState) {
@@ -177,6 +186,13 @@ fun ItivioRoot(
         else -> null
     }
     val walkPath = remember(walkLeg) { walkLeg?.let { WalkPath.of(it.steps, it.geometry) } }
+    var walkProgress by remember(walkPath) { mutableStateOf<WalkProgress?>(null) }
+    LaunchedEffect(walkPath, locationState) {
+        val path = walkPath ?: return@LaunchedEffect
+        snapshotFlow { locationState.lastLocation?.toFix() }.collect { fix ->
+            walkProgress = fix?.let { path.progress(it, wasOffRoute = walkProgress?.isOffRoute == true) }
+        }
+    }
     val peek = when (top) {
         ResultsRoute -> ResultsPeekHeight
         is ItineraryRoute -> ItineraryPeekHeight
@@ -212,6 +228,7 @@ fun ItivioRoot(
             focus = stopPoint,
             follow = top is WalkRoute && following,
             walk = walkPath,
+            walkProgress = walkProgress,
             northUp = northUp,
             overviewRequest = overviewRequest,
             onBearing = { mapBearing = it.toFloat() },
@@ -378,11 +395,10 @@ fun ItivioRoot(
                             if (leg == null) {
                                 SessionFallback(wide, state.results) { backStack.pop(planner) }
                             } else {
-                                val position by userLocation.point.collectAsStateWithLifecycle()
                                 WalkScreen(
                                     wide = wide,
                                     leg = leg,
-                                    position = position,
+                                    progress = walkProgress,
                                     locationGranted = locationGranted,
                                     following = following,
                                     now = now,
@@ -466,6 +482,14 @@ private fun SessionFallback(wide: Boolean, results: LoadState<*>, onBack: () -> 
         LaunchedEffect(Unit) { onBack() }
     }
 }
+
+private val WalkLocationRequest = LocationRequest(LocationRequest.Standard) {
+    accuracy = LocationAccuracy.BestForNavigation
+    minimumInterval = 500.milliseconds
+    minimumDistance = 0.meters
+}
+
+private val WalkHeadingRequest = HeadingRequest(HeadingRequest.Standard) { minimumInterval = 200.milliseconds }
 
 /** Gives no heading, so the compass sensor stays off outside the walking view. */
 private object NoHeading : HeadingProvider {
