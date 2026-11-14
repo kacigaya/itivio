@@ -369,6 +369,20 @@ open class ScreenshotTest {
         )
     }
 
+    // The boarding hints and the line times have not arrived: each leg shows its departures skeleton.
+    @Test
+    fun itineraryLoading() = capture("itinerary_loading") {
+        val journey = sampleJourneys.first().let { sample ->
+            sample.copy(legs = sample.legs.mapIndexed { index, leg ->
+                if (leg is Leg.Transit) leg.copy(from = leg.from.copy(stopId = "stop-$index")) else leg
+            })
+        }
+        ItineraryScreen(
+            wide = true, journey = journey, now = t0.plusSeconds(120),
+            lineTimes = emptyMap(), onBack = {}, onWalk = {}, boarding = null,
+        )
+    }
+
     @Test
     fun boardingPositions() = capture("boarding") {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

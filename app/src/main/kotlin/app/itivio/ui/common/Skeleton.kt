@@ -43,12 +43,16 @@ private val LocalSkeletonAlpha = compositionLocalOf<State<Float>> { mutableFloat
 
 /**
  * The loading state of a list: a column of placeholders with the layout of the content to come,
- * so the list does not jump when the content arrives. A screen reader gets one "Loading" label.
+ * so the list does not jump when the content arrives. A screen reader gets one [label].
  * All the blocks in [content] pulse in step. With system animations off, they do not pulse.
  */
 @Composable
-fun Skeleton(modifier: Modifier = Modifier, spacing: Dp = 0.dp, content: @Composable ColumnScope.() -> Unit) {
-    val label = stringResource(R.string.loading)
+fun Skeleton(
+    modifier: Modifier = Modifier,
+    spacing: Dp = 0.dp,
+    label: String = stringResource(R.string.loading),
+    content: @Composable ColumnScope.() -> Unit,
+) {
     val alpha = rememberInfiniteTransition(label = "skeleton").animateFloat(
         initialValue = PULSE_LOW,
         targetValue = PULSE_HIGH,

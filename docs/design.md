@@ -183,14 +183,16 @@ Each list has a loading, empty, offline, and error state. Offline and error stat
 
 The loading state of a list is a skeleton (`Skeleton`): placeholders with the layout of the content to come, so the list does not jump when the content arrives.
 
-- The results show three route cards. The nearby departures show two stop cards. The stop shows one departure board. The disruptions show a group title and two cards. The search shows five place rows.
+- The results show three route cards. The nearby departures show two stop cards. The stop shows one departure board. The disruptions show a group title and two cards. The search shows five place rows. Each itinerary leg with a boarding stop shows three train rows under "Next departures".
 - A placeholder card has the container color and the shape of the real card. Its blocks use `onSurface` at 8% to 16% opacity, on all card colors.
 - A text block has the line height of its text style, so the skeleton grows with the text size.
 - The blocks of one list pulse in step, 900 ms for each direction. They do not pulse when system animations are off.
 - A screen reader gets one "Loading" label for the list, not one for each block.
 - The skeleton of a component is next to the component in the source. Change the two together.
 
-The Expressive loading indicator is for an action in progress on content that is on screen: the first departures of an itinerary leg, a train change, and a page of earlier or later journeys. It is also the loading state when the layout to come is not known, as when the session plans again after process death.
+The itinerary loads the boarding hints and the first line times of all legs at the same time. They appear together: the skeletons fade out, and the boarding rows, exit rows, and train lists fade in as their space opens, with the springs of the theme. Live times do not reset the shown departures.
+
+The Expressive loading indicator is for an action in progress on content that is on screen: a train change, and a page of earlier or later journeys. It is also the loading state when the layout to come is not known, as when the session plans again after process death.
 
 ## Accessibility
 

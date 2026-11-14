@@ -1,6 +1,13 @@
 package app.itivio.ui.itinerary
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -82,6 +89,8 @@ import app.itivio.ui.common.LegChain
 import app.itivio.ui.common.LineBadge
 import app.itivio.ui.common.MapPanel
 import app.itivio.ui.common.PaneCorner
+import app.itivio.ui.common.Skeleton
+import app.itivio.ui.common.SkeletonText
 import app.itivio.ui.common.Tag
 import app.itivio.ui.common.TimeText
 import app.itivio.ui.common.amountText
@@ -105,7 +114,9 @@ private val ListMargin = 16.dp
 /**
  * The steps of [journey]. [now] drives the tracker: the status tag and the outline around the
  * step in progress. [lineTimes] gives the next departures of each transit leg's line, by leg index.
- * [boarding] gives where to board each transit leg's train, by leg index.
+ * [boarding] gives where to board each transit leg's train, by leg index, or null while it loads.
+ * The boarding hints and the first line times of all legs appear together; until then, each
+ * leg shows a skeleton of its departures.
  * [onWalk] opens the walking view of a walk.
  */
 @Composable
@@ -119,9 +130,12 @@ fun ItineraryScreen(
     selection: TrainSelectionState = TrainSelectionState(),
     onSelectDeparture: (Int, Departure) -> Unit = { _, _ -> },
     onResetTrain: (Int) -> Unit = {},
-    boarding: Map<Int, BoardingHint> = emptyMap(),
+    boarding: Map<Int, BoardingHint>? = emptyMap(),
 ) {
     val currentLeg = journey.currentLegIndex(now)
+    val pending = boarding == null || journey.legs.withIndex().any { (index, leg) ->
+        leg is Leg.Transit && leg.from.stopId != null && index !in lineTimes
+    }
     MapPanel(
         wide = wide,
         peekHeight = ItineraryPeekHeight,
@@ -149,9 +163,10 @@ fun ItineraryScreen(
                 Step(current = index == currentLeg, card = leg is Leg.Transit) {
                     when (leg) {
                         is Leg.Transit -> TransitLegItem(
-                            leg, lineTimes[index].orEmpty(), now, boarding[index],
+                            leg, lineTimes[index].orEmpty(), now, boarding?.get(index),
+                            pending = pending,
                             loading = selection.loadingLeg == index,
-                            departuresLoading = leg.from.stopId != null && index !in lineTimes,
+                            departuresLoading = pending && leg.from.stopId != null,
                             canSelect = selection.loadingLeg == null,
                             changed = index in selection.changedLegs,
                             platformChanged = index in selection.platformChangedLegs,
@@ -264,7 +279,7 @@ private fun Summary(journey: Journey, now: Instant, wide: Boolean) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TransitLegItem(
-    leg: Leg.Transit, departures: List<Departure>, now: Instant, boarding: BoardingHint?,
+    leg: Leg.Transit, departures: List<Departure>, now: Instant, boarding: BoardingHint?, pending: Boolean,
     loading: Boolean, departuresLoading: Boolean, canSelect: Boolean, changed: Boolean, platformChanged: Boolean, failed: Boolean,
     onSelect: (Departure) -> Unit, onReset: () -> Unit,
 ) {
@@ -302,7 +317,9 @@ private fun TransitLegItem(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-                boarding?.let { hint -> hint.part?.let { BoardingRow(hint, it) } }
+                AnimatedVisibility(!pending && boarding?.part != null, enter = reveal(), exit = conceal()) {
+                    boarding?.let { hint -> hint.part?.let { BoardingRow(hint, it) } }
+                }
                 if (leg.alerts.isNotEmpty()) AlertBanner(leg.alerts)
                 if (platformChanged) {
                     Text(stringResource(R.string.itinerary_platform_changed), style = MaterialTheme.typography.bodyMedium,
@@ -310,7 +327,10 @@ private fun TransitLegItem(
                 }
                 // Line times refresh once a minute; drop the ones that left since.
                 val upcoming = departures.filter { clockMinutesUntil(now, it.time.best) >= 0 }
-                if (upcoming.isNotEmpty() || loading || departuresLoading || failed || changed) {
+                AnimatedVisibility(
+                    upcoming.isNotEmpty() || loading || departuresLoading || failed || changed,
+                    enter = reveal(), exit = conceal(),
+                ) {
                     TrainDepartures(upcoming, leg.tripId, now, loading, canSelect, changed, failed, onSelect, onReset,
                         departuresLoading = departuresLoading)
                 }
@@ -343,8 +363,23 @@ private fun TransitLegItem(
             caption = leg.to.track?.let { stringResource(R.string.itinerary_track, it) },
             emphasized = false,
         )
-        boarding?.exit?.let { ExitRow(it, Modifier.padding(start = RailWidth, top = 8.dp)) }
+        AnimatedVisibility(!pending && boarding?.exit != null, enter = reveal(), exit = conceal()) {
+            boarding?.exit?.let { ExitRow(it, Modifier.padding(start = RailWidth, top = 8.dp)) }
+        }
     }
+}
+
+/** Extras of a leg fade in as their space opens, with the springs of the theme. */
+@Composable
+private fun reveal(): EnterTransition {
+    val motion = MaterialTheme.motionScheme
+    return fadeIn(motion.defaultEffectsSpec()) + expandVertically(motion.defaultSpatialSpec())
+}
+
+@Composable
+private fun conceal(): ExitTransition {
+    val motion = MaterialTheme.motionScheme
+    return fadeOut(motion.fastEffectsSpec()) + shrinkVertically(motion.fastSpatialSpec())
 }
 
 /** The number of stops of a leg. A tap shows or hides the stops between boarding and alighting. */
@@ -444,15 +479,11 @@ internal fun TrainDepartures(
         Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.itinerary_next_departures), style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f).padding(vertical = 6.dp))
-            if (loading || departuresLoading) LoadingIndicator(Modifier.size(32.dp).clearAndSetSemantics {})
+            if (loading) LoadingIndicator(Modifier.size(32.dp).clearAndSetSemantics {})
             if (changed) TextButton(onClick = onReset, enabled = canSelect) { Text(stringResource(R.string.itinerary_reset_train)) }
         }
-        if (loading || departuresLoading || failed) {
-            val status = when {
-                failed -> R.string.itinerary_change_train_failed
-                loading -> R.string.itinerary_changing_train
-                else -> R.string.itinerary_loading_departures
-            }
+        if (loading || failed) {
+            val status = if (failed) R.string.itinerary_change_train_failed else R.string.itinerary_changing_train
             Text(stringResource(status),
                 style = MaterialTheme.typography.bodySmall, color = if (failed) scheme.error else scheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 4.dp, bottom = 6.dp).semantics { liveRegion = LiveRegionMode.Polite })
@@ -460,6 +491,10 @@ internal fun TrainDepartures(
         // The first and the last row have the round corners of the list. The selected row is round on all sides.
         val outer = MaterialTheme.shapes.large.topStart
         val inner = MaterialTheme.shapes.extraSmall.topStart
+        if (departuresLoading) {
+            TrainRowsSkeleton(outer, inner)
+            return@Column
+        }
         departures.forEachIndexed { index, departure ->
             val selected = selectedTripId != null && departure.tripId == selectedTripId
             val top = if (selected || index == 0) outer else inner
@@ -563,6 +598,35 @@ private fun TrainRow(departure: Departure, selected: Boolean, now: Instant) {
         }
     }
 }
+
+/** The placeholder of the [TrainRow] list, with its connected shapes. */
+@Composable
+private fun TrainRowsSkeleton(outer: CornerSize, inner: CornerSize) {
+    val type = MaterialTheme.typography
+    Skeleton(spacing = 2.dp, label = stringResource(R.string.itinerary_loading_departures)) {
+        repeat(SKELETON_TRAINS) { index ->
+            val top = if (index == 0) outer else inner
+            val bottom = if (index == SKELETON_TRAINS - 1) outer else inner
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                shape = MaterialTheme.shapes.large.copy(topStart = top, topEnd = top, bottomEnd = bottom, bottomStart = bottom),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.heightIn(min = 56.dp).padding(horizontal = 12.dp, vertical = 10.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        // Headsigns have different lengths; equal bars would read as a table.
+                        SkeletonText(type.bodyLarge, Modifier.fillMaxWidth(if (index % 2 == 0) 0.65f else 0.45f))
+                        SkeletonText(type.bodySmall, Modifier.fillMaxWidth(0.4f))
+                    }
+                    SkeletonText(type.titleMedium, Modifier.width(48.dp))
+                }
+            }
+        }
+    }
+}
+
+private const val SKELETON_TRAINS = 3
 
 /** A walk with a route on the map can open the walking view. */
 private val Leg.Street.hasWalkingView: Boolean get() = mode == TransitMode.WALK && geometry.size >= 2

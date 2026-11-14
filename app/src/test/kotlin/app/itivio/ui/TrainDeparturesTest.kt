@@ -8,7 +8,9 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.itivio.domain.*
@@ -105,10 +107,33 @@ class TrainDeparturesTest {
             }
         }
         compose.onNodeWithText("Next departures").assertExists()
-        compose.onNodeWithText("Loading departures…").assertExists()
+        compose.onNodeWithContentDescription("Loading departures…").assertExists()
         compose.onNodeWithText("Updating train…").assertDoesNotExist()
         compose.runOnIdle { times = mapOf(0 to listOf(first)) }
-        compose.onNodeWithText("Loading departures…").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Loading departures…").assertDoesNotExist()
         compose.onNodeWithText("Chessy").assertIsSelected()
+    }
+
+    @Test fun `boarding hints wait for the line times and appear with them`() {
+        var times by mutableStateOf<Map<Int, List<Departure>>>(emptyMap())
+        var boarding by mutableStateOf<Map<Int, BoardingHint>?>(null)
+        val end = StopTime(now.plusSeconds(1200))
+        val leg = Leg.Transit(
+            TransitMode.RAIL, stop, stop.copy(name = "Destination"), StopTime(now), end, emptyList(),
+            first.line, "Destination", first.tripId, emptyList(),
+        )
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                ItineraryScreen(
+                    wide = true, journey = Journey("j", listOf(leg), leg.start, end, 0),
+                    now = now, lineTimes = times, onBack = {}, onWalk = {}, boarding = boarding,
+                )
+            }
+        }
+        compose.runOnIdle { boarding = mapOf(0 to BoardingHint(TrainPart.FRONT, null)) }
+        compose.onAllNodesWithContentDescription("Where to board", substring = true).assertCountEquals(0)
+        compose.runOnIdle { times = mapOf(0 to listOf(first)) }
+        compose.onNodeWithContentDescription("Where to board", substring = true).assertExists()
+        compose.onNodeWithText("Chessy").assertExists()
     }
 }

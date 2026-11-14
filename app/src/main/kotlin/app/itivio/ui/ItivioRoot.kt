@@ -352,7 +352,8 @@ fun ItivioRoot(
                                 }
                                 // Read from the table in the app: no request. The legs of a changed train keep their stops.
                                 val boardingRepository = koinInject<BoardingRepository>()
-                                val boarding by produceState(emptyMap<Int, BoardingHint>(), journey, state.options.wheelchair) {
+                                // Null until the table loads, so the itinerary can show its extras together.
+                                val boarding by produceState<Map<Int, BoardingHint>?>(null, journey, state.options.wheelchair) {
                                     value = boardingRepository.hints(journey, state.options.wheelchair)
                                 }
                                 ItineraryScreen(
