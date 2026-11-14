@@ -158,7 +158,7 @@ Limits for this release:
 
 ## v0.8.1: UI redesign and boarding positions
 
-This beta release ships the redesign. The completed accessibility fixes above stay complete. The checks that remain open cover the final UI and must pass before v0.9.0.
+This beta release ships the redesign. The completed accessibility fixes above stay complete. The checks that remain open cover the final UI and must pass before v1.0.0.
 
 - [x] Improve train-choice contrast and readability. Show delay, arrival time, and time on board. Use the destination name in each choice row.
 - [x] Make choice buttons use the available width. Add icons and labels to journey options and the theme picker.
@@ -174,9 +174,23 @@ This beta release ships the redesign. The completed accessibility fixes above st
 
 Tablet navigation changes remain deferred. Boarding-position hints use the RATP dataset from Île-de-France Mobilités, because Transitous has no boarding-position data. They cover the Paris metro and some RER platforms.
 
-## v0.9.0: Release candidate
+## v0.9.0: Walking map, loading states, and back gesture
 
-Feature work stops here. Only fixes go in after this release.
+This is the last beta release. The release-candidate work moved to v1.0.0. All items are done.
+
+- [x] Show the walking view as a navigation map. Tilt the map and turn it with the user. Keep the position arrow on the route line near the route. Show the walked part in gray.
+- [x] Add a compass button for north up or "turn with you", and a button that shows the full route. Show the next maneuver on a "Then" tab.
+- [x] Show skeleton placeholders while lists load. Show a loading indicator on "Earlier departures" and "Later departures".
+- [x] Show a preview during a back gesture. Give the bottom sheet the corner radius of the screen.
+- [x] Change the app icon to a walking destination pin.
+
+The open checks from v0.8.1 must pass before v1.0.0.
+
+## v1.0.0: Stable
+
+v1.0.0 adds release signing and F-Droid. Feature work stops here. Only fixes go in after this release.
+
+### Release and distribution
 
 - [ ] Sign the APKs with a release key. Without all signing values, release APKs stay unsigned.
 - [ ] Tell users that the key change needs one reinstall.
@@ -186,9 +200,9 @@ Feature work stops here. Only fixes go in after this release.
 - [x] Add a privacy policy file.
 - [x] Add screenshots to the README.
 
-## v1.0.0: Stable
+### Release conditions
 
-v1.0.0 has no new features. It ships when all these conditions are true:
+v1.0.0 ships when all these conditions are true:
 
 - [ ] Replace pre-release dependencies with stable versions: Material 3 `1.5.0-rc01` and Robolectric `4.18-beta-1`.
 - [ ] No open bug causes a crash or data loss.

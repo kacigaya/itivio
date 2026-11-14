@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.9.0
+
 - Show skeleton placeholders while the journey results, nearby departures, stop board, disruptions, and place suggestions load.
 - Show a loading indicator on the "Earlier departures" or "Later departures" button while its page loads.
 - Show a preview during a back gesture. The screen on top becomes a card over the dim screen below. The Disruptions page shows the Departures page, and home shows the launcher.
