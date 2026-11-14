@@ -19,6 +19,10 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 ./gradlew :app:lintDebug              # lint
 ```
 
+## Release packaging
+
+- The v0.9.x prereleases use debug-signed APKs for `arm64-v8a`, `armeabi-v7a`, `x86_64`, and universal, plus `SHA256SUMS.txt`. Build with `:app:assembleDebug`; APKs are in `app/build/outputs/apk/debug/`.
+
 ## Rules
 
 - `.github/workflows/apk.yml` runs tests, lint, and the debug build on each push and pull request. A `workflow_dispatch` run also uploads debug APKs. It uses Ubuntu 24.04, JDK 21, Android platform `android-37.0`, and build-tools `36.0.0`. It runs all three checks above and uploads `itivio-debug-apks` for 14 days.

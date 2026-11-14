@@ -5,6 +5,10 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.9.1
+
+- Keep train choices correct when the requested time, direction, or arrival platform changes.
+
 - Fix the next departures of itinerary legs, which stayed empty on recent Android versions. The request time had microseconds, so Transitous started at the beginning of the service day.
 - Show a skeleton of the next departures while an itinerary loads. The boarding hints and the departures of all legs appear together, and live times no longer reset the list.
 - Load the line times and live trip times of all legs at the same time.

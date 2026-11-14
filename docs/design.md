@@ -119,7 +119,7 @@ When the data knows the exits of the alighting platform, a "Best exit" row sits 
 
 The rail and the stop dots draw on the same whole pixel, so the rail has no step below a dot.
 
-The itinerary shows a Material 3 loading indicator and "Loading departures…" while each eligible leg waits for its first departure response. Completed legs show their times without waiting for other legs. Refreshes keep the displayed times. An empty or failed first response removes the loading state.
+The itinerary shows departure skeletons until all eligible legs finish their first departure response and the boarding hints are ready. The hints and departures then appear together. Refreshes keep the displayed times. An empty or failed first response completes that leg’s loading state.
 
 ## Disruptions
 

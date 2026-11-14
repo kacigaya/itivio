@@ -42,7 +42,8 @@ These images use test data from the [screenshot checks](docs/quality.md#screensh
 - Sort routes by duration, transfers, or walking distance.
 - Walk-only routes, when walking is a good choice.
 - Service alerts on the route cards and in the journey details.
-- Journey details: stops, platforms, times, and the route on the map. The trip tracker follows new delays while the details are open.
+- Journey details: stops, platforms, times, and the route on the map. Departure skeletons show while the boarding hints and train lists load. They appear together. The trip tracker follows new delays while the details are open.
+- Recent journey results and live times stay in memory for 30 seconds, so screens can reopen without a loading wait.
 - Where to board the metro in Paris: the part of the train that stops nearest to your transfer or exit. Show the exit number and name below the arrival stop. The app picks the exit nearest to your destination. This is an estimate and does not check street access or lifts. The data ships with the app, so it sends no request.
 - Walking directions: the next turn, the distance to it, the remaining time, and the arrival time. The map follows your position and heading.
 - The app keeps your search when Android stops it in the background, and plans it again.
