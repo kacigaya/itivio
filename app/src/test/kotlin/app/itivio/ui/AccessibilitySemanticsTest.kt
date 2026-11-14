@@ -6,9 +6,12 @@ import app.itivio.ui.common.LocalTimeFormatter
 import java.time.format.DateTimeFormatter
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import app.itivio.ui.itinerary.ItineraryScreen
+import app.itivio.ui.common.Choice
+import app.itivio.ui.common.ChoiceButtons
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -21,6 +24,7 @@ import app.itivio.ui.common.LegChain
 import app.itivio.domain.Departure
 import app.itivio.domain.Line
 import app.itivio.ui.nearby.DeparturesCard
+import app.itivio.ui.itinerary.TrainDepartures
 import app.itivio.domain.StopTime
 import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.TimeText
@@ -72,9 +76,46 @@ class AccessibilitySemanticsTest {
         compose.onAllNodesWithText("5").assertCountEquals(0)
     }
 
+    @Test
+    fun `train arrival label replaces the visual abbreviation`() {
+        val now = Instant.parse("2026-11-09T10:00:00Z")
+        val stop = Stop("Station", GeoPoint(52.5, 13.4), stopId = "stop", zone = ZoneId.of("UTC"))
+        val departure = Departure(
+            stop = stop, line = Line("R", id = "line"), mode = TransitMode.RAIL,
+            headsign = "Destination", time = StopTime(now.plusSeconds(300)), cancelled = false, tripId = "trip",
+            alightTime = StopTime(now.plusSeconds(1500)),
+        )
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                CompositionLocalProvider(LocalTimeFormatter provides DateTimeFormatter.ofPattern("HH:mm")) {
+                    TrainDepartures(
+                        listOf(departure), null, now,
+                        loading = false, canSelect = true, changed = false, failed = false,
+                        onSelect = {}, onReset = {},
+                    )
+                }
+            }
+        }
+        compose.onAllNodesWithText("10:25", substring = true, useUnmergedTree = true).assertCountEquals(0)
+        compose.onNodeWithContentDescription("Arrives at 10:25, 20 min on board", useUnmergedTree = true).assertIsDisplayed()
+    }
 
-
-
+    @Test
+    fun `abbreviated choices speak the full label without repeating the number`() {
+        var picked = -1
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                ChoiceButtons(
+                    choices = listOf(Choice("1 transfer", text = "1"), Choice("2 transfers", text = "2")),
+                    selected = 0,
+                    onSelect = { picked = it },
+                )
+            }
+        }
+        compose.onAllNodesWithText("2").assertCountEquals(0)
+        compose.onNodeWithContentDescription("2 transfers").assertIsNotSelected().performClick()
+        org.junit.Assert.assertEquals(1, picked)
+    }
 
 
     @Test

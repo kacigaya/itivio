@@ -95,7 +95,8 @@ class TransitousRoutingRepository(
             parameter("arriveBy", request.arriveBy)
             cursor?.let { parameter("pageCursor", it) }
             val options = request.options
-            if (options.excludedModes.isNotEmpty()) parameter("transitModes", options.transitModes())
+            // Always set: the list also keeps flights out of the journeys.
+            parameter("transitModes", options.transitModes())
             options.maxTransfers?.let { parameter("maxTransfers", it) }
             if (options.wheelchair) {
                 parameter("pedestrianProfile", "WHEELCHAIR")
@@ -175,7 +176,10 @@ class TransitousRoutingRepository(
             departures = sameLine.filter { (dto, departure) ->
                 if (byStops != null) dto.nextStops.orEmpty().any { it.isAt(byStops) && (!it.cancelled || departure.cancelled) }
                 else directionId == null || departure.directionId == directionId
-            }.map { it.second }
+            }.map { (dto, departure) ->
+                // The same response gives the arrival at the alighting stop; it needs no other request.
+                if (byStops != null) departure.copy(alightTime = dto.arrivalAt { it.isAt(byStops) }) else departure
+            }
                 .filter { it.time.best >= from }
                 .distinctBy { Triple(it.tripId, it.stop.stopId, it.time.scheduled) }
                 .sortedBy { it.time.best }
@@ -232,7 +236,7 @@ private fun Place.isAt(stop: Stop) =
 
 /** The MOTIS modes that stay allowed. MOTIS has no parameter that excludes a mode. */
 private fun JourneyOptions.transitModes() = TransitMode.entries
-    .filter { it.isTransit && it !in excludedModes }
+    .filter { it.isTransit && it !in excludedModes && it !in JourneyOptions.UNUSED_MODES }
     .flatMap { it.motisModes() }
     .joinToString(",")
 

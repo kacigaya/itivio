@@ -155,7 +155,8 @@ fun TransitMap(
             locationState = locationState,
             accuracyRadiusColor = scheme.primary.copy(alpha = 0.2f),
             accuracyRadiusBorderColor = scheme.primary.copy(alpha = 0.4f),
-            topImage = LocationIndicatorDefaults.topImage(color = scheme.primary, borderColor = Color.White),
+            // The border uses the surface, as the stop pins do. A white border merges with a light primary in dark schemes.
+            topImage = LocationIndicatorDefaults.topImage(color = scheme.primary, borderColor = scheme.surface),
             bearingImage = LocationIndicatorDefaults.bearingImage(color = scheme.primary),
         )
         if (journey != null) {

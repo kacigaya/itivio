@@ -14,7 +14,7 @@ Material 3 Expressive on Jetpack Compose. The map is the canvas. The UI floats o
 - Dynamic color on Android 12+. Fallback scheme: tonal spot from seed `#1B6B5A`.
 - Map style: OpenFreeMap Liberty in the light theme. The dark theme uses `assets/map/dark.json`: the Liberty layers with dark colors, so both themes show the same roads, stops, and places. `tools/dark-map-style.py` builds this file.
 - Route lines on the map: transit legs in the line color with a `surface` casing. Walking legs are dotted in `onSurfaceVariant`. A walk that the map draws alone, as in the walking view, is dotted in `primary`.
-- The position dot on the map uses `primary`.
+- The position dot on the map uses `primary` with a `surface` border, the same as the casing of the stop pins. A white border merges with the dot in a dark scheme that has a light `primary`.
 
 ## Type
 
@@ -44,20 +44,22 @@ Material Symbols Rounded, filled, as vector drawables. A row without a line colo
 
 | Screen | Compact | Medium and up |
 |---|---|---|
-| Home | Map, bottom sheet with the search bar and the "locate me" button at its top, the saved place buttons, then nearby departures | Map with sheet content in a 400dp side pane |
+| Home | Map, bottom sheet with the search bar and the "locate me" button at its top, the saved place buttons, then two pages: nearby departures and disruptions | Map with sheet content in a 400dp side pane. The pane has only the nearby departures |
 | Search | Full-screen search view: origin and destination fields, swap button, saved places or suggestions list | Same, in the side pane |
-| Results | Sheet with a travel time button, an options button, sort buttons, and route cards. "Earlier departures" is above the cards and "Later departures" is below them. Map shows the selected route | Side pane with route cards |
+| Results | Sheet with a travel time button, an options button, sort buttons, and route cards. The row of buttons scrolls to the two edges of the sheet. "Earlier departures" is above the cards and "Later departures" is below them. Map shows the selected route | Side pane with route cards |
 | Itinerary | Sheet with leg timeline. Map fits the route | Side pane timeline |
 | Stop | Sheet with the stop name, "Directions to here", and the departures. Map centers on the stop | Side pane |
 | Walking | Instruction card at the top. Sheet with the remaining time, distance, and arrival, then all instructions. Map follows the user | Instruction card above the side pane |
 
 ## Navigation
 
-The app has two top-level destinations: Map and Disruptions. Compact windows show a navigation bar below the content. Medium and wider windows show a navigation rail at the start. Only the two top-level screens show it: the results, the itinerary, the stop, the walking view, the settings, and the about screen have a back button. "Back" on Disruptions goes to the map.
+A compact window has no navigation bar. Its home sheet has two pages, Departures and Disruptions. The two page titles are tabs above the list: a swipe on the list or a tap on a title changes the page. The title of the page on screen has the `onSurface` color, and the other title has `outline`. A badge on "Disruptions" gives the number of alerts. "Back" on the Disruptions page goes to the Departures page. The map, the search bar, and the saved places stay in place.
+
+Medium and wider windows have two top-level destinations, Map and Disruptions, on a navigation rail at the start. Only these two screens show the rail: the results, the itinerary, the stop, the walking view, the settings, and the about screen have a back button. "Back" on Disruptions goes to the map. The change to the home pages for wide windows is deferred.
 
 The settings button is at the end of the search bar on home.
 
-Disruptions, Settings, and About are full pages that cover the map. A page has a heavy title, and its content is at most 840dp wide.
+Settings and About are full pages that cover the map. On a wide window, Disruptions is a full page too. A page has a heavy title, and its content is at most 840dp wide.
 
 ## Saved places
 
@@ -78,14 +80,18 @@ The results filters are tonal toggle buttons, the same as the saved places on ho
 The options button, after the travel time button, opens a dialog with the same layout as the travel time dialog. The button shows as checked when an option is not at its default.
 
 - Transport modes: one filter chip for each mode, with the mode icon. A tap on the last selected mode changes nothing, and a line of text says why.
-- Maximum transfers: single-choice chips (No limit, Direct, 1 to 3 transfers).
-- Walking: a "Wheelchair accessible" switch with a text that gives its limits, then a segmented button for the walking speed (Slow, Normal, Fast). The wheelchair switch disables the walking speed, and a line of text says why.
+- Maximum transfers: one row of five connected buttons: an infinity icon for no limit, then 0 to 3. A line of text below the row gives the choice in words. A screen reader gets the full name of each button.
+- Walking: a "Wheelchair accessible" switch with its icon and a text that gives its limits, then a row of connected buttons for the walking speed (Slow, Normal, Fast). Each speed has one, two, or three arrows. The wheelchair switch disables the walking speed, and a line of text says why.
+
+A row of connected buttons (`ChoiceButtons`) is the single-choice control of the app. The selected button has the `secondary` color and a round shape, the same as a checked filter button. It has no check mark. At 150% text size and more, a row with icons and labels becomes a vertical radio list, so each label stays readable.
+
+The dialog has no switch for flights. No journey uses a flight.
 
 The dialog edits a copy. "Done" applies all changes with one new search. "Reset" puts the copy back to the defaults. "Cancel" drops the changes.
 
 ## Earlier and later departures
 
-"Earlier departures" and "Later departures" are outlined buttons at the two ends of the route cards. Each one shows only when the provider gives a cursor for that direction. Both are disabled while a page loads. The map keeps its route when a new page arrives.
+"Earlier departures" and "Later departures" are text buttons with an arrow icon at the two ends of the route cards. They are text buttons so the route cards stay the main content. Each one shows only when the provider gives a cursor for that direction. Both are disabled while a page loads. The map keeps its route when a new page arrives.
 
 ## Itinerary
 
@@ -93,21 +99,23 @@ The itinerary is a trip tracker. The summary is a `primaryContainer` card with t
 
 Each transit leg is a `surfaceContainerHigh` card with the line color as a rail. A walk is a row with an icon tile, the distance in bold, and a "Directions" button. The step in progress has a `primary` outline. The service alerts of a leg are in one `errorContainer` banner: it shows the first alert and the number of the others, and a tap shows all of them. A tag gives the travel time of the leg. A second tag gives the number of stops; a tap shows or hides the stops.
 
-Each transit leg shows the next 4 departures of its line at the boarding stop on a `surfaceContainerHighest` card. The list has only trips that stop at the alighting stop. Each row shows the trip code when the feed has one, then the destination: "QOKA52 · Marne-la-Vallée - Chessy". The planned trip is bold on a `tertiaryContainer` row. A live departure in the next hour shows as a countdown with the live icon. Other departures show the clock time. The line times refresh once a minute while the itinerary is visible. The scan starts when the platform is reachable and pages past other lines. A departure row is a selectable radio item. Selecting a train checks its trip and updates the tracked leg. A changed leg has a Reset button. The selected trip code stays in the leg header after departure. A warning explains a missed onward connection or cleared walking directions after a platform change. See `train-selection.md` for the limits.
+Each transit leg shows the next 4 departures of its line at the boarding stop as a list of connected rows on `surfaceContainerHighest`, with a 2dp gap. The list has only trips that stop at the alighting stop. Each row shows the destination, not the trip code. Below it are the platform, the arrival time at the alighting stop, and the time on board: "Platform 2 · → 20:13 · 29 min". The arrival time comes with the departures, so it needs no other request. The clock time of the departure is the heavy number at the end of the row. A live departure in the next hour also shows its countdown with the live icon. A late train shows its planned time struck through above the new time, and its delay in words with a warning icon. The row of the selected train has the `secondary` color, a round shape, and a "Your train" label. On this row, the delay is a pill in `errorContainer`, because `error` text has too little contrast on `secondary`. The line times refresh once a minute while the itinerary is visible. The scan starts when the platform is reachable and pages past other lines. A departure row has the radio role for a screen reader, but shows no radio button. Selecting a train checks its trip and updates the tracked leg. A changed leg has a Reset button. The leg header shows the line badge and the direction, with no trip code and no operator name. A warning explains a missed onward connection or cleared walking directions after a platform change. See `train-selection.md` for the limits.
+
+When the data gives one, a "Where to board" row sits below the line and the direction. It is a `surfaceContainerHighest` card with the part of the train in heavy text ("At the front"), the reason ("Transfer" and the badge of the next line, or "Near the exit"), and a drawing of a train of three parts. The rear is on the left and the front, with its nose, is on the right, in the direction of travel. The part to board uses `primary`; the other parts use `outline`. The text names the part, so color is not the only cue. A screen reader gets one sentence. See `architecture.md` for the data and its limits.
 
 ## Disruptions
 
-The page lists the service alerts in two groups: "Your saved stops" (Home, Work, and favorites that are stops), then "Near you" (stops within 400 m). An alert shows only one time, also when it applies to more than one stop or to both groups. The most severe disruptions come first in each group. The rating of the provider gives the severity. Without a rating, the effect gives it: "no service" is severe.
+The list shows the service alerts in two groups: "Your saved stops" (Home, Work, and favorites that are stops), then "Near you" (stops within 400 m). An alert shows only one time, also when it applies to more than one stop or to both groups. The most severe disruptions come first in each group. The rating of the provider gives the severity. Without a rating, the effect gives it: "no service" is severe.
 
 Each disruption is a card: a tag with the effect and the cause, the badges of the lines, the header, the time period, the stops, the description, and a "More information" button when the alert has a web link. A severe disruption uses `errorContainer`. The card shows 3 lines of the description; a tap shows all of it. The time period is the one in progress ("Until …") or the next one ("From … to …").
 
-The empty state says that some regions publish no alerts. The list loads only while the page is on screen.
+The empty state says that some regions publish no alerts. On a compact window, the list is the second page of the home sheet, without the page title and the scope text. It loads while home is open, because the home title shows the number of alerts. On a wide window, the list is a full page, and it loads only while the page is on screen. See `architecture.md` for the requests.
 
 ## Settings and about
 
-At larger text sizes, the theme choices use a vertical radio group so each label stays readable.
+At larger text sizes, the theme choices use a vertical radio group so each label stays readable. Each choice keeps its icon.
 
-Settings has four groups of rows on cards: appearance (theme as a segmented button with System, Light, and Dark; language, which opens the Android setting on Android 13 and later), journeys (the journey options dialog of the results), stored data (clear recent searches; delete all app data, in `error` color, with a confirmation dialog), and about.
+Settings has four groups of rows on cards: appearance (theme as a row of connected buttons with an icon and a label: System, Light, and Dark; language, which opens the Android setting on Android 13 and later), journeys (the journey options dialog of the results), stored data (clear recent searches; delete all app data, in `error` color, with a confirmation dialog), and about.
 
 About shows the version, the license, the source code link, the data credits, the font and icon licenses, and the privacy text. Each credit opens its web page.
 
@@ -134,13 +142,18 @@ The departure board is one card with the rows of the nearby departures: one row 
 ## Route card
 
 ```
-[12:04 → 12:31]                       27 min
-[walk 4] › [U2] › [walk] › [M41]   ●Live
-Departs 12:08 from Alexanderplatz · 1 transfer · 450 m walk
-⚠ Diversion at Potsdamer Platz · 1 more alert
+12:04 – 12:31                         27 min
+walk 4 › [U2] › [M41]
+12:08 Alexanderplatz
+1 transfer · 450 m walk
+⚠ Diversion at Potsdamer Platz        [+1]
 ```
 
-The alert line shows the first alert of the journey and the number of the others. It shows only when the journey has an alert.
+The departure and arrival times are heavy. The leg chain shows a badge for each line. A walk is an icon and its minutes, with no container. A first or last walk shows from 2 min. A walk between two lines shows from 5 min. The itinerary shows all walks. The itinerary summary uses the same chain.
+
+The alert line shows the first alert of the journey on one line, and the number of the others on an `errorContainer` pill. It shows only when the journey has an alert.
+
+The card of the route on the map uses `secondaryContainer`. It has no outline.
 
 ## States
 

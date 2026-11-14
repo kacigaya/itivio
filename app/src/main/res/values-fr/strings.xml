@@ -41,6 +41,12 @@
     <string name="explore_body">Cherchez un arrêt, une adresse ou un lieu pour voir les itinéraires en transports en commun. Autorisez la localisation pour voir les départs près de vous.</string>
 
     <!-- Nearby -->
+    <string name="home_departures">Départs</string>
+    <plurals name="home_alerts">
+        <item quantity="one">%d alerte</item>
+        <item quantity="many">%d alertes</item>
+        <item quantity="other">%d alertes</item>
+    </plurals>
     <string name="nearby_title">Départs à proximité</string>
     <string name="nearby_now">Imminent</string>
     <!-- The departures after the next one. %1$s is a list of minutes, such as "4 · 8". -->
@@ -183,6 +189,7 @@
         <item quantity="many">%d autres alertes</item>
         <item quantity="other">%d autres alertes</item>
     </plurals>
+    <string name="results_more_alerts_count">+%1$d</string>
     <string name="no_transfers">Direct</string>
     <string name="walk_distance">%1$s à pied</string>
     <string name="time_range">%1$s – %2$s</string>
@@ -218,12 +225,10 @@
     <string name="itinerary_more_alerts">+%1$d</string>
     <string name="itinerary_arrive">Arrivée</string>
     <string name="itinerary_next_departures">Prochains départs</string>
-    <string name="itinerary_trip_code">%1$s · %2$s</string>
     <string name="itinerary_leave_in">Départ dans %1$s</string>
     <string name="itinerary_leave_now">Partez maintenant</string>
     <string name="itinerary_arrive_in">Arrivée dans %1$s</string>
     <string name="itinerary_current_step">Étape en cours</string>
-    <string name="itinerary_operated_by">Exploité par %1$s</string>
 
     <!-- Walking view -->
     <string name="walk_open">Itinéraire à pied</string>
@@ -317,6 +322,19 @@
     <string name="attribution_sources">Sources des données</string>
     <string name="attribution_ign">Adresses françaises : IGN · BAN</string>
     <string name="privacy_ign">Les recherches d’adresses françaises vont aussi à l’IGN. Votre position n’est pas envoyée à l’IGN.</string>
+    <string name="itinerary_your_train">Votre train</string>
+    <string name="itinerary_train_arrival">→ %1$s · %2$s</string>
+    <string name="itinerary_train_arrival_description">Arrivée à %1$s, %2$s de trajet</string>
+    <string name="boarding_title">Où monter ?</string>
+    <string name="boarding_front">À l’avant</string>
+    <string name="boarding_middle">Au milieu</string>
+    <string name="boarding_rear">À l’arrière</string>
+    <string name="boarding_transfer">Correspondance</string>
+    <string name="boarding_exit">Près de la sortie</string>
+    <string name="boarding_transfer_description">pour la correspondance %1$s %2$s</string>
+    <string name="boarding_description">Où monter : %1$s, %2$s</string>
+    <string name="about_boarding">Position dans la rame</string>
+    <string name="about_boarding_body">RATP, via Île-de-France Mobilités. Licence Ouverte 2.0. Métro et RER à Paris.</string>
     <string name="itinerary_reset_train">Réinitialiser</string>
     <string name="itinerary_changing_train">Mise à jour du train…</string>
     <string name="itinerary_change_train_failed">Impossible de changer de train. Réessayez.</string>

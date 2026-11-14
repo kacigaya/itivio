@@ -63,8 +63,8 @@ import java.time.format.FormatStyle
  * time period that each disruption shows.
  */
 @Composable
-fun DisruptionsScreen(state: LoadState<DisruptionGroups>, now: Instant, onRetry: () -> Unit) {
-    Page(title = stringResource(R.string.disruptions_title), onBack = null) {
+fun DisruptionsScreen(state: LoadState<DisruptionGroups>, now: Instant, onRetry: () -> Unit, onBack: (() -> Unit)? = null) {
+    Page(title = stringResource(R.string.disruptions_title), onBack = onBack) {
         item(key = "scope") {
             Text(
                 stringResource(R.string.disruptions_scope),
@@ -74,21 +74,29 @@ fun DisruptionsScreen(state: LoadState<DisruptionGroups>, now: Instant, onRetry:
                 modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 8.dp),
             )
         }
-        when (state) {
-            LoadState.Idle, LoadState.Loading -> item(key = "loading") { LoadingState() }
-            is LoadState.Failed -> item(key = "error") { FailureState(state.failure, onRetry) }
-            is LoadState.Ready -> if (state.value.isEmpty) {
-                item(key = "empty") {
-                    MessageState(
-                        icon = R.drawable.ic_info,
-                        title = stringResource(R.string.disruptions_empty_title),
-                        body = stringResource(R.string.disruptions_empty_body),
-                    )
-                }
-            } else {
-                group("saved", R.string.disruptions_saved, state.value.saved, now)
-                group("nearby", R.string.disruptions_nearby, state.value.nearby, now)
+        disruptions(state, now, onRetry)
+    }
+}
+
+/**
+ * Adds the disruptions to a list: the two groups, or the loading, empty, or error state. The
+ * page and the home sheet show the same list.
+ */
+fun LazyListScope.disruptions(state: LoadState<DisruptionGroups>, now: Instant, onRetry: () -> Unit) {
+    when (state) {
+        LoadState.Idle, LoadState.Loading -> item(key = "loading") { LoadingState() }
+        is LoadState.Failed -> item(key = "error") { FailureState(state.failure, onRetry) }
+        is LoadState.Ready -> if (state.value.isEmpty) {
+            item(key = "empty") {
+                MessageState(
+                    icon = R.drawable.ic_info,
+                    title = stringResource(R.string.disruptions_empty_title),
+                    body = stringResource(R.string.disruptions_empty_body),
+                )
             }
+        } else {
+            group("saved", R.string.disruptions_saved, state.value.saved, now)
+            group("nearby", R.string.disruptions_nearby, state.value.nearby, now)
         }
     }
 }

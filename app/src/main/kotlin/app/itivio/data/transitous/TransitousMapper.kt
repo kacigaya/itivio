@@ -180,6 +180,10 @@ internal fun PlanResponse.toDomain(fromName: String? = null, toName: String? = n
     previousPageCursor, nextPageCursor,
 )
 
+/** The arrival of this trip at the first later stop that [matches]. Null when the request did not ask for the stops. */
+internal fun StopTime.arrivalAt(matches: (Place) -> Boolean): DomainTime? =
+    nextStops?.firstOrNull(matches)?.let { time(it.scheduledArrival, it.arrival, realTime) }
+
 internal fun StopTime.toDomain(): Departure {
     val heading = Heading(headsign, tripShortName, tripTo, agencyName)
     return Departure(

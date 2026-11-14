@@ -4,18 +4,15 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
@@ -25,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -49,7 +47,10 @@ import androidx.navigation3.ui.NavDisplay
 import app.itivio.domain.Departure
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.Journey
+import app.itivio.domain.BoardingHint
+import app.itivio.domain.BoardingRepository
 import app.itivio.domain.Leg
+import app.itivio.domain.hints
 import app.itivio.domain.Location
 import app.itivio.domain.LocationKind
 import app.itivio.ui.common.LoadState
@@ -195,7 +196,7 @@ fun ItivioRoot(
             journey = mapJourney,
             destination = destinationPoint,
             stops = stops,
-            insets = panelInsets(wide, peek, headerHeight.value, navigation = if (topLevel) navigationSize else 0.dp),
+            insets = panelInsets(wide, peek, headerHeight.value, navigation = if (topLevel && wide) navigationSize else 0.dp),
             recenterRequest = recenterRequest,
             areaStops = areaStops,
             focus = stopPoint,
@@ -226,6 +227,10 @@ fun ItivioRoot(
                     predictivePopTransitionSpec = { fadeIn() togetherWith fadeOut() },
                     entryProvider = entryProvider {
                         entry<ExploreRoute> {
+                            // Scoped to this entry. A compact window shows the alerts and their count on
+                            // home, so they load while home is open. A wide window has its own page.
+                            val disruptions: DisruptionsViewModel = koinViewModel()
+                            val homeDisruptions = if (wide) null else disruptions.disruptions.collectAsStateWithLifecycle().value
                             ExploreScreen(
                                 wide = wide,
                                 locationGranted = locationGranted,
@@ -234,6 +239,8 @@ fun ItivioRoot(
                                 onRequestLocation = locationState::requestPermission,
                                 onRecenter = { recenterRequest++ },
                                 onRetryNearby = nearby::retry,
+                                disruptions = homeDisruptions,
+                                onRetryDisruptions = disruptions::retry,
                                 onDestination = { endpoint ->
                                     planner.setDestination(endpoint)
                                     backStack.add(ResultsRoute)
@@ -245,12 +252,14 @@ fun ItivioRoot(
                             )
                         }
                         entry<DisruptionsRoute> {
-                            // Scoped to this entry, so the alerts load only while the tab is open.
+                            // Scoped to this entry, so the alerts load only while the page is open.
                             val disruptions: DisruptionsViewModel = koinViewModel()
                             DisruptionsScreen(
                                 state = disruptions.disruptions.collectAsStateWithLifecycle().value,
                                 now = now,
                                 onRetry = disruptions::retry,
+                                // A compact window has no rail. It gets here only when a wide window got narrow.
+                                onBack = if (wide) null else ({ backStack.pop(planner) }),
                             )
                         }
                         entry<SettingsRoute> {
@@ -325,10 +334,16 @@ fun ItivioRoot(
                                     trackedJourney = visible
                                     lineTimes.show(visible, if (state.arriveBy) journey.departure.best else state.time)
                                 }
+                                // Read from the table in the app: no request. The legs of a changed train keep their stops.
+                                val boardingRepository = koinInject<BoardingRepository>()
+                                val boarding by produceState(emptyMap<Int, BoardingHint>(), journey, state.options.wheelchair) {
+                                    value = boardingRepository.hints(journey, state.options.wheelchair)
+                                }
                                 ItineraryScreen(
                                     wide = wide,
                                     journey = visible,
                                     now = now,
+                                    boarding = boarding,
                                     lineTimes = lineTimes.times.collectAsStateWithLifecycle().value,
                                     selection = tracker.selection.collectAsStateWithLifecycle().value,
                                     onSelectDeparture = tracker::selectDeparture,
@@ -372,10 +387,10 @@ fun ItivioRoot(
 }
 
 /**
- * The two top-level destinations: a navigation bar below [content] on phones, and a navigation
- * rail beside it on wide windows. Only the top-level screens show it ([visible]). The layout
- * around [content] is the same in all cases, so the screens keep their state. [onSize] gets the
- * height of the bar or the width of the rail.
+ * The two top-level destinations of a wide window, on a navigation rail beside [content]. A
+ * compact window has no bar: its home sheet holds the two pages. Only the top-level screens show
+ * the rail ([visible]). The layout around [content] is the same in all cases, so the screens
+ * keep their state. [onSize] gets the width of the rail.
  */
 @Composable
 private fun TopLevelNavigation(
@@ -388,50 +403,27 @@ private fun TopLevelNavigation(
     content: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
-    val mapLabel = stringResource(R.string.navigation_map)
-    val disruptionsLabel = stringResource(R.string.disruptions_title)
+    val rail = visible && wide
     Row(Modifier.fillMaxSize()) {
-        if (visible && wide) {
+        if (rail) {
             NavigationRail(Modifier.onSizeChanged { onSize(with(density) { it.width.toDp() }) }) {
                 NavigationRailItem(
                     selected = !disruptions,
                     onClick = onMap,
                     icon = { Icon(painterResource(R.drawable.ic_map), contentDescription = null) },
-                    label = { Text(mapLabel) },
+                    label = { Text(stringResource(R.string.navigation_map)) },
                 )
                 NavigationRailItem(
                     selected = disruptions,
                     onClick = onDisruptions,
                     icon = { Icon(painterResource(R.drawable.ic_warning), contentDescription = null) },
-                    label = { Text(disruptionsLabel) },
+                    label = { Text(stringResource(R.string.disruptions_title)) },
                 )
             }
         }
-        Column(Modifier.weight(1f)) {
-            // The bar or the rail takes the system inset on its side; the screens must not add it again.
-            val insets = when {
-                !visible -> Modifier
-                wide -> Modifier.consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start))
-                else -> Modifier.consumeWindowInsets(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
-            }
-            Box(Modifier.weight(1f).then(insets)) { content() }
-            if (visible && !wide) {
-                NavigationBar(Modifier.onSizeChanged { onSize(with(density) { it.height.toDp() }) }) {
-                    NavigationBarItem(
-                        selected = !disruptions,
-                        onClick = onMap,
-                        icon = { Icon(painterResource(R.drawable.ic_map), contentDescription = null) },
-                        label = { Text(mapLabel) },
-                    )
-                    NavigationBarItem(
-                        selected = disruptions,
-                        onClick = onDisruptions,
-                        icon = { Icon(painterResource(R.drawable.ic_warning), contentDescription = null) },
-                        label = { Text(disruptionsLabel) },
-                    )
-                }
-            }
-        }
+        // The rail takes the system inset on its side; the screens must not add it again.
+        val insets = if (rail) Modifier.consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start)) else Modifier
+        Box(Modifier.weight(1f).fillMaxHeight().then(insets)) { content() }
     }
 }
 

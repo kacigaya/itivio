@@ -53,9 +53,12 @@ fun rememberNow(): State<Instant> = produceState(Instant.now()) {
     }
 }
 
-/** Adds the nearby departures section to a list. [now] drives the countdowns. */
-fun LazyListScope.nearbyDepartures(state: LoadState<List<StopDepartures>>, now: Instant, onRetry: () -> Unit) {
-    item(key = "nearby-title") {
+/**
+ * Adds the nearby departures section to a list. [now] drives the countdowns. The home sheet
+ * has its own titles above the list, and sets [title] to false.
+ */
+fun LazyListScope.nearbyDepartures(state: LoadState<List<StopDepartures>>, now: Instant, onRetry: () -> Unit, title: Boolean = true) {
+    if (title) item(key = "nearby-title") {
         Text(
             stringResource(R.string.nearby_title),
             style = MaterialTheme.typography.headlineSmall,

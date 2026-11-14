@@ -7,13 +7,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.AlertDialog
@@ -21,10 +15,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,11 +23,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -48,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.domain.JourneyOptions
 import app.itivio.domain.ThemeMode
+import app.itivio.ui.common.Choice
+import app.itivio.ui.common.ChoiceButtons
 import app.itivio.ui.common.Page
 import app.itivio.ui.results.JourneyOptionsDialog
 
@@ -193,31 +183,12 @@ private fun ThemePicker(theme: ThemeMode, onTheme: (ThemeMode) -> Unit) {
         headlineContent = { Text(stringResource(R.string.settings_theme), fontWeight = FontWeight.SemiBold) },
         leadingContent = { Icon(painterResource(R.drawable.ic_palette), contentDescription = null) },
         supportingContent = {
-            if (LocalDensity.current.fontScale >= 1.5f) {
-                Column(Modifier.selectableGroup()) {
-                    ThemeMode.entries.forEach { mode ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                                .selectable(selected = mode == theme, role = Role.RadioButton, onClick = { onTheme(mode) })
-                                .padding(vertical = 4.dp),
-                        ) {
-                            RadioButton(selected = mode == theme, onClick = null)
-                            Text(stringResource(mode.label()), modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
-            } else SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                ThemeMode.entries.forEachIndexed { index, mode ->
-                    SegmentedButton(
-                        selected = mode == theme,
-                        onClick = { onTheme(mode) },
-                        shape = SegmentedButtonDefaults.itemShape(index, ThemeMode.entries.size),
-                        label = { Text(stringResource(mode.label()), maxLines = 1) },
-                    )
-                }
-            }
+            ChoiceButtons(
+                choices = ThemeMode.entries.map { Choice(stringResource(it.label()), icon = it.icon()) },
+                selected = theme.ordinal,
+                onSelect = { onTheme(ThemeMode.entries[it]) },
+                modifier = Modifier.padding(top = 8.dp),
+            )
         },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
@@ -227,4 +198,10 @@ private fun ThemeMode.label(): Int = when (this) {
     ThemeMode.SYSTEM -> R.string.settings_theme_system
     ThemeMode.LIGHT -> R.string.settings_theme_light
     ThemeMode.DARK -> R.string.settings_theme_dark
+}
+
+private fun ThemeMode.icon(): Int = when (this) {
+    ThemeMode.SYSTEM -> R.drawable.ic_routine
+    ThemeMode.LIGHT -> R.drawable.ic_light_mode
+    ThemeMode.DARK -> R.drawable.ic_dark_mode
 }

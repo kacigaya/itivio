@@ -1,6 +1,7 @@
 package app.itivio.ui.results
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,9 +25,9 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +61,8 @@ import java.time.Instant
 import kotlinx.coroutines.launch
 
 val ResultsPeekHeight = 360.dp
+
+private val ListMargin = 16.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -204,7 +208,7 @@ private fun ResultsList(
 ) {
     val highlighted = state.highlighted?.id
     LazyColumn(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(horizontal = ListMargin, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item(key = "filters") { FilterChips(state, onPickTime, onPickOptions, onSort) }
@@ -224,11 +228,7 @@ private fun ResultsList(
             } else {
                 if (state.canLoadEarlier) {
                     item(key = "earlier") {
-                        OutlinedButton(
-                            onClick = onEarlier,
-                            enabled = state.loadingPage == null,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) { Text(stringResource(R.string.results_earlier)) }
+                        PageButton(R.drawable.ic_arrow_upward, R.string.results_earlier, enabled = state.loadingPage == null, onClick = onEarlier)
                     }
                 }
                 items(state.sortedJourneys, key = { it.id }) { journey ->
@@ -244,11 +244,7 @@ private fun ResultsList(
                 }
                 if (state.canLoadLater) {
                     item(key = "later") {
-                        OutlinedButton(
-                            onClick = onLater,
-                            enabled = state.loadingPage == null,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) { Text(stringResource(R.string.results_later)) }
+                        PageButton(R.drawable.ic_arrow_downward, R.string.results_later, enabled = state.loadingPage == null, onClick = onLater)
                     }
                 }
             }
@@ -257,10 +253,32 @@ private fun ResultsList(
     }
 }
 
-/** The travel time and the options come first: they change the results, while sorting only reorders them. */
+/** Loads the page of journeys before or after the list. A text button, so the route cards stay the main content. */
+@Composable
+private fun PageButton(@DrawableRes icon: Int, @StringRes label: Int, enabled: Boolean, onClick: () -> Unit) {
+    TextButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxWidth()) {
+        Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+        Text(stringResource(label))
+    }
+}
+
+/**
+ * The travel time and the options come first: they change the results, while sorting only
+ * reorders them. The row scrolls to the two screen edges, past the margin of the list.
+ */
 @Composable
 private fun FilterChips(state: PlannerState, onPickTime: () -> Unit, onPickOptions: () -> Unit, onSort: (RouteSort) -> Unit) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        contentPadding = PaddingValues(horizontal = ListMargin),
+        modifier = Modifier.layout { measurable, constraints ->
+            val margin = ListMargin.roundToPx()
+            val placeable = measurable.measure(constraints.copy(maxWidth = constraints.maxWidth + margin * 2))
+            layout(placeable.width - margin * 2, placeable.height) { placeable.place(-margin, 0) }
+        },
+    ) {
         item(key = "time") { TravelTimeChip(state.time, state.arriveBy, onPickTime) }
         item(key = "options") { JourneyOptionsChip(state.options, onPickOptions, enabled = state.optionsLoaded) }
         item(key = "divider") { VerticalDivider(Modifier.height(24.dp), color = MaterialTheme.colorScheme.outlineVariant) }

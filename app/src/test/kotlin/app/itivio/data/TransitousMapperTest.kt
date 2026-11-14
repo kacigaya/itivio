@@ -27,6 +27,26 @@ class TransitousMapperTest {
         assertEquals("GAMO", otherAgency.headsign)
     }
 
+    @Test fun arrivalAtTheAlightingStopComesFromTheNextStops() {
+        val source = fixture<StoptimesResponse>("stoptimes-idfm").stopTimes.first { !it.nextStops.isNullOrEmpty() }
+        val stops = requireNotNull(source.nextStops)
+        val target = stops.last()
+        val timed = source.copy(
+            realTime = true,
+            nextStops = stops.map {
+                if (it === target) it.copy(scheduledArrival = "2026-11-12T18:00:00Z", arrival = "2026-11-12T18:04:00Z") else it
+            },
+        )
+        val arrival = requireNotNull(timed.arrivalAt { it.stopId == target.stopId })
+        assertEquals(Instant.parse("2026-11-12T18:00:00Z"), arrival.scheduled)
+        assertEquals(Instant.parse("2026-11-12T18:04:00Z"), arrival.estimated)
+        // Without live data, the planned time is the only time.
+        assertNull(timed.copy(realTime = false).arrivalAt { it.stopId == target.stopId }?.estimated)
+        // The stops of an older server have no times, and a request without the stops has no list.
+        assertNull(source.arrivalAt { it.stopId == target.stopId })
+        assertNull(source.copy(nextStops = null).arrivalAt { true })
+    }
+
     @Test fun googlePolyline() {
         val points = decodePolyline("_p~iF~ps|U_ulLnnqC_mqNvxq`@", 5)
         assertEquals(3, points.size)

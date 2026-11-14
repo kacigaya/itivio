@@ -6,6 +6,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -43,7 +44,7 @@ class JourneyOptionsDialogTest {
     fun `done returns all changes at one time`() {
         show()
         compose.onNodeWithText("Bus").performScrollTo().performClick()
-        compose.onNodeWithText("1 transfer").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("1 transfer").performScrollTo().performClick()
         compose.onNodeWithText("Fast").performScrollTo().performClick()
         compose.runOnIdle { assertEquals(null, confirmed) }
 

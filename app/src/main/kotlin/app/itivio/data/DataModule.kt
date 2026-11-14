@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
+import app.itivio.data.boarding.IdfmBoardingRepository
 import app.itivio.data.ign.IgnAddressSearch
 import app.itivio.data.options.DataStoreJourneyOptionsRepository
 import app.itivio.data.places.PlacesDatabase
@@ -15,6 +16,7 @@ import app.itivio.data.settings.DataStoreSettingsRepository
 import app.itivio.data.settings.LocalAppData
 import app.itivio.data.transitous.TransitousRoutingRepository
 import app.itivio.domain.AppData
+import app.itivio.domain.BoardingRepository
 import app.itivio.domain.JourneyOptionsRepository
 import app.itivio.domain.PlacesRepository
 import app.itivio.domain.RoutingRepository
@@ -41,4 +43,5 @@ val dataModule = module {
     single<JourneyOptionsRepository> { DataStoreJourneyOptionsRepository(get()) }
     single<SettingsRepository> { DataStoreSettingsRepository(get()) }
     single<AppData> { LocalAppData(get<PlacesDatabase>().places(), get()) }
+    single<BoardingRepository> { IdfmBoardingRepository { androidContext().assets.open("boarding/idfm.tsv") } }
 }

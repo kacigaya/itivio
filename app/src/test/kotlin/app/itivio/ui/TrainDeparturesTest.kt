@@ -4,9 +4,11 @@ import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import app.itivio.domain.*
@@ -27,7 +29,7 @@ class TrainDeparturesTest {
     private val now = Instant.parse("2026-11-13T15:30:00Z")
     private val stop = Stop("La Défense", GeoPoint(48.0, 2.0), "a", track = "1")
     private val first = Departure(stop, Line("A"), TransitMode.RAIL, "Chessy", StopTime(now.plusSeconds(240)), false, "qiki", tripCode = "QIKI22")
-    private val second = first.copy(tripId = "nani", tripCode = "NANI26", time = StopTime(now.plusSeconds(1_200)))
+    private val second = first.copy(tripId = "nani", tripCode = "NANI26", headsign = "Boissy", time = StopTime(now.plusSeconds(1_200)))
 
     @Test fun `departure rows switch selection and reset the train`() {
         var selected by mutableStateOf(second.tripId)
@@ -40,12 +42,34 @@ class TrainDeparturesTest {
                     onReset = { selected = second.tripId; changed = false })
             }
         }
-        compose.onNodeWithText("NANI26", substring = true).assertIsSelected()
-        compose.onNodeWithText("QIKI22", substring = true).performClick()
-        compose.onNodeWithText("QIKI22", substring = true).assertIsSelected()
+        compose.onNodeWithText("Boissy").assertIsSelected()
+        compose.onNodeWithText("Chessy").performClick()
+        compose.onNodeWithText("Chessy").assertIsSelected()
         assertEquals("qiki", selected)
         compose.onNodeWithText("Reset").performClick()
-        compose.onNodeWithText("NANI26", substring = true).assertIsSelected()
+        compose.onNodeWithText("Boissy").assertIsSelected()
+    }
+
+    @Test fun `a row shows the destination without the trip code, and names the selected train`() {
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                TrainDepartures(listOf(first, second), second.tripId, now, loading = false, canSelect = true,
+                    changed = false, failed = false, onSelect = {}, onReset = {})
+            }
+        }
+        compose.onAllNodesWithText("QIKI22", substring = true).assertCountEquals(0)
+        compose.onAllNodesWithText("Your train").assertCountEquals(1)
+    }
+
+    @Test fun `a late train shows its delay in words`() {
+        val late = first.copy(time = StopTime(now.plusSeconds(240), now.plusSeconds(840)))
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                TrainDepartures(listOf(late, second), second.tripId, now, loading = false, canSelect = true,
+                    changed = false, failed = false, onSelect = {}, onReset = {})
+            }
+        }
+        compose.onNodeWithText("10 min late").assertExists()
     }
 
     @Test fun `cancelled and loading departures cannot be selected`() {
@@ -57,9 +81,9 @@ class TrainDeparturesTest {
                     onSelect = {}, onReset = {})
             }
         }
-        compose.onNodeWithText("QIKI22", substring = true).assertIsNotEnabled()
+        compose.onNodeWithText("Chessy").assertIsNotEnabled()
         compose.runOnIdle { loading = true }
-        compose.onNodeWithText("NANI26", substring = true).assertIsNotEnabled()
+        compose.onNodeWithText("Boissy").assertIsNotEnabled()
         compose.onNodeWithText("Reset").assertIsNotEnabled()
         compose.onNodeWithText("Updating train…").assertExists()
     }
