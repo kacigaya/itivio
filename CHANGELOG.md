@@ -7,6 +7,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 - Fix the next departures of itinerary legs, which stayed empty on recent Android versions. The request time had microseconds, so Transitous started at the beginning of the service day.
 - Load the line times and live trip times of all legs at the same time.
+- Give the itinerary summary the same margin on each side of the side pane, and a corner radius that follows the pane corner.
 
 ## 0.9.0
 

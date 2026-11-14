@@ -40,6 +40,9 @@ import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOW
 val PaneWidth = 400.dp
 private val PaneMargin = 16.dp
 
+/** The corner of the side pane: the extra-large shape of Material 3. A card nested in it takes this radius minus its margin. */
+val PaneCorner = 28.dp
+
 /** True when content sits in a side pane beside the map (600dp and wider). */
 @Composable
 fun isWideLayout(): Boolean =
@@ -86,7 +89,7 @@ fun MapPanel(
             header()
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
-                shape = MaterialTheme.shapes.extraLarge,
+                shape = RoundedCornerShape(PaneCorner),
                 modifier = Modifier.fillMaxWidth().weight(1f),
             ) {
                 Column(Modifier.padding(top = 8.dp)) { content() }

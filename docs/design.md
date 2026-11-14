@@ -29,7 +29,8 @@ Text pairs a heavy weight with a light weight:
 
 ## Shape and spacing
 
-- Search bar: full. "Locate me" button: `largeIncreased` (20dp) with the height of the search bar (56dp), in `primaryContainer`, so it does not read as part of the bar. Route cards: `large` (16dp). Stop cards and transit leg cards: `largeIncreased`. Itinerary summary and walking instruction card: `extraLarge`. Bottom sheet: top corners with the radius of the screen corners (Android 12 and later), otherwise `extraLarge`. Line badges and tags: full.
+- Search bar: full. "Locate me" button: `largeIncreased` (20dp) with the height of the search bar (56dp), in `primaryContainer`, so it does not read as part of the bar. Route cards: `large` (16dp). Stop cards and transit leg cards: `largeIncreased`. Itinerary summary and walking instruction card: `extraLarge`. Side pane (wide windows): `extraLarge` (28dp). Bottom sheet: top corners with the radius of the screen corners (Android 12 and later), otherwise `extraLarge`. Line badges and tags: full.
+- A card nested in the corner of a container has the radius of the container minus the margin between them, so the two curves stay parallel: `inner = outer - margin`. The itinerary summary in the side pane is 16dp from each edge, so its radius is 28 - 16 = 12dp. Leave the same margin on the top and the sides.
 
 ## Icons
 

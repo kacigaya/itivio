@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.RadioButton
@@ -80,6 +81,7 @@ import app.itivio.ui.common.IconTile
 import app.itivio.ui.common.LegChain
 import app.itivio.ui.common.LineBadge
 import app.itivio.ui.common.MapPanel
+import app.itivio.ui.common.PaneCorner
 import app.itivio.ui.common.Tag
 import app.itivio.ui.common.TimeText
 import app.itivio.ui.common.amountText
@@ -98,6 +100,7 @@ import java.time.Instant
 val ItineraryPeekHeight = 320.dp
 private val RailWidth = 32.dp
 private val RailStroke: Dp = 6.dp
+private val ListMargin = 16.dp
 
 /**
  * The steps of [journey]. [now] drives the tracker: the status tag and the outline around the
@@ -129,10 +132,11 @@ fun ItineraryScreen(
         },
     ) {
         LazyColumn(
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            // The pane adds 8 dp above its content; 8 more gives the summary the same margin on each side.
+            contentPadding = PaddingValues(start = ListMargin, end = ListMargin, top = if (wide) 8.dp else 0.dp, bottom = ListMargin),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            item(key = "summary") { Summary(journey, now) }
+            item(key = "summary") { Summary(journey, now, wide) }
             if (journey.missedConnectionIndex != null) {
                 item(key = "missed_connection") {
                     Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.large) {
@@ -197,17 +201,20 @@ private fun trackerStatus(journey: Journey, now: Instant): String? = when {
     else -> null
 }
 
-/** The hero card: the tracker status, the duration, the times, and the legs of the journey. */
+/**
+ * The hero card: the tracker status, the duration, the times, and the legs of the journey. In the
+ * [wide] pane it sits in the corner, so its radius is the pane corner minus the margin.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Summary(journey: Journey, now: Instant) {
+private fun Summary(journey: Journey, now: Instant, wide: Boolean) {
     val scheme = MaterialTheme.colorScheme
     val departure = formatTime(journey.departure.best, journey.legs.first().from.zone)
     val arrival = formatTime(journey.arrival.best, journey.legs.last().to.zone)
     Surface(
         color = scheme.primaryContainer,
         contentColor = scheme.onPrimaryContainer,
-        shape = MaterialTheme.shapes.extraLarge,
+        shape = if (wide) RoundedCornerShape(PaneCorner - ListMargin) else MaterialTheme.shapes.extraLarge,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
