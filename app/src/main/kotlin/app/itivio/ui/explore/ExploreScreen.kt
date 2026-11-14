@@ -1,7 +1,7 @@
 package app.itivio.ui.explore
 
 import androidx.annotation.DrawableRes
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.fillMaxSize
@@ -64,6 +64,7 @@ import app.itivio.domain.Location
 import app.itivio.domain.SavedPlaces
 import app.itivio.domain.Shortcut
 import app.itivio.domain.savedKey
+import app.itivio.ui.common.BackGestureEasing
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.MapPanel
 import app.itivio.ui.nearby.StopDepartures
@@ -77,11 +78,16 @@ import app.itivio.ui.search.labelRes
 import app.itivio.ui.search.rememberLocationSearchBarState
 import app.itivio.ui.search.rememberLocationTextState
 import java.time.Instant
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
 // Drag handle, search row, shortcut chips, title, and the first departures.
 val ExplorePeekHeight = 344.dp
+
+// How far the home pages move during a back gesture, as a part of one page. Less than half, so
+// the page on screen stays the current page until the user completes the gesture.
+private const val BackPreviewFraction = 0.3f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -157,7 +163,18 @@ fun ExploreScreen(
         } else {
             // Two pages in place of a navigation bar. A swipe on the list or a tap on a title changes the page.
             val pager = rememberPagerState { HomePage.entries.size }
-            BackHandler(enabled = pager.currentPage != 0) { scope.launch { pager.animateScrollToPage(0) } }
+            // "Back" goes to the first page. During the gesture, the first page comes into view as a
+            // preview. The last scroll runs in the scope of the screen: a cancelled gesture stops this handler.
+            PredictiveBackHandler(enabled = pager.currentPage != 0) { gesture ->
+                val page = pager.currentPage
+                try {
+                    gesture.collect { pager.scrollToPage(page, -BackPreviewFraction * BackGestureEasing.transform(it.progress)) }
+                    scope.launch { pager.animateScrollToPage(0) }
+                } catch (cancelled: CancellationException) {
+                    scope.launch { pager.animateScrollToPage(page) }
+                    throw cancelled
+                }
+            }
             HomeTitles(
                 selected = HomePage.entries[pager.currentPage],
                 alerts = (disruptions as? LoadState.Ready)?.value?.let { it.saved.size + it.nearby.size } ?: 0,

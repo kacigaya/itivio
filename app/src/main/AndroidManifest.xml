@@ -7,11 +7,16 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
-    <!-- allowBackup=false covers API < 31; the extraction rules cover device transfer on 31+. -->
+    <!--
+        allowBackup=false covers API < 31; the extraction rules cover device transfer on 31+.
+        enableOnBackInvokedCallback turns on the back gesture preview on Android 13 to 15. Android 16
+        and later turn it on from the target SDK.
+    -->
     <application
         android:name=".ItivioApp"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"

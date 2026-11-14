@@ -29,7 +29,7 @@ Text pairs a heavy weight with a light weight:
 
 ## Shape and spacing
 
-- Search bar: full. "Locate me" button: `largeIncreased` (20dp) with the height of the search bar (56dp), in `primaryContainer`, so it does not read as part of the bar. Route cards: `large` (16dp). Stop cards and transit leg cards: `largeIncreased`. Itinerary summary and walking instruction card: `extraLarge`. Bottom sheet: `extraLarge` top corners. Line badges and tags: full.
+- Search bar: full. "Locate me" button: `largeIncreased` (20dp) with the height of the search bar (56dp), in `primaryContainer`, so it does not read as part of the bar. Route cards: `large` (16dp). Stop cards and transit leg cards: `largeIncreased`. Itinerary summary and walking instruction card: `extraLarge`. Bottom sheet: top corners with the radius of the screen corners (Android 12 and later), otherwise `extraLarge`. Line badges and tags: full.
 
 ## Icons
 
@@ -39,6 +39,17 @@ Material Symbols Rounded, filled, as vector drawables. A row without a line colo
 ## Motion
 
 `MotionScheme.expressive()`. Sheet and card changes use the theme springs. The search view opens and closes with the default spatial spring, not the slow one. Screen changes use shared-axis fades. A list that loads shows a skeleton. An action in progress shows the Expressive `LoadingIndicator`. See "States".
+
+### Back gesture
+
+The app shows a preview during a back gesture, as in the Android [predictive back guidance](https://developer.android.com/design/ui/mobile/guides/patterns/predictive-back). The preview follows the finger. A release before the commit point puts the screen back.
+
+- Between screens: the screen on top becomes a card, as in the system settings. The card shrinks to 90%, gets the corners of the screen, and moves away from the edge of the gesture. It stays 8dp from the other edge. The screen below and the map get the Material scrim, up to 32%. A release fades the card out and removes the scrim. On a map screen, the sheet and its header form the card.
+- Disruptions page of the home sheet: the Departures page comes into view by 30% of its width.
+- Search view, dialogs, and menus: the Material components supply their own behavior.
+- Home: the system shows the launcher behind the app.
+
+The preview uses the easing of the system back animations, `(0.1, 0.1, 0, 1)`. The card does not follow the vertical position of the finger. The back button of a screen and three-button navigation use the usual fade.
 
 ## Screens
 
@@ -137,13 +148,17 @@ The departure board is one card with the rows of the nearby departures: one row 
 
 "Directions" is a filled button on each walk step of the itinerary. Its accessibility label is "Walking directions". A walk-only route has one walk step.
 
-- The instruction card uses `primaryContainer`. It shows the maneuver icon on a `primary` tile, the distance to the maneuver as the largest text, and the instruction. The start shows the length of the first part. A "Then" line shows the instruction after it.
+- The instruction card uses `primaryContainer`. It shows the maneuver icon on a `primary` tile, the distance to the maneuver as the largest text, and the instruction. The start shows the length of the first part.
+- A "Then" tab hangs below the card, at its start, in the same color. It shows the word and the icon of the next maneuver. Its accessibility label gives the full instruction ("Then: Turn left").
 - The card is a polite live region, so TalkBack reads a new instruction.
 - Off the route, an `errorContainer` banner says so and gives "Plan a new route". Without location access, the banner gives "Allow location".
-- The map follows the position and the heading. A gesture on the map stops this, and a "Recenter" button shows.
-- The close button sits at the end of the summary row in the sheet, in `errorContainer`.
+- The map is tilted and turns with the walker. The position is an arrow on a `primary` disc that lies flat on the map. The position sits low on the screen, so the walker sees the way ahead. Within 20 m of the route, the arrow sits on the route line.
+- The arrow and the map turn to the heading of the device. Without a heading, they turn to the route ahead.
+- A round compass button below the card turns the map between "north up" (flat) and "turn with you". Its arrow points north, in `error` red.
+- A gesture on the map stops the camera, and a "Recenter" button shows.
+- The summary row in the sheet has the close button at the start, in `errorContainer`. In the middle are the remaining time and, below it, the distance and the arrival time. At the end, a tonal button shows the full route; the "Recenter" button then shows.
 - A wavy progress bar below the summary shows the part of the walk that is done.
-- The walk is dotted in `primary` on the map, with markers at its start and its end.
+- The walk has markers at its start and its end.
 
 ## Route card
 

@@ -1,5 +1,7 @@
 package app.itivio.ui
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -55,6 +57,7 @@ import app.itivio.domain.hints
 import app.itivio.domain.Location
 import app.itivio.domain.LocationKind
 import app.itivio.ui.common.LoadState
+import app.itivio.ui.common.backPreviewDecorator
 import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.MapPanel
 import app.itivio.ui.common.UserLocation
@@ -232,10 +235,12 @@ fun ItivioRoot(
                     entryDecorators = listOf(
                         rememberSaveableStateHolderNavEntryDecorator(),
                         rememberViewModelStoreNavEntryDecorator(),
+                        remember { backPreviewDecorator() },
                     ),
                     transitionSpec = { fadeIn() togetherWith fadeOut() },
                     popTransitionSpec = { fadeIn() togetherWith fadeOut() },
-                    predictivePopTransitionSpec = { fadeIn() togetherWith fadeOut() },
+                    // The back preview decorator gives the motion of a back gesture.
+                    predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.KeepUntilTransitionsFinished },
                     entryProvider = entryProvider {
                         entry<ExploreRoute> {
                             // Scoped to this entry. A compact window shows the alerts and their count on

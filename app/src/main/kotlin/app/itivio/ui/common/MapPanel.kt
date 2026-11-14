@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -93,9 +94,12 @@ fun MapPanel(
         }
     } else {
         Box(Modifier.fillMaxSize()) {
+            val corner = screenCornerRadius()
             BottomSheetScaffold(
                 modifier = Modifier.navigationBarsPadding(),
                 sheetPeekHeight = peekHeight,
+                // The top corners of the sheet have the radius of the screen corners.
+                sheetShape = RoundedCornerShape(topStart = corner, topEnd = corner),
                 sheetContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 containerColor = Color.Transparent,
                 sheetContent = {
