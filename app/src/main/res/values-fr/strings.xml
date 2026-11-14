@@ -333,6 +333,9 @@
     <string name="boarding_exit">Près de la sortie</string>
     <string name="boarding_transfer_description">pour la correspondance %1$s %2$s</string>
     <string name="boarding_description">Où monter : %1$s, %2$s</string>
+    <string name="boarding_exit_number">Près de la sortie %1$s</string>
+    <string name="boarding_best_exit">Meilleure sortie</string>
+    <string name="boarding_best_exit_description">Meilleure sortie : %1$s</string>
     <string name="about_boarding">Position dans la rame</string>
     <string name="about_boarding_body">RATP, via Île-de-France Mobilités. Licence Ouverte 2.0. Métro et RER à Paris.</string>
     <string name="itinerary_reset_train">Réinitialiser</string>

@@ -3,18 +3,18 @@ package app.itivio.domain
 /** The part of a train to board, in the direction of travel. */
 enum class TrainPart { FRONT, MIDDLE, REAR }
 
-/**
- * Where to board the train of a transit leg, so that the rider gets off near the next step.
- * [transfer] is the next transit leg when the hint is for that transfer. Null means the hint is
- * for the station exit.
- */
-data class BoardingHint(val part: TrainPart, val transfer: Leg.Transit?)
+data class StationExit(val id: String, val number: String?, val name: String, val point: GeoPoint)
 
-/**
- * One known position on a platform: [part] of the train stops nearest to the transfer platform
- * [transferStop], or to an exit when it is null. [lift] is true when the path has a lift.
- */
-data class BoardingPosition(val transferStop: String?, val part: TrainPart, val lift: Boolean)
+/** part: null when the data has no single part for this target; exit: the chosen exit, or null for a transfer. */
+data class BoardingHint(val part: TrainPart?, val transfer: Leg.Transit?, val exit: StationExit? = null)
+
+/** A position near a transfer platform, or an exit. Exit details need known coordinates. */
+data class BoardingPosition(
+    val transferStop: String?,
+    val part: TrainPart,
+    val lift: Boolean,
+    val exit: StationExit? = null,
+)
 
 /** The boarding positions of the stations that publish them. */
 fun interface BoardingRepository {
@@ -23,8 +23,8 @@ fun interface BoardingRepository {
 }
 
 /**
- * The boarding hint of each transit leg of [journey], by leg index. A hint shows only when the
- * data gives one part of the train for the next step: a wrong hint is worse than none.
+ * The boarding hint of each transit leg of [journey], by leg index. An exit hint chooses the
+ * exit nearest to the final destination. Its part can be unknown when positions disagree.
  *
  * - The next step is the next transit leg when only walks come between, else the exit.
  * - A transfer that the data does not list gets no hint, not the exit hint: the rider stays in
@@ -44,7 +44,13 @@ suspend fun BoardingRepository.hints(journey: Journey, wheelchair: Boolean): Map
             val stop = position.transferStop
             if (nextStop == null) stop == null else stop != null && nextStop.endsWith(":$stop")
         }
-        known.onePart(wheelchair)?.let { hints[index] = BoardingHint(it, next) }
+        val exit = if (next == null) {
+            known.mapNotNull { it.exit }.distinctBy { it.id }
+                .minByOrNull { WalkRoute.distance(it.point, legs.last().to.point) }
+        } else null
+        val target = if (exit == null) known else known.filter { it.exit?.id == exit.id }
+        val part = target.onePart(wheelchair)
+        if (part != null || exit != null) hints[index] = BoardingHint(part, next, exit)
     }
     return hints
 }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,6 +22,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -28,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.domain.BoardingHint
+import app.itivio.domain.StationExit
 import app.itivio.domain.TrainPart
 import app.itivio.ui.common.LineBadge
 import app.itivio.ui.common.label
@@ -37,14 +40,16 @@ import app.itivio.ui.common.label
  * drawing of a train with that part filled. The text names the part, so color is not the only cue.
  */
 @Composable
-internal fun BoardingRow(hint: BoardingHint) {
+internal fun BoardingRow(hint: BoardingHint, trainPart: TrainPart) {
     val scheme = MaterialTheme.colorScheme
-    val part = stringResource(hint.part.label())
+    val part = stringResource(trainPart.label())
     val transfer = hint.transfer
+    val exitNumber = hint.exit?.number?.takeIf { it.isNotBlank() }
+    val exitText = if (exitNumber != null) stringResource(R.string.boarding_exit_number, exitNumber) else stringResource(R.string.boarding_exit)
     val reason = if (transfer != null) {
         stringResource(R.string.boarding_transfer_description, stringResource(transfer.mode.label()), transfer.line.name)
     } else {
-        stringResource(R.string.boarding_exit)
+        exitText
     }
     val description = stringResource(R.string.boarding_description, part, reason)
     Surface(
@@ -62,14 +67,37 @@ internal fun BoardingRow(hint: BoardingHint) {
                 Text(part, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.ExtraBold)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        stringResource(if (transfer != null) R.string.boarding_transfer else R.string.boarding_exit),
+                        if (transfer != null) stringResource(R.string.boarding_transfer) else exitText,
                         style = MaterialTheme.typography.bodySmall,
                         color = scheme.onSurfaceVariant,
                     )
                     if (transfer != null) LineBadge(transfer.line, transfer.mode)
                 }
             }
-            TrainDrawing(hint.part, Modifier.size(width = 104.dp, height = 24.dp))
+            TrainDrawing(trainPart, Modifier.size(width = 104.dp, height = 24.dp))
+        }
+    }
+}
+
+/**
+ * The best exit of the station, below the alighting stop: its number and its name. The data
+ * gives the exit nearest to the destination; the walk can use another exit.
+ */
+@Composable
+internal fun ExitRow(exit: StationExit, modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
+    val number = exit.number?.takeIf { it.isNotBlank() }
+    val name = if (number != null) stringResource(R.string.boarding_exit_name, number, exit.name) else exit.name
+    val description = stringResource(R.string.boarding_best_exit_description, name)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description },
+    ) {
+        Icon(painterResource(R.drawable.ic_logout), contentDescription = null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.boarding_best_exit), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+            Text(name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
         }
     }
 }

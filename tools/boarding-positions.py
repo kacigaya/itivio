@@ -1,49 +1,91 @@
 #!/usr/bin/env python3
-"""Builds the boarding position table from the IDFM "Positionnement dans la rame" dataset.
+"""Build the offline boarding tables from two IDFM CSV exports.
 
-The RATP gives, for each metro and RER platform, the part of the train that stops nearest to
-each exit and each transfer. The app reads a small tab-separated copy from its assets, so it
-sends no request for this data. Run it from the repository root when the dataset changes:
+Run from the repository root: python3 tools/boarding-positions.py
 
-    python3 tools/boarding-positions.py
+Sources: IDFM "Positionnement dans la rame" (RATP) and "Accès".
+License: Licence Ouverte 2.0, Île-de-France Mobilités.
 
-Source: https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/positionnement-dans-la-rame
-License: Licence Ouverte v2.0 (Etalab). Producer: RATP.
-
-Output columns: platform ID, line ID, target (a stop ID for a transfer, "exit" for an exit),
-part of the train (F, M, or R), and "L" when the path to the target has a lift.
+idfm.tsv: platform, line, target (transfer stop ID or exit:<access ID>), part
+(F/M/R), lift flag (L or empty).
+exits.tsv: access ID, exit number (may be empty), name, latitude, longitude.
+Only referenced exits with coordinates enter exits.tsv.
 """
 import csv
 import io
+import math
 import urllib.request
 
-SOURCE = (
-    "https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/"
-    "positionnement-dans-la-rame/exports/csv?delimiter=%3B"
-)
+BASE = "https://data.iledefrance-mobilites.fr/api/explore/v2.1/catalog/datasets/"
+SOURCE = BASE + "positionnement-dans-la-rame/exports/csv?delimiter=%3B"
+EXITS_SOURCE = BASE + "acces/exports/csv?delimiter=%3B"
 OUTPUT = "app/src/main/assets/boarding/idfm.tsv"
+EXITS_OUTPUT = "app/src/main/assets/boarding/exits.tsv"
 PARTS = {"Avant": "F", "Milieu": "M", "Arrière": "R"}
 
 
-def main() -> None:
-    request = urllib.request.Request(SOURCE, headers={"User-Agent": "itivio-tools"})
+def download(url: str) -> csv.DictReader:
+    request = urllib.request.Request(url, headers={"User-Agent": "itivio-tools"})
     with urllib.request.urlopen(request, timeout=120) as response:
         text = response.read().decode("utf-8-sig")
+    return csv.DictReader(io.StringIO(text), delimiter=";")
+
+
+def coordinates(row: dict[str, str]) -> tuple[float, float] | None:
+    point = row.get("accgeopoint", "").strip()
+    fields = point.split(",") if point else (row.get("lat", ""), row.get("lon", ""))
+    if len(fields) != 2:
+        return None
+    try:
+        lat, lon = map(float, fields)
+    except ValueError:
+        return None
+    if not (math.isfinite(lat) and math.isfinite(lon) and -90 <= lat <= 90 and -180 <= lon <= 180):
+        return None
+    return lat, lon
+
+
+def write_table(path: str, rows: list[tuple[str, ...]]) -> None:
+    with open(path, "w", encoding="utf-8", newline="\n") as out:
+        for row in sorted(rows):
+            out.write("\t".join(" ".join(field.split()) for field in row) + "\n")
+
+
+def main() -> None:
     rows = set()
+    referenced = set()
     skipped = 0
-    for row in csv.DictReader(io.StringIO(text), delimiter=";"):
+    for row in download(SOURCE):
         part = PARTS.get(row["position_average"])
-        if part is None or not row["from_id"] or not row["line_id"]:
-            # A few rows give a car number in place of a part of the train.
+        if (part is None or not row["from_id"] or not row["line_id"] or not row["to_id"]
+                or row["to_type"] not in {"stop_point", "access_point"}):
+            # Some rows give a car number instead of a part of the train.
             skipped += 1
             continue
-        target = row["to_id"] if row["to_type"] == "stop_point" else "exit"
+        if row["to_type"] == "access_point":
+            referenced.add(row["to_id"])
+            target = "exit:" + row["to_id"]
+        else:
+            target = row["to_id"]
         lift = "L" if row["equipment_type"] == "Ascenseur" else ""
         rows.add((row["from_id"], row["line_id"], target, part, lift))
-    with open(OUTPUT, "w", encoding="utf-8", newline="\n") as out:
-        for row in sorted(rows):
-            out.write("\t".join(row) + "\n")
+
+    exits = {}
+    for row in download(EXITS_SOURCE):
+        access_id = row["accid"]
+        if access_id not in referenced:
+            continue
+        point = coordinates(row)
+        if point is None:
+            continue
+        lat, lon = point
+        exits[access_id] = (access_id, row["accshortname"], row["accname"], f"{lat:.6f}", f"{lon:.6f}")
+
+    write_table(OUTPUT, list(rows))
+    write_table(EXITS_OUTPUT, list(exits.values()))
     print(f"{len(rows)} rows written to {OUTPUT}, {skipped} skipped")
+    print(f"{len(exits)} exits written to {EXITS_OUTPUT}")
+    print(f"{len(referenced - exits.keys())} referenced exits have no coordinates (including missing access records)")
 
 
 if __name__ == "__main__":

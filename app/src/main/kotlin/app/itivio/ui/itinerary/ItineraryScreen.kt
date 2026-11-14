@@ -2,7 +2,6 @@ package app.itivio.ui.itinerary
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.selection.selectableGroup
@@ -63,6 +62,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import kotlin.math.roundToInt
 import app.itivio.R
 import app.itivio.domain.Alert
 import app.itivio.domain.BoardingHint
@@ -291,7 +296,7 @@ private fun TransitLegItem(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-                boarding?.let { BoardingRow(it) }
+                boarding?.let { hint -> hint.part?.let { BoardingRow(hint, it) } }
                 if (leg.alerts.isNotEmpty()) AlertBanner(leg.alerts)
                 if (platformChanged) {
                     Text(stringResource(R.string.itinerary_platform_changed), style = MaterialTheme.typography.bodyMedium,
@@ -331,6 +336,7 @@ private fun TransitLegItem(
             caption = leg.to.track?.let { stringResource(R.string.itinerary_track, it) },
             emphasized = false,
         )
+        boarding?.exit?.let { ExitRow(it, Modifier.padding(start = RailWidth, top = 8.dp)) }
     }
 }
 
@@ -644,25 +650,34 @@ private fun StopRow(
     }
 }
 
+/**
+ * The rail between two stops. It and [RailDot] draw at the same pixel position: each part
+ * centers on its own box of [RailWidth], so they must use the same rounding to line up.
+ */
 @Composable
 private fun Rail(color: Color) {
-    Box(Modifier.width(RailWidth).fillMaxHeight(), contentAlignment = Alignment.Center) {
-        Box(Modifier.width(RailStroke).fillMaxHeight().background(color))
-    }
+    Canvas(Modifier.width(RailWidth).fillMaxHeight()) { drawRail(color, 0f, size.height) }
 }
 
 /** A stop marker on the rail, with rail segments above and/or below it. */
 @Composable
 private fun RailDot(color: Color, top: Boolean, bottom: Boolean) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxHeight()) {
-        Box(Modifier.width(RailStroke).weight(1f).background(if (top) color else Color.Transparent))
-        Box(
-            Modifier
-                .size(18.dp)
-                .background(color, CircleShape)
-                .padding(5.dp)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
-        )
-        Box(Modifier.width(RailStroke).weight(1f).background(if (bottom) color else Color.Transparent))
+    val hole = MaterialTheme.colorScheme.surfaceContainerHigh
+    Canvas(Modifier.fillMaxSize()) {
+        val center = size.height / 2
+        if (top) drawRail(color, 0f, center)
+        if (bottom) drawRail(color, center, size.height)
+        val dot = Offset(railX(), center)
+        drawCircle(color, radius = 9.dp.toPx(), center = dot)
+        drawCircle(hole, radius = 4.dp.toPx(), center = dot)
     }
+}
+
+/** The center of the rail, on a whole pixel, so the segments of each box meet without a step. */
+private fun DrawScope.railX(): Float = (size.width / 2).roundToInt().toFloat()
+
+private fun DrawScope.drawRail(color: Color, from: Float, to: Float) {
+    val stroke = RailStroke.toPx().roundToInt().toFloat()
+    val left = railX() - (stroke / 2).roundToInt()
+    drawRect(color, topLeft = Offset(left, from), size = Size(stroke, to - from))
 }

@@ -43,7 +43,7 @@ These images use test data from the [screenshot checks](docs/quality.md#screensh
 - Walk-only routes, when walking is a good choice.
 - Service alerts on the route cards and in the journey details.
 - Journey details: stops, platforms, times, and the route on the map. The trip tracker follows new delays while the details are open.
-- Where to board the metro in Paris: the part of the train that stops nearest to your transfer or exit. The data ships with the app, so it sends no request.
+- Where to board the metro in Paris: the part of the train that stops nearest to your transfer or exit. Show the exit number and name below the arrival stop. The app picks the exit nearest to your destination. This is an estimate and does not check street access or lifts. The data ships with the app, so it sends no request.
 - Walking directions: the next turn, the distance to it, the remaining time, and the arrival time. The map follows your position and heading.
 - The app keeps your search when Android stops it in the background, and plans it again.
 - Live times where the transit agency publishes them. Scheduled times have no live marker.
@@ -82,7 +82,7 @@ Routing comes from [Transitous](https://transitous.org/), a community service th
 
 French address search also uses IGN Géoplateforme and the [Base Adresse Nationale](https://adresse.data.gouv.fr/). Address-like queries go to IGN when the first Transitous match identifies France. IGN failures leave Transitous suggestions available.
 
-Boarding positions in Paris come from the RATP dataset [Positionnement dans la rame](https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/positionnement-dans-la-rame), published by Île-de-France Mobilités under the Licence Ouverte 2.0 (Etalab). The app ships a copy. `tools/boarding-positions.py` builds it.
+Boarding positions in Paris come from the RATP dataset [Positionnement dans la rame](https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/positionnement-dans-la-rame). Exit numbers, names, and coordinates come from the [Accès dataset](https://data.iledefrance-mobilites.fr/explore/dataset/acces/). Île-de-France Mobilités publishes both under the Licence Ouverte 2.0 (Etalab). The app ships copies. `tools/boarding-positions.py` builds them.
 
 Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Map tiles from [OpenFreeMap](https://openfreemap.org/). The map styles derive from [OSM Liberty](https://github.com/maputnik/osm-liberty) (BSD 3-Clause code, CC BY design) with [OpenMapTiles](https://openmaptiles.org/) data.
 

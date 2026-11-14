@@ -2,6 +2,8 @@ package app.itivio.data.boarding
 
 import app.itivio.domain.BoardingPosition
 import app.itivio.domain.BoardingRepository
+import app.itivio.domain.GeoPoint
+import app.itivio.domain.StationExit
 import app.itivio.domain.Leg
 import app.itivio.domain.TrainPart
 import kotlinx.coroutines.Dispatchers
@@ -13,9 +15,12 @@ import java.io.InputStream
 /**
  * The boarding positions of the RATP metro and RER platforms, from the IDFM dataset
  * "Positionnement dans la rame". The app ships the table (see `tools/boarding-positions.py`),
- * so this sends no request. [open] reads the table; it runs once, on the first call.
+ * so this sends no request. Both files load once, off the main thread, on the first call.
  */
-class IdfmBoardingRepository(private val open: () -> InputStream) : BoardingRepository {
+class IdfmBoardingRepository(
+    private val open: () -> InputStream,
+    private val openExits: () -> InputStream,
+) : BoardingRepository {
     private val lock = Mutex()
     private var table: Map<Pair<String, String>, List<BoardingPosition>>? = null
 
@@ -26,15 +31,21 @@ class IdfmBoardingRepository(private val open: () -> InputStream) : BoardingRepo
     }
 
     private suspend fun table() = lock.withLock {
-        table ?: withContext(Dispatchers.IO) { open().bufferedReader().use { parse(it.readLines()) } }.also { table = it }
+        table ?: withContext(Dispatchers.IO) {
+            val exits = openExits().bufferedReader().use { parseExits(it.readLines()) }
+            open().bufferedReader().use { parse(it.readLines(), exits) }
+        }.also { table = it }
     }
 
     internal companion object {
         /** IDFM IDs keep their own part after the prefix of the feed: "…_IDFM:22194" gives "22194". */
         fun idfmId(id: String?): String? = id?.substringAfterLast("IDFM:", "")?.takeIf { it.isNotEmpty() }
 
-        /** One line per position: platform, line, target ("exit" or a stop ID), part (F, M, R), and "L" for a lift. */
-        fun parse(lines: List<String>): Map<Pair<String, String>, List<BoardingPosition>> = lines.mapNotNull { line ->
+        /** One line per position: platform, line, target ("exit:<access ID>" or a stop ID), part (F, M, R), and "L" for a lift. */
+        fun parse(
+            lines: List<String>,
+            exits: Map<String, StationExit> = emptyMap(),
+        ): Map<Pair<String, String>, List<BoardingPosition>> = lines.mapNotNull { line ->
             val fields = line.split('\t')
             if (fields.size < 4) return@mapNotNull null
             val part = when (fields[3]) {
@@ -43,8 +54,24 @@ class IdfmBoardingRepository(private val open: () -> InputStream) : BoardingRepo
                 "R" -> TrainPart.REAR
                 else -> return@mapNotNull null
             }
-            val target = fields[2].takeIf { it != "exit" }
-            (fields[0] to fields[1]) to BoardingPosition(target, part, lift = fields.getOrNull(4) == "L")
+            val target = fields[2]
+            val isExit = target == "exit" || target.startsWith("exit:")
+            (fields[0] to fields[1]) to BoardingPosition(
+                transferStop = target.takeUnless { isExit },
+                part = part,
+                lift = fields.getOrNull(4) == "L",
+                exit = if (isExit) exits[target.removePrefix("exit:")] else null,
+            )
         }.groupBy({ it.first }, { it.second })
+
+        /** Access ID, optional number, name, latitude, longitude. Invalid coordinates give no exit. */
+        fun parseExits(lines: List<String>): Map<String, StationExit> = lines.mapNotNull { line ->
+            val fields = line.split('\t')
+            if (fields.size != 5 || fields[0].isBlank() || fields[2].isBlank()) return@mapNotNull null
+            val lat = fields[3].toDoubleOrNull() ?: return@mapNotNull null
+            val lon = fields[4].toDoubleOrNull() ?: return@mapNotNull null
+            if (!lat.isFinite() || !lon.isFinite() || lat !in -90.0..90.0 || lon !in -180.0..180.0) return@mapNotNull null
+            fields[0] to StationExit(fields[0], fields[1].takeIf { it.isNotBlank() }, fields[2], GeoPoint(lat, lon))
+        }.toMap()
     }
 }

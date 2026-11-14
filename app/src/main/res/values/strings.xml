@@ -344,6 +344,10 @@
     <string name="boarding_exit">Near the exit</string>
     <string name="boarding_transfer_description">for the transfer to %1$s %2$s</string>
     <string name="boarding_description">Where to board: %1$s, %2$s</string>
+    <string name="boarding_exit_number">Near exit %1$s</string>
+    <string name="boarding_best_exit">Best exit</string>
+    <string name="boarding_exit_name" translatable="false">%1$s – %2$s</string>
+    <string name="boarding_best_exit_description">Best exit: %1$s</string>
     <string name="about_boarding">Boarding positions</string>
     <string name="about_boarding_body">RATP, via Île-de-France Mobilités. Licence Ouverte 2.0. Metro and RER in Paris.</string>
     <string name="about_boarding_url" translatable="false">https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/positionnement-dans-la-rame</string>

@@ -3,6 +3,8 @@ package app.itivio.domain
 import app.itivio.data.boarding.IdfmBoardingRepository
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -24,7 +26,7 @@ class BoardingTest {
         bad line
         4	C1	exit	7	
     """.trimIndent()
-    private val repository = IdfmBoardingRepository { table.byteInputStream() }
+    private val repository = IdfmBoardingRepository({ table.byteInputStream() }, { byteArrayOf().inputStream() })
 
     private fun stop(id: String?) = Stop("Stop", GeoPoint(48.8, 2.3), stopId = id?.let { "$idfm:$it" })
     private fun ride(to: String?, from: String? = "0", line: String? = "C1") = Leg.Transit(
@@ -72,12 +74,115 @@ class BoardingTest {
         assertNull(IdfmBoardingRepository.idfmId("de-VBB_900"))
     }
 
+    private val exits = """
+        near	3	Near street	48.846	2.3736
+        far		Far street	48.85	2.38
+        invalid	1	No point	NaN	2.3
+        outside	1	Bad point	91	2.3
+        missing	1	No point		
+    """.trimIndent()
+
+    private fun exitRepository(rows: String) = IdfmBoardingRepository(
+        { rows.trimIndent().byteInputStream() }, { exits.byteInputStream() },
+    )
+
+    private fun destinationWalk() = walk().let { it.copy(to = it.to.copy(point = GeoPoint(48.8460, 2.3736))) }
+
     @Test
-    fun `the shipped table parses and covers the metro`() {
-        val file = java.io.File("src/main/assets/boarding/idfm.tsv")
-        val parsed = IdfmBoardingRepository.parse(file.readLines())
+    fun `the nearest exit uses the journey destination and only its own positions`() = runTest {
+        val repo = exitRepository("""
+            1	C1	exit:far	F	
+            1	C1	exit:near	M	
+            1	C1	exit:near	R	L
+        """)
+        val journey = journey(ride("1"), destinationWalk())
+        val hint = repo.hints(journey, wheelchair = false)[0]
+        assertEquals("near", hint?.exit?.id)
+        assertEquals("3", hint?.exit?.number)
+        assertEquals("Near street", hint?.exit?.name)
+        assertEquals(TrainPart.MIDDLE, hint?.part)
+        assertNull(hint?.transfer)
+        assertEquals(TrainPart.REAR, repo.hints(journey, wheelchair = true)[0]?.part)
+    }
+
+    @Test
+    fun `conflicting positions keep the chosen exit without a train part`() = runTest {
+        val repo = exitRepository("""
+            1	C1	exit:near	F	
+            1	C1	exit:near	R	
+            1	C1	exit:far	M	
+        """)
+        val hint = repo.hints(journey(ride("1"), destinationWalk()), wheelchair = false)[0]
+        assertEquals("near", hint?.exit?.id)
+        assertNull(hint?.part)
+    }
+
+    @Test
+    fun `exit rows without coordinates use the old agreement rule`() = runTest {
+        val repo = exitRepository("""
+            1	C1	exit:missing	F	
+            1	C1	exit:invalid	F	
+            2	C1	exit:missing	F	
+            2	C1	exit:invalid	R	
+        """)
+        assertEquals(BoardingHint(TrainPart.FRONT, null), repo.hints(journey(ride("1")), false)[0])
+        assertTrue(repo.hints(journey(ride("2")), false).isEmpty())
+        val parsed = IdfmBoardingRepository.parseExits(exits.lines())
+        assertEquals(setOf("near", "far"), parsed.keys)
+        assertNull(parsed["far"]?.number)
+    }
+
+    @Test
+    fun `a known exit does not change a transfer hint`() = runTest {
+        val repo = exitRepository("""
+            1	C1	exit:near	R	
+            1	C1	9	F	
+        """)
+        val next = ride("5", from = "9")
+        assertEquals(BoardingHint(TrainPart.FRONT, next), repo.hints(journey(ride("1"), next), false)[0])
+    }
+
+    @Test
+    fun `both files load once off the caller thread even with concurrent requests`() = runTest {
+        val caller = Thread.currentThread()
+        var positionLoads = 0
+        var exitLoads = 0
+        val repo = IdfmBoardingRepository(
+            open = {
+                assertTrue(Thread.currentThread() != caller)
+                positionLoads++
+                table.byteInputStream()
+            },
+            openExits = {
+                assertTrue(Thread.currentThread() != caller)
+                exitLoads++
+                exits.byteInputStream()
+            },
+        )
+        assertEquals(0, positionLoads)
+        assertEquals(0, exitLoads)
+        List(4) { async { repo.positions(ride("1")) } }.awaitAll()
+        assertEquals(1, positionLoads)
+        assertEquals(1, exitLoads)
+    }
+
+    @Test
+    fun `the shipped tables parse and give a named exit at Gare de Lyon`() = runTest {
+        val positionsFile = java.io.File("src/main/assets/boarding/idfm.tsv")
+        val exitsFile = java.io.File("src/main/assets/boarding/exits.tsv")
+        val exits = IdfmBoardingRepository.parseExits(exitsFile.readLines())
+        assertEquals(exitsFile.readLines().size, exits.size)
+        assertTrue(exits.size > 1000)
+        val parsed = IdfmBoardingRepository.parse(positionsFile.readLines(), exits)
+        assertEquals(positionsFile.readLines().size, parsed.values.sumOf { it.size })
         assertTrue(parsed.size > 500)
         // Line 14 at Madeleine: the front is nearest to the exits.
         assertEquals(TrainPart.FRONT, parsed["463064" to "C01384"]?.filter { it.transferStop == null }?.onePart(false))
+        val repo = IdfmBoardingRepository({ positionsFile.inputStream() }, { exitsFile.inputStream() })
+        val hint = repo.hints(journey(ride("463197", line = "C01371"), destinationWalk()), false)[0]
+        assertEquals("3", hint?.exit?.number)
+        assertEquals("r. M. Chasles", hint?.exit?.name)
+        assertNull(hint?.part)
+        assertTrue(hint?.exit?.id in exits)
     }
 }

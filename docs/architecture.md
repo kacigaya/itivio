@@ -109,13 +109,15 @@ Limits:
 
 ## Boarding positions
 
-The RATP publishes, for each metro platform and some RER platforms, the part of the train that stops nearest to each transfer and each exit. Île-de-France Mobilités hosts this dataset, "Positionnement dans la rame", under the Licence Ouverte 2.0. Transitous has no such data.
+The RATP publishes the train part nearest to each transfer and exit for metro platforms and some RER platforms. Île-de-France Mobilités hosts "Positionnement dans la rame" under the Licence Ouverte 2.0. Its second dataset, "Accès" (`acces`), gives exit numbers, names, and coordinates under the same Licence Ouverte 2.0. Transitous has no boarding data.
 
-- `tools/boarding-positions.py` downloads the dataset and writes `app/src/main/assets/boarding/idfm.tsv`: the platform, the line, the target (a transfer platform or "exit"), the part of the train, and a lift flag. Run it again when the dataset changes.
-- `IdfmBoardingRepository` reads the file one time, on the first itinerary. It sends no request.
-- Transitous stop and route IDs end with the IDFM IDs (`…_IDFM:22194`, `…_IDFM:C01384`). The repository uses this part to find the alighting platform and the line.
-- `domain.hints` picks one part of the train for each transit leg. The target is the next transit leg when only walks come between, else the exit. A hint shows only when the positions for that target agree. A transfer that the data does not list gets no hint. With wheelchair routing, the positions with a lift come first; without it, the other positions come first.
-- Limits: RER legs in Transitous end at a stop area, not a platform, so they get no hint. The dataset has no RER A or B positions at Châtelet. The exit hint does not know which exit the walk uses, so platforms whose exits are at different ends get no exit hint.
+`tools/boarding-positions.py` downloads both datasets with a generic User-Agent. It writes two offline tables in `app/src/main/assets/boarding/`. `idfm.tsv` holds the platform, line, target (a transfer stop ID or `exit:<access ID>`), train part, and lift flag. `exits.tsv` holds only referenced exits with coordinates: ID, optional number, name, latitude, and longitude. The tool rounds coordinates to six decimals and reports exits without coordinates. Run it again when the datasets change.
+
+`IdfmBoardingRepository` loads both files once, off the main thread, on first use. It sends no request. It matches the IDFM suffix of Transitous stop and route IDs (`…_IDFM:22194`, `…_IDFM:C01384`).
+
+`domain.hints` uses the next transit leg as the transfer target. A transfer gets a train part only when its positions agree. An unlisted transfer gets no hint. For the last transit leg, the rule chooses the exit nearest to the final journey destination. It uses only that exit's positions to choose the train part. The hint keeps the exit even when those positions disagree. Without exit coordinates, all exit positions must agree. Wheelchair routing prefers lift rows. Other routing prefers rows without lifts. If the preferred rows are absent, all rows for the target count.
+
+Limits: the nearest exit is a guess. It may differ from the exit that the walk uses. Exit choice does not check street access or lift availability. RER legs in Transitous end at stop areas, so they get no platform hint. The dataset has no RER A or B positions at Châtelet.
 
 ## Journeys without transit
 

@@ -5,6 +5,11 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.8.2
+
+- Show the best exit of the station below the alighting stop, with its number and name. Pick the exit nearest to the destination, so the boarding hint also shows at large stations.
+- Fix a one-pixel step in the itinerary rail below the stop dots.
+
 ## 0.8.1
 
 - Add a privacy policy, README screenshots, contribution guidance, and a security reporting policy.

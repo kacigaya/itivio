@@ -43,5 +43,11 @@ val dataModule = module {
     single<JourneyOptionsRepository> { DataStoreJourneyOptionsRepository(get()) }
     single<SettingsRepository> { DataStoreSettingsRepository(get()) }
     single<AppData> { LocalAppData(get<PlacesDatabase>().places(), get()) }
-    single<BoardingRepository> { IdfmBoardingRepository { androidContext().assets.open("boarding/idfm.tsv") } }
+    single<BoardingRepository> {
+        val assets = androidContext().assets
+        IdfmBoardingRepository(
+            open = { assets.open("boarding/idfm.tsv") },
+            openExits = { assets.open("boarding/exits.tsv") },
+        )
+    }
 }

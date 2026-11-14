@@ -314,7 +314,10 @@ open class ScreenshotTest {
             lineTimes = mapOf(1 to listOf(u2(6, 2, "t1"), u2(11, null, "t4"), u2(16, null, "t5"))),
             onBack = {},
             onWalk = {},
-            boarding = mapOf(1 to app.itivio.domain.BoardingHint(app.itivio.domain.TrainPart.FRONT, sampleJourneys.first().legs[3] as Leg.Transit)),
+            boarding = mapOf(
+                1 to app.itivio.domain.BoardingHint(app.itivio.domain.TrainPart.FRONT, sampleJourneys.first().legs[3] as Leg.Transit),
+                3 to app.itivio.domain.BoardingHint(app.itivio.domain.TrainPart.REAR, null, sampleExit),
+            ),
         )
     }
 
@@ -322,9 +325,15 @@ open class ScreenshotTest {
     fun boardingPositions() = capture("boarding") {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val transfer = sampleJourneys.first().legs[3] as Leg.Transit
-            app.itivio.ui.itinerary.BoardingRow(app.itivio.domain.BoardingHint(app.itivio.domain.TrainPart.FRONT, transfer))
-            app.itivio.ui.itinerary.BoardingRow(app.itivio.domain.BoardingHint(app.itivio.domain.TrainPart.MIDDLE, null))
-            app.itivio.ui.itinerary.BoardingRow(app.itivio.domain.BoardingHint(app.itivio.domain.TrainPart.REAR, null))
+            val front = app.itivio.domain.TrainPart.FRONT
+            val middle = app.itivio.domain.TrainPart.MIDDLE
+            val rear = app.itivio.domain.TrainPart.REAR
+            app.itivio.ui.itinerary.BoardingRow(app.itivio.domain.BoardingHint(front, transfer), front)
+            app.itivio.ui.itinerary.BoardingRow(app.itivio.domain.BoardingHint(middle, null, sampleExit), middle)
+            app.itivio.ui.itinerary.BoardingRow(app.itivio.domain.BoardingHint(rear, null), rear)
+            CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                app.itivio.ui.itinerary.ExitRow(sampleExit)
+            }
         }
     }
 
@@ -473,6 +482,8 @@ open class ScreenshotTest {
                 trains.drop(1) + trains[1].copy(tripId = "d7", cancelled = true, time = at(12)))
                 .map { it.copy(alightTime = StopTime(it.time.scheduled.plusSeconds(1_260), it.time.estimated?.plusSeconds(1_260))) }
         }
+
+        val sampleExit = app.itivio.domain.StationExit("50147981", "3", "r. M. Chasles", GeoPoint(52.509, 13.376))
 
         val sampleJourneys: List<Journey> = listOf(
             Journey(
