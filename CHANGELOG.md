@@ -5,7 +5,9 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
-- Add contribution guidance and a security reporting policy.
+## 0.8.1
+
+- Add a privacy policy, README screenshots, contribution guidance, and a security reporting policy.
 - Add this changelog.
 - Include minutes in spoken walking badges.
 - Remove duplicate text from spoken walking direction buttons.
@@ -18,6 +20,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 - Remove the flight mode. No journey uses a flight.
 - Fix the position marker in dark color schemes with a light primary color.
 - Show where to board the metro in Paris, for the next transfer or the exit. The RATP data ships with the app.
+- Move the MapLibre credit from the map to the About screen. The map credits button stays.
 
 ## 0.8.0
 

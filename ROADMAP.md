@@ -156,9 +156,9 @@ Limits for this release:
 - Screenshot references exclude the native map. They cover panels and dialogs in light and dark at 100% and 200% text size.
 - Train selection does not change onward trains automatically. A platform change removes stale walking directions and gives a notice to follow station signs. See `docs/train-selection.md`.
 
-## UI redesign in progress
+## v0.8.1: UI redesign and boarding positions
 
-Implementation continues in the separate UI thread. These items remain open until the changes are complete and verified. The completed accessibility fixes above stay complete. Earlier checks cover the interim UI, so the final UI needs new checks before release.
+This beta release ships the redesign. The completed accessibility fixes above stay complete. The checks that remain open cover the final UI and must pass before v0.9.0.
 
 - [x] Improve train-choice contrast and readability. Show delay, arrival time, and time on board. Use the destination name in each choice row.
 - [x] Make choice buttons use the available width. Add icons and labels to journey options and the theme picker.
