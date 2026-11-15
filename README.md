@@ -17,6 +17,14 @@
   <a href="https://github.com/kacigaya/itivio/blob/main/LICENSE"><img alt="GPL-3.0-or-later License" src="https://shieldcn.dev/github/license/kacigaya/itivio.svg?variant=secondary"></a>
 </p>
 
+## Video
+
+<p align="center">
+  <a href="https://github.com/kacigaya/itivio/releases/download/v0.10.1/demo.mp4"><img src="assets/demo-poster.jpg" alt="itivio launch video: where to board the Paris metro, your live train, walking directions, and no account, analytics, or ads" width="720"></a>
+</p>
+
+A 24-second tour with live data in Paris. Select the image to download the video.
+
 ## Screenshots
 
 Journey results in the light theme, disruptions in the dark theme, and settings in the light theme.
