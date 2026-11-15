@@ -19,11 +19,9 @@
 
 ## Video
 
-<p align="center">
-  <a href="https://github.com/kacigaya/itivio/releases/download/v0.10.1/demo.mp4"><img src="assets/demo-poster.jpg" alt="itivio launch video: where to board the Paris metro, your live train, walking directions, and no account, analytics, or ads" width="720"></a>
-</p>
+https://github.com/user-attachments/assets/7e3c4580-aaad-45cc-9b80-27f59540e0b4
 
-A 24-second tour with live data in Paris. Select the image to download the video.
+A 24-second tour with live data in Paris: where to board the metro, your train and its delay, walking directions, and no account, analytics, or ads.
 
 ## Screenshots
 
