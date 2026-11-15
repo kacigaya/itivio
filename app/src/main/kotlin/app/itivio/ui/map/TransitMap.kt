@@ -56,6 +56,8 @@ import org.maplibre.compose.location.mostAccurateBearing
 import org.maplibre.spatialk.units.Bearing
 import org.maplibre.spatialk.units.extensions.inDegrees
 import org.maplibre.spatialk.units.extensions.inMeters
+import kotlin.math.cos
+import kotlin.math.pow
 import kotlin.math.roundToInt
 import app.itivio.ui.common.icon
 import app.itivio.ui.common.lineColors
@@ -86,6 +88,9 @@ import org.maplibre.compose.expressions.value.LineCap
 import org.maplibre.compose.expressions.value.LineJoin
 import org.maplibre.compose.expressions.dsl.case
 import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.expressions.dsl.exponential
+import org.maplibre.compose.expressions.dsl.interpolate
+import org.maplibre.compose.expressions.dsl.zoom
 import org.maplibre.compose.expressions.dsl.convertToColor
 import org.maplibre.compose.expressions.dsl.feature
 import org.maplibre.compose.expressions.dsl.image
@@ -144,6 +149,9 @@ const val MAP_STOPS_MIN_ZOOM = 15.0
 /** Walking view: the camera looks ahead, over the next street or two, with the map tilted. */
 private const val NAVIGATION_ZOOM = 19.0
 private const val NAVIGATION_PITCH = 50.0
+private const val MAX_SIDE_METERS = 15.0
+private const val METERS_PER_DP_AT_ZOOM_0 = 78_271.517
+private const val MAX_OFFSET_ZOOM = 24
 
 /** Walking view: the share of the free map height that sits above the position, under the header. */
 private const val NAVIGATION_LOOK_AHEAD = 0.3f
@@ -195,6 +203,9 @@ fun TransitMap(
     }
     // The position on the walk, in metres along it. Rounded, so the route redraws only once the walker has moved.
     val walkedMeters by rememberUpdatedState(walkProgress?.takeUnless { it.isOffRoute }?.alongMeters?.toInt() ?: 0)
+    val sideMeters by rememberUpdatedState(
+        walkProgress?.takeUnless { it.isOffRoute }?.rightMeters?.coerceIn(-MAX_SIDE_METERS, MAX_SIDE_METERS)?.roundToInt() ?: 0,
+    )
     // The direction of the arrow in the walking view, in whole degrees: the heading of the device,
     // else the route ahead. Without a compass, as on many tablets, the arrow still points the way.
     val puckRotation by remember(walk, locationState) {
@@ -223,7 +234,7 @@ fun TransitMap(
             visible = walk == null,
         )
         if (walk != null) {
-            WalkLayers(walk, walkedMeters.toDouble(), ahead = scheme.primary, walked = scheme.outline, casing = scheme.surface)
+            WalkLayers(walk, walkedMeters.toDouble(), sideMeters, ahead = scheme.primary, walked = scheme.outline, casing = scheme.surface)
         } else if (journey != null) {
             // A walk drawn alone, as in the walking view, is the route to follow: it gets the accent.
             val walk = if (journey.isStreetOnly) scheme.primary else scheme.onSurfaceVariant
@@ -429,8 +440,17 @@ private fun JourneyLayers(journey: Journey, accent: Color, casing: Color, walk: 
  */
 @Composable
 @MaplibreComposable
-private fun WalkLayers(walk: WalkRoute, walkedMeters: Double, ahead: Color, walked: Color, casing: Color) {
+private fun WalkLayers(walk: WalkRoute, walkedMeters: Double, sideMeters: Int, ahead: Color, walked: Color, casing: Color) {
     val (done, rest) = remember(walk, walkedMeters) { walk.split(walkedMeters) }
+    val offset = remember(walk, sideMeters) {
+        val dpPerMeterAtZoom0 = 1 / (METERS_PER_DP_AT_ZOOM_0 * cos(Math.toRadians(walk.points.firstOrNull()?.latitude ?: 0.0)))
+        interpolate(
+            exponential(2f),
+            zoom(),
+            0 to const((sideMeters * dpPerMeterAtZoom0).dp),
+            MAX_OFFSET_ZOOM to const((sideMeters * dpPerMeterAtZoom0 * 2.0.pow(MAX_OFFSET_ZOOM)).dp),
+        )
+    }
     val doneSource = rememberGeoJsonSource(GeoJsonData.Features(done.toLineString()))
     val restSource = rememberGeoJsonSource(GeoJsonData.Features(rest.toLineString()))
     LineLayer(
@@ -441,6 +461,7 @@ private fun WalkLayers(walk: WalkRoute, walkedMeters: Double, ahead: Color, walk
         dasharray = const(listOf(0.0, 2.4)),
         cap = const(LineCap.Round),
         join = const(LineJoin.Round),
+        offset = offset,
     )
     // A casing under the dots keeps them clear on busy streets, as the transit lines have.
     LineLayer(
@@ -453,6 +474,7 @@ private fun WalkLayers(walk: WalkRoute, walkedMeters: Double, ahead: Color, walk
         dasharray = const(listOf(0.0, 12.0 / 9)),
         cap = const(LineCap.Round),
         join = const(LineJoin.Round),
+        offset = offset,
     )
     LineLayer(
         id = "walk-ahead",
@@ -462,6 +484,7 @@ private fun WalkLayers(walk: WalkRoute, walkedMeters: Double, ahead: Color, walk
         dasharray = const(listOf(0.0, 2.0)),
         cap = const(LineCap.Round),
         join = const(LineJoin.Round),
+        offset = offset,
     )
 }
 

@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Draw the walk on your side of the street in the walking view. The line moves sideways to pass under your position, up to 15 m from the street centre.
+
 ## 0.10.1
 
 - Show your real position in the walking view. The arrow no longer jumps to the route line, so it stays on your side of the street.

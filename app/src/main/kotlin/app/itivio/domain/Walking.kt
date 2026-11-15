@@ -48,6 +48,7 @@ data class WalkProgress(
     /** Distance from the position to the nearest point of the route. */
     val offRouteMeters: Double,
     val limitMeters: Double = WalkRoute.OFF_ROUTE_METERS,
+    val rightMeters: Double = 0.0,
 ) {
     val isOffRoute: Boolean get() = offRouteMeters > limitMeters
 }
@@ -75,14 +76,17 @@ class WalkRoute(val points: List<GeoPoint>, val instructions: List<WalkInstructi
         if (points.size < 2) return WalkProgress(0.0, points.firstOrNull()?.let { distance(it, position) } ?: 0.0)
         var bestOff = Double.MAX_VALUE
         var bestAlong = 0.0
+        var bestIndex = 0
         for (i in 0 until points.lastIndex) {
             val (fraction, off) = project(points[i], points[i + 1], position)
             if (off < bestOff) {
                 bestOff = off
+                bestIndex = i
                 bestAlong = cumulative[i] + fraction * (cumulative[i + 1] - cumulative[i])
             }
         }
-        return WalkProgress(bestAlong, bestOff)
+        val side = normalized(bearing(points[bestIndex], position) - bearing(points[bestIndex], points[bestIndex + 1]))
+        return WalkProgress(bestAlong, bestOff, rightMeters = if (side < 0) -bestOff else bestOff)
     }
 
     fun progress(fix: LocationFix, wasOffRoute: Boolean = false): WalkProgress {

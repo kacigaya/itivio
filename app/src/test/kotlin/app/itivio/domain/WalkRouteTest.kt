@@ -87,6 +87,9 @@ class WalkRouteTest {
         val near = route.progress(at(10.0, 50.0))
         assertEquals(50.0, near.alongMeters, 1.0)
         assertEquals(10.0, near.offRouteMeters, 1.0)
+        assertEquals(10.0, near.rightMeters, 1.0)
+        assertEquals(-10.0, route.progress(at(-10.0, 50.0)).rightMeters, 1.0)
+        assertEquals(-5.0, route.progress(at(50.0, 105.0)).rightMeters, 1.0)
         assertFalse(near.isOffRoute)
         assertTrue(route.progress(at(-80.0, 50.0)).isOffRoute)
 
