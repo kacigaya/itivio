@@ -1,10 +1,5 @@
 package app.itivio.ui
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -61,12 +56,14 @@ import app.itivio.domain.hints
 import app.itivio.domain.Location
 import app.itivio.domain.LocationKind
 import app.itivio.ui.common.LoadState
-import app.itivio.ui.common.backPreviewDecorator
 import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.MapPanel
+import app.itivio.ui.common.ScreenChange
+import app.itivio.ui.common.screenMotionDecorator
 import app.itivio.ui.common.UserLocation
 import app.itivio.ui.common.LocalPanelHeaderHeight
 import app.itivio.ui.common.isWideLayout
+import app.itivio.ui.common.keptWhileLeaving
 import app.itivio.ui.common.panelInsets
 import app.itivio.ui.explore.ExplorePeekHeight
 import app.itivio.ui.disruptions.DisruptionsScreen
@@ -244,6 +241,7 @@ fun ItivioRoot(
     // Only the two top-level screens show the navigation bar or rail.
     val topLevel = top == ExploreRoute || top == DisruptionsRoute
     var navigationSize by remember { mutableStateOf(0.dp) }
+    val screenChange = remember { ScreenChange() }
 
     Box(Modifier.fillMaxSize()) {
         TransitMap(
@@ -281,12 +279,12 @@ fun ItivioRoot(
                     entryDecorators = listOf(
                         rememberSaveableStateHolderNavEntryDecorator(),
                         rememberViewModelStoreNavEntryDecorator(),
-                        remember { backPreviewDecorator() },
+                        remember { screenMotionDecorator(screenChange) },
                     ),
-                    transitionSpec = { fadeIn() togetherWith fadeOut() },
-                    popTransitionSpec = { fadeIn() togetherWith fadeOut() },
-                    // The back preview decorator gives the motion of a back gesture.
-                    predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.KeepUntilTransitionsFinished },
+                    // The screen motion decorator gives the motion of all screen changes.
+                    transitionSpec = { screenChange.transform(this, back = false) },
+                    popTransitionSpec = { screenChange.transform(this, back = true) },
+                    predictivePopTransitionSpec = { screenChange.transform(this, back = true) },
                     entryProvider = entryProvider {
                         entry<ExploreRoute> {
                             // Scoped to this entry. A compact window shows the alerts and their count on
@@ -361,7 +359,7 @@ fun ItivioRoot(
                         entry<ResultsRoute> {
                             ResultsScreen(
                                 wide = wide,
-                                state = state,
+                                state = keptWhileLeaving(state),
                                 onBack = { backStack.pop(planner) },
                                 onOrigin = { endpoint ->
                                     if (endpoint == Endpoint.MyLocation && !locationGranted) locationState.requestPermission()
@@ -428,7 +426,7 @@ fun ItivioRoot(
                                 WalkScreen(
                                     wide = wide,
                                     leg = leg,
-                                    progress = walkProgress,
+                                    progress = keptWhileLeaving(walkProgress),
                                     locationGranted = locationGranted,
                                     following = following,
                                     now = now,

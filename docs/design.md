@@ -39,18 +39,31 @@ Material Symbols Rounded, filled, as vector drawables. A row without a line colo
 
 ## Motion
 
-`MotionScheme.expressive()`. Sheet and card changes use the theme springs. The search view opens and closes with the default spatial spring, not the slow one. Screen changes use shared-axis fades. A list that loads shows a skeleton. An action in progress shows the Expressive `LoadingIndicator`. See "States".
+`MotionScheme.expressive()`. Sheet and card changes use the theme springs. The search view opens and closes with the default spatial spring, not the slow one. A list that loads shows a skeleton. An action in progress shows the Expressive `LoadingIndicator`. See "States".
+
+### Screen changes
+
+The screen on top is a card. The same motion serves a new screen, the back button, and the back gesture.
+
+- A new screen comes up from the bottom edge in 450 ms, with the Material emphasized decelerate easing. A spring would go past the rest position and show the map below the card. The screen below fades out in the first half of the time.
+- "Back" sends the card down in 300 ms, with the emphasized accelerate easing. The screen below fades in during the first half of the time.
+- On a map screen, the card is the sheet or the side pane. The header and the map buttons of a compact window move with the card, but they show only in the last eighth of the way. Thus they fade in near their position and do not cross the map.
+- A full-screen page gets the top corners of the screen while it moves.
+- "Back" on the results resets the journey search at once. The card keeps its last content while it goes down.
+- When system animations are off, the screens change at once.
+
+`ScreenMotion.kt` holds this motion. NavDisplay gives only the direction and the time.
 
 ### Back gesture
 
 The app shows a preview during a back gesture, as in the Android [predictive back guidance](https://developer.android.com/design/ui/mobile/guides/patterns/predictive-back). The preview follows the finger. A release before the commit point puts the screen back.
 
-- Between screens: the screen on top becomes a card, as in the system settings. The card shrinks to 90%, gets the corners of the screen, and moves away from the edge of the gesture. It stays 8dp from the other edge. The screen below and the map get the Material scrim, up to 32%. A release fades the card out and removes the scrim. On a map screen, the sheet and its header form the card.
+- Between screens: the card on top goes down by up to 15% of the screen height, and the screen below fades in. A release sends the card down below the edge of the screen. The content of the card does not update during the gesture.
 - Disruptions page of the home sheet: the Departures page comes into view by 30% of its width.
 - Search view, dialogs, and menus: the Material components supply their own behavior.
 - Home: the system shows the launcher behind the app.
 
-The preview uses the easing of the system back animations, `(0.1, 0.1, 0, 1)`. The card does not follow the vertical position of the finger. The back button of a screen and three-button navigation use the usual fade.
+The preview uses the easing of the system back animations, `(0.1, 0.1, 0, 1)`. The card does not follow the edge or the vertical position of the finger.
 
 ## Screens
 

@@ -36,7 +36,7 @@ private val PageWidth = 840.dp
  */
 @Composable
 fun Page(title: String, onBack: (() -> Unit)?, content: LazyListScope.() -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxSize()) {
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxSize().screenCard()) {
         Box(Modifier.safeDrawingPadding(), contentAlignment = Alignment.TopCenter) {
             LazyColumn(
                 contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),

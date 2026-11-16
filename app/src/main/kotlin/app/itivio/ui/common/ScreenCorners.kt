@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 private val FallbackCornerRadius = 28.dp
 
 /**
- * The corner radius of the screen, so the sheets and the back gesture card have the shape of the
+ * The corner radius of the screen, so the sheets and the screen cards have the shape of the
  * device. Android 12 and later give it. Older versions, square screens, and tests get the radius
  * of the `extraLarge` shape.
  */

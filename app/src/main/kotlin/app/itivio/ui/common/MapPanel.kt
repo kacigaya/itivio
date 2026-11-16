@@ -100,7 +100,7 @@ fun MapPanel(
             }
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.align(Alignment.BottomStart).padding(start = PaneWidth + PaneMargin * 2, bottom = PaneMargin),
+                modifier = Modifier.align(Alignment.BottomStart).screenFloat().padding(start = PaneWidth + PaneMargin * 2, bottom = PaneMargin),
                 content = controls,
             )
         }
@@ -124,13 +124,14 @@ fun MapPanel(
                         Column(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier
+                                .screenFloat()
                                 .onSizeChanged { headerHeight?.value = with(density) { it.height.toDp() } }
                                 .statusBarsPadding()
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                         ) { header() }
                         Column(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.align(Alignment.BottomStart).padding(start = 16.dp, bottom = peekHeight + 16.dp),
+                            modifier = Modifier.align(Alignment.BottomStart).screenFloat().padding(start = 16.dp, bottom = peekHeight + 16.dp),
                             content = controls,
                         )
                     }
