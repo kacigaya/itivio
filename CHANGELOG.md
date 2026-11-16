@@ -5,6 +5,10 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.11.0
+
+Beta prerelease for Android 8.0 and later.
+
 - Move each new screen up from the bottom edge as a card. "Back" sends the card down again. A back gesture pulls the card down and shows the screen below.
 - Draw the walk on your side of the street in the walking view. The line moves sideways to pass under your position, up to 15 m from the street centre.
 
