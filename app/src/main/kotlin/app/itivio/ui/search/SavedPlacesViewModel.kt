@@ -6,7 +6,7 @@ import app.itivio.domain.Location
 import app.itivio.domain.PlacesRepository
 import app.itivio.domain.SavedPlaces
 import app.itivio.domain.Shortcut
-import kotlinx.coroutines.CancellationException
+import app.itivio.ui.common.attempt
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -49,13 +49,7 @@ class SavedPlacesViewModel(private val places: PlacesRepository) : ViewModel() {
 
     private fun write(block: suspend () -> Unit) {
         viewModelScope.launch {
-            try {
-                block()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Nothing to show: the lists keep their last state from storage.
-            }
+            attempt { block() }
         }
     }
 }

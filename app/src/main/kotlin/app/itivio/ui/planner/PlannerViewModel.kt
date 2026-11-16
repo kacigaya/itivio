@@ -15,6 +15,7 @@ import app.itivio.domain.TransitMode
 import app.itivio.ui.common.Failure
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.UserLocation
+import app.itivio.ui.common.attempt
 import app.itivio.ui.common.toFailure
 import java.time.Instant
 import kotlinx.coroutines.CancellationException
@@ -102,11 +103,7 @@ class PlannerViewModel(
     // Stored options are optional: a storage failure, such as a full disk, must not stop routing.
     // A failed read keeps the defaults, and a failed write keeps the options for this session.
     private val storedOptions: Job = viewModelScope.launch {
-        val stored = try {
-            optionsRepository.options.first()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
+        val stored = attempt { optionsRepository.options.first() }.getOrElse {
             _state.update { it.copy(optionsLoaded = true) }
             return@launch
         }
@@ -117,12 +114,8 @@ class PlannerViewModel(
         restore()
         // The settings screen also edits the stored options. The first value is the read above.
         viewModelScope.launch {
-            try {
+            attempt {
                 optionsRepository.options.drop(1).collect { stored -> _state.update { it.copy(options = stored) } }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Storage failed: the options of this session stay.
             }
         }
     }
@@ -196,13 +189,7 @@ class PlannerViewModel(
         storedOptions.cancel()
         _state.update { it.copy(options = options, optionsLoaded = true) }
         viewModelScope.launch {
-            try {
-                optionsRepository.save(options)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Nothing to show: the options still apply until the app stops.
-            }
+            attempt { optionsRepository.save(options) }
         }
         planIfReady()
     }

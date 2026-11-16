@@ -7,7 +7,7 @@ itivio is one Android app module (`:app`). Packages give the layering. Split int
 ```
 ui/        Compose screens, ViewModels (StateFlow), navigation, theme
 domain/    Plain Kotlin models and the RoutingRepository contract
-data/      Transitous client, DTOs, mappers, caches, local storage, location
+data/      Transitous client, DTOs, mappers, caches, local storage
 ```
 
 - `ui` depends on `domain`. It never imports `data` types.
@@ -15,6 +15,7 @@ data/      Transitous client, DTOs, mappers, caches, local storage, location
 - `domain.PlacesRepository` holds saved places. `data/places` implements it with Room.
 - `domain.JourneyOptionsRepository` holds the journey options. `data/options` implements it with DataStore.
 - `domain.SettingsRepository` holds the app settings. `domain.AppData` deletes all stored data. `data/settings` implements both.
+- Device location lives in `ui/common/UserLocation.kt` and the MapLibre provider in `ItivioRoot.kt`.
 - ViewModels are bound in `UiModule.kt`.
 
 The planning session is in memory. The planner also keeps the minimal request in its `SavedStateHandle`: the origin, the destination, the travel time, and "arrive by". After process death, the planner reads the request and plans again. The results, the sort, and the selection are not saved. A request from "My location" waits up to 10 seconds for the first location fix. While the new plan loads, the itinerary and the walking view show a loading state. If the journey is not in the new results, the screen goes back to the results. Without a saved request, the screens of the session close. "Back" from the results deletes the request.

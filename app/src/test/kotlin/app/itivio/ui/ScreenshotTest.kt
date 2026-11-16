@@ -576,13 +576,13 @@ open class ScreenshotTest {
                     Leg.Street(TransitMode.WALK, stop("Start"), stop("S+U Alexanderplatz"), at(0), at(4), emptyList(), 320.0),
                     Leg.Transit(
                         TransitMode.SUBWAY, stop("S+U Alexanderplatz", "2"), stop("U Stadtmitte"), at(6, 2), at(13, 2),
-                        emptyList(), Line("U2", color = 0xFFDA421E.toInt(), textColor = 0xFFFFFFFF.toInt(), agency = "BVG"),
+                        emptyList(), Line("U2", color = 0xFFDA421E.toInt(), textColor = 0xFFFFFFFF.toInt()),
                         "Ruhleben", "t1", listOf(stop("U Klosterstr."), stop("U Märkisches Museum"), stop("U Spittelmarkt")),
                     ),
                     Leg.Street(TransitMode.WALK, stop("U Stadtmitte"), stop("U Stadtmitte (U6)"), at(15), at(18), emptyList(), 180.0),
                     Leg.Transit(
                         TransitMode.BUS, stop("U Stadtmitte (U6)", "B"), stop("Potsdamer Platz"), at(19), at(26),
-                        emptyList(), Line("M41", color = 0xFFA5027D.toInt(), agency = "BVG"), "Sonnenallee", "t2", emptyList(),
+                        emptyList(), Line("M41", color = 0xFFA5027D.toInt()), "Sonnenallee", "t2", emptyList(),
                         alerts = listOf(
                             Alert("Diversion at Potsdamer Platz because of road works", "The stop moves 50 m."),
                             Alert("Lift out of service at U Stadtmitte", ""),

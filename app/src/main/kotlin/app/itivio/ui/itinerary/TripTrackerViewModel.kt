@@ -7,6 +7,7 @@ import app.itivio.domain.Journey
 import app.itivio.domain.Leg
 import app.itivio.domain.RoutingException
 import app.itivio.domain.RoutingRepository
+import app.itivio.domain.samePlatformAs
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,15 +15,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.launch
 
 data class TrainSelectionState(
     val loadingLeg: Int? = null,
@@ -121,16 +122,14 @@ class TripTrackerViewModel(
                 val restored = updated.legs.mapIndexed { index, leg ->
                     val originalWalk = baseline.legs.getOrNull(index) as? Leg.Street
                     if (leg is Leg.Street && originalWalk != null && index in legIndex - 1..legIndex + 1 &&
-                        leg.from.stopId == originalWalk.from.stopId && leg.to.stopId == originalWalk.to.stopId &&
-                        leg.from.track == originalWalk.from.track && leg.to.track == originalWalk.to.track
+                        leg.from.samePlatformAs(originalWalk.from) && leg.to.samePlatformAs(originalWalk.to)
                     ) leg.copy(geometry = originalWalk.geometry, steps = originalWalk.steps) else leg
                 }
                 updated = updated.copy(legs = restored)
             }
             val changed = selectionState.value.changedLegs.let { if (tripId == originalLeg.tripId) it - legIndex else it + legIndex }
             val updatedLeg = updated.legs[legIndex] as Leg.Transit
-            val platformChanged = originalLeg.from.stopId != updatedLeg.from.stopId || originalLeg.to.stopId != updatedLeg.to.stopId ||
-                originalLeg.from.track != updatedLeg.from.track || originalLeg.to.track != updatedLeg.to.track
+            val platformChanged = !originalLeg.from.samePlatformAs(updatedLeg.from) || !originalLeg.to.samePlatformAs(updatedLeg.to)
             val platforms = selectionState.value.platformChangedLegs.let { if (platformChanged) it + legIndex else it - legIndex }
             planned.value = updated
             selectionState.value = TrainSelectionState(changedLegs = changed, platformChangedLegs = platforms)

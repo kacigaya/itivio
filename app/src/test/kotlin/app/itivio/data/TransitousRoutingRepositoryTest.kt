@@ -21,6 +21,45 @@ class TransitousRoutingRepositoryTest {
     private val from = Location("a", "Origin", LocationKind.STOP, point, stopId = "stop:origin")
     private val to = Location("b", "Destination", LocationKind.PLACE, GeoPoint(52.5076, 13.3904))
 
+    @Test fun cachedRequestsReadLanguageOnce() = runTest {
+        var reads = 0
+        val seen = mutableListOf<String?>()
+        val engine = MockEngine { request ->
+            seen += request.url.parameters["language"]
+            val name = when (request.url.encodedPath) {
+                "/api/v1/geocode" -> "geocode"
+                "/api/v6/plan" -> "plan"
+                "/api/v6/trip" -> "trip"
+                else -> "stoptimes"
+            }
+            respond(fixture(name), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        createHttpClient(engine, "test", "").use { client ->
+            val repo = TransitousRoutingRepository(client, { if (reads++ % 2 == 0) "de-DE" else "fr-FR" })
+            val requests: List<suspend () -> Unit> = listOf(
+                { repo.searchLocations("Berlin") },
+                { repo.planJourneys(JourneyRequest(from, to)) },
+                { repo.nearbyDepartures(point) },
+                { repo.stopDepartures("stop:a") },
+                { repo.trip("trip:a") },
+                { repo.lineDepartures("stop:a", Line("RE3"), null, Instant.EPOCH, 1) },
+            )
+            for (request in requests) {
+                reads = 0
+                seen.clear()
+                request()
+                assertEquals(1, reads)
+                assertTrue(seen.isNotEmpty())
+                assertTrue(seen.all { it == "de-DE" })
+                reads = 0
+                seen.clear()
+                request()
+                assertEquals(1, reads)
+                assertTrue(seen.isEmpty())
+            }
+        }
+    }
+
     @Test fun userAgentBuilder() {
         assertEquals("itivio/1 (Android)", userAgent("1", ""))
         assertEquals("itivio/1 (Android)", userAgent("1", "  "))
@@ -77,12 +116,12 @@ class TransitousRoutingRepositoryTest {
                 "BUS,COACH,TRAM,SUBWAY,SUBURBAN,REGIONAL_RAIL,LONG_DISTANCE,NIGHT_RAIL,HIGHSPEED_RAIL,FERRY,AERIAL_LIFT,FUNICULAR,ODM,RIDE_SHARING,OTHER",
                 seen.last().url.parameters["transitModes"],
             )
-            val departures = repo.nearbyDepartures(point, 700, 12)
+            val departures = repo.nearbyDepartures(point)
             assertEquals(departures.sortedBy { it.time.best }, departures)
             params = seen.last().url.parameters
             assertEquals("52.5221,13.4133", params["center"])
-            assertEquals("700", params["radius"])
-            assertEquals("12", params["n"])
+            assertEquals("400", params["radius"])
+            assertEquals("20", params["n"])
             assertEquals("true", params["exactRadius"])
             assertEquals("false", params["withAlerts"])
             repo.nearbyDepartures(point, withAlerts = true)
@@ -198,7 +237,7 @@ class TransitousRoutingRepositoryTest {
             suspend fun all() {
                 repo.planJourneys(request)
                 repo.stopDepartures("stop:a")
-                repo.nearbyDepartures(point, 500, 20, false)
+                repo.nearbyDepartures(point)
             }
             all()
             assertEquals(3, requests)
@@ -206,7 +245,7 @@ class TransitousRoutingRepositoryTest {
             // A move of a few meters gives the same rounded position.
             now = start.plusSeconds(29)
             all()
-            repo.nearbyDepartures(GeoPoint(point.latitude + 0.00001, point.longitude), 500, 20, false)
+            repo.nearbyDepartures(GeoPoint(point.latitude + 0.00001, point.longitude))
             assertEquals(3, requests)
 
             // Another page, stop, or option is another request.

@@ -8,7 +8,7 @@ import app.itivio.domain.JourneyOptionsRepository
 import app.itivio.domain.PlacesRepository
 import app.itivio.domain.SettingsRepository
 import app.itivio.domain.ThemeMode
-import kotlinx.coroutines.CancellationException
+import app.itivio.ui.common.attempt
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -42,13 +42,7 @@ class SettingsViewModel(
 
     private fun write(action: suspend () -> Unit) {
         viewModelScope.launch {
-            try {
-                action()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                // Nothing to show: the stored data stays as it was.
-            }
+            attempt { action() }
         }
     }
 }

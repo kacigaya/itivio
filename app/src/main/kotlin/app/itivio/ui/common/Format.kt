@@ -55,7 +55,6 @@ fun formatTime(instant: Instant, zone: ZoneId?): String {
     return formatter.withZone(zone ?: ZoneId.systemDefault()).format(instant)
 }
 
-/** Rounds to whole minutes; a journey under one minute still shows as 1 min. */
 /**
  * Minutes from [now] to [time] on the clock, seconds ignored, so a countdown agrees with the clock
  * time beside it. At 12:13:40 a 12:15 departure is 2 minutes away, not the 1 whole minute left.
@@ -63,6 +62,7 @@ fun formatTime(instant: Instant, zone: ZoneId?): String {
 fun clockMinutesUntil(now: Instant, time: Instant): Long =
     Duration.between(now.truncatedTo(ChronoUnit.MINUTES), time.truncatedTo(ChronoUnit.MINUTES)).toMinutes()
 
+/** Rounds to whole minutes; a journey under one minute still shows as 1 min. */
 @Composable
 fun formatDuration(duration: Duration): String {
     val totalMinutes = ((duration.seconds + 30) / 60).toInt().coerceAtLeast(1)

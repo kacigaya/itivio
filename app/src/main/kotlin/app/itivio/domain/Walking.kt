@@ -14,7 +14,6 @@ enum class StepKind { WALK, STAIRS, ELEVATOR }
  * provider can give no turn and no street name. [WalkRoute] makes instructions from the steps.
  */
 data class WalkStep(
-    val distanceMeters: Double,
     /** Null when the way has no name. */
     val streetName: String?,
     val geometry: List<GeoPoint>,
@@ -197,7 +196,7 @@ class WalkRoute(val points: List<GeoPoint>, val instructions: List<WalkInstructi
          */
         fun of(steps: List<WalkStep>, geometry: List<GeoPoint>): WalkRoute {
             val usable = steps.filter { it.geometry.size >= 2 }
-            val parts = usable.ifEmpty { listOf(WalkStep(0.0, null, geometry)) }
+            val parts = usable.ifEmpty { listOf(WalkStep(null, geometry)) }
             val points = buildList {
                 parts.forEach { step -> step.geometry.forEach { if (lastOrNull() != it) add(it) } }
             }

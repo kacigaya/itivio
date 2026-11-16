@@ -17,9 +17,6 @@ import app.itivio.domain.WalkingSpeed
 import app.itivio.data.ign.IgnAddressSearch
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.HttpRequestTimeoutException
-import io.ktor.client.network.sockets.ConnectTimeoutException
-import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.HttpRequestBuilder
@@ -54,7 +51,7 @@ class TransitousRoutingRepository(
 
     /** A departure board: one stop ([stopId]), or the stops around [center]. Disruptions read the same boards. */
     private data class BoardKey(
-        val stopId: String?, val center: String?, val radius: Int?, val limit: Int, val withAlerts: Boolean, val language: String,
+        val stopId: String?, val center: String?, val limit: Int, val withAlerts: Boolean, val language: String,
     )
     private val boardCache = lru<BoardKey, Cached<List<Departure>>>(32)
 
@@ -76,7 +73,7 @@ class TransitousRoutingRepository(
             val matches = get<List<Match>>("v1/geocode") {
                 parameter("text", text)
                 parameter("numResults", 10)
-                parameter("language", language())
+                parameter("language", language)
                 bias?.let { parameter("place", it) }
             }
             var complete = true
@@ -112,10 +109,12 @@ class TransitousRoutingRepository(
         }.firstOrNull()?.toDomain()
     }
 
-    override suspend fun planJourneys(request: JourneyRequest, cursor: String?): JourneyPage =
-        planCache.cached(Triple(request, cursor, language())) { planRequest(request, cursor) }
+    override suspend fun planJourneys(request: JourneyRequest, cursor: String?): JourneyPage {
+        val language = language()
+        return planCache.cached(Triple(request, cursor, language)) { planRequest(request, cursor, language) }
+    }
 
-    private suspend fun planRequest(request: JourneyRequest, cursor: String?): JourneyPage = mapped {
+    private suspend fun planRequest(request: JourneyRequest, cursor: String?, language: String): JourneyPage = mapped {
         get<PlanResponse>("v6/plan") {
             parameter("fromPlace", request.from.stopId ?: request.from.point.coordinates())
             parameter("toPlace", request.to.stopId ?: request.to.point.coordinates())
@@ -135,49 +134,55 @@ class TransitousRoutingRepository(
             }
             parameter("detailedLegs", true)
             parameter("detailedTransfers", false)
-            parameter("language", language())
+            parameter("language", language)
         }.toDomain(request.from.name, request.to.name)
     }
 
-    override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int, withAlerts: Boolean): List<Departure> {
+    override suspend fun nearbyDepartures(point: GeoPoint, withAlerts: Boolean): List<Departure> {
         // The key has the position as sent, so small moves of the user still share one entry.
         val center = point.rounded(4)
-        return boardCache.cached(BoardKey(null, center, radiusMeters, limit, withAlerts, language())) {
-            nearbyRequest(center, radiusMeters, limit, withAlerts)
+        val key = BoardKey(null, center, NEARBY_LIMIT, withAlerts, language())
+        return boardCache.cached(key) {
+            nearbyRequest(center, withAlerts, key.language)
         }
     }
 
-    private suspend fun nearbyRequest(center: String, radiusMeters: Int, limit: Int, withAlerts: Boolean): List<Departure> = mapped {
+    private suspend fun nearbyRequest(center: String, withAlerts: Boolean, language: String): List<Departure> = mapped {
         get<StoptimesResponse>("v6/stoptimes") {
             parameter("center", center)
-            parameter("radius", radiusMeters)
+            parameter("radius", NEARBY_RADIUS_METERS)
             parameter("exactRadius", true)
-            parameter("n", limit)
+            parameter("n", NEARBY_LIMIT)
             parameter("withAlerts", withAlerts)
-            parameter("language", language())
+            parameter("language", language)
         }.stopTimes.map { it.toDomain() }.sortedBy { it.time.best }
     }
 
-    override suspend fun stopDepartures(stopId: String, limit: Int, withAlerts: Boolean): List<Departure> =
-        boardCache.cached(BoardKey(stopId, null, null, limit, withAlerts, language())) { stopRequest(stopId, limit, withAlerts) }
+    override suspend fun stopDepartures(stopId: String, limit: Int, withAlerts: Boolean): List<Departure> {
+        val language = language()
+        return boardCache.cached(BoardKey(stopId, null, limit, withAlerts, language)) { stopRequest(stopId, limit, withAlerts, language) }
+    }
 
-    private suspend fun stopRequest(stopId: String, limit: Int, withAlerts: Boolean): List<Departure> = mapped {
+    private suspend fun stopRequest(stopId: String, limit: Int, withAlerts: Boolean, language: String): List<Departure> = mapped {
         get<StoptimesResponse>("v6/stoptimes") {
             parameter("stopId", stopId)
             parameter("n", limit)
             parameter("withAlerts", withAlerts)
-            parameter("language", language())
+            parameter("language", language)
         }.stopTimes.map { it.toDomain() }.sortedBy { it.time.best }
     }
 
-    override suspend fun trip(tripId: String): Trip = tripCache.cached(tripId to language()) { tripRequest(tripId) }
+    override suspend fun trip(tripId: String): Trip {
+        val language = language()
+        return tripCache.cached(tripId to language) { tripRequest(tripId, language) }
+    }
 
-    private suspend fun tripRequest(tripId: String): Trip = mapped {
+    private suspend fun tripRequest(tripId: String, language: String): Trip = mapped {
         get<Itinerary>("v6/trip") {
             parameter("tripId", tripId)
             // The tracker needs the times, not the shape of the route.
             parameter("detailedLegs", false)
-            parameter("language", language())
+            parameter("language", language)
         }.toTrip()
     }
 
@@ -191,11 +196,11 @@ class TransitousRoutingRepository(
     ): List<Departure> {
         val key = LineKey(stopId, line, directionId, from, limit,
             alightAt?.stopId, alightAt?.stationId, language())
-        return lineCache.cached(key) { lineRequest(stopId, line, directionId, from, limit, alightAt) }.filter { it.time.best >= from }
+        return lineCache.cached(key) { lineRequest(stopId, line, directionId, from, limit, alightAt, key.language) }
     }
 
     private suspend fun lineRequest(
-        stopId: String, line: Line, directionId: String?, from: Instant, limit: Int, alightAt: Stop?,
+        stopId: String, line: Line, directionId: String?, from: Instant, limit: Int, alightAt: Stop?, language: String,
     ): List<Departure> = mapped {
         val target = alightAt?.takeIf { it.stopId != null || it.stationId != null }
         if (limit <= 0) return@mapped emptyList()
@@ -210,7 +215,7 @@ class TransitousRoutingRepository(
                     parameter("time", from.motisTime())
                     parameter("n", LINE_SCAN)
                     parameter("withAlerts", false)
-                    parameter("language", language())
+                    parameter("language", language)
                     if (target != null) parameter("fetchStops", true)
                     cursor?.let { parameter("pageCursor", it) }
                 } }
@@ -262,12 +267,6 @@ class TransitousRoutingRepository(
         throw e
     } catch (e: RoutingException) {
         throw e
-    } catch (e: HttpRequestTimeoutException) {
-        throw RoutingException.Offline(e)
-    } catch (e: ConnectTimeoutException) {
-        throw RoutingException.Offline(e)
-    } catch (e: SocketTimeoutException) {
-        throw RoutingException.Offline(e)
     } catch (e: IOException) {
         throw RoutingException.Offline(e)
     } catch (e: Exception) {
@@ -276,6 +275,8 @@ class TransitousRoutingRepository(
 }
 
 // Bound each refresh at busy stations and on lines with little service.
+private const val NEARBY_RADIUS_METERS = 400
+private const val NEARBY_LIMIT = 20
 private const val LINE_SCAN = 80
 private const val LINE_MAX_PAGES = 8
 private val LIVE_CACHE: Duration = Duration.ofSeconds(30)

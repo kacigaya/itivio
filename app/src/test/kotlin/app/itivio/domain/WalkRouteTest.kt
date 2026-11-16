@@ -19,7 +19,7 @@ class WalkRouteTest {
             val count = (length / size).toInt().coerceAtLeast(1)
             (0 until count).map { i ->
                 fun lerp(t: Double) = at(a.first + (b.first - a.first) * t, a.second + (b.second - a.second) * t)
-                WalkStep(length / count, name, listOf(lerp(i.toDouble() / count), lerp((i + 1.0) / count)))
+                WalkStep(name, listOf(lerp(i.toDouble() / count), lerp((i + 1.0) / count)))
             }
         }
 
@@ -50,7 +50,7 @@ class WalkRouteTest {
     @Test
     fun `stairs get their own instruction and the walk continues after them`() {
         val before = steps(0.0 to 0.0, 0.0 to 40.0)
-        val stairs = WalkStep(15.0, null, listOf(at(0.0, 40.0), at(0.0, 55.0)), kind = StepKind.STAIRS)
+        val stairs = WalkStep(null, listOf(at(0.0, 40.0), at(0.0, 55.0)), kind = StepKind.STAIRS)
         val after = steps(0.0 to 55.0, 0.0 to 100.0)
         val route = WalkRoute.of(before + stairs + after, emptyList())
         assertEquals(listOf(Maneuver.DEPART, Maneuver.STAIRS, Maneuver.STRAIGHT, Maneuver.ARRIVE), route.maneuvers())
@@ -60,14 +60,14 @@ class WalkRouteTest {
     @Test
     fun `a turn from the provider is kept`() {
         val first = steps(0.0 to 0.0, 0.0 to 50.0)
-        val turn = WalkStep(50.0, null, listOf(at(0.0, 50.0), at(0.0, 100.0)), turn = Maneuver.LEFT)
+        val turn = WalkStep(null, listOf(at(0.0, 50.0), at(0.0, 100.0)), turn = Maneuver.LEFT)
         assertEquals(listOf(Maneuver.DEPART, Maneuver.LEFT, Maneuver.ARRIVE), WalkRoute.of(first + turn, emptyList()).maneuvers())
     }
 
     @Test
     fun `the street name is the one that covers most of the instruction`() {
         val named = steps(0.0 to 0.0, 0.0 to 90.0, name = "Rue de Rivoli")
-        val bit = WalkStep(2.0, "Allée", listOf(at(0.0, 90.0), at(0.0, 92.0)))
+        val bit = WalkStep("Allée", listOf(at(0.0, 90.0), at(0.0, 92.0)))
         val route = WalkRoute.of(named + bit + steps(0.0 to 92.0, 100.0 to 92.0), emptyList())
         assertEquals("Rue de Rivoli", route.instructions[0].streetName)
         // The way after the turn has no name: the fallback text names only the turn.

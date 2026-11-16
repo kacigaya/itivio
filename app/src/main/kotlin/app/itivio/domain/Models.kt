@@ -62,7 +62,6 @@ data class Line(
     /** Agency colors as ARGB. Null when the feed has none; the UI then uses theme colors. */
     val color: Int? = null,
     val textColor: Int? = null,
-    val agency: String? = null,
     /** Provider route ID. Null when the provider gives none; lines then match by [name]. */
     val id: String? = null,
 )
@@ -195,6 +194,9 @@ data class Journey(
             return null
         }
 
+    private fun nextTransit(after: Int): Int =
+        (after + 1 until legs.size).firstOrNull { legs[it] is Leg.Transit } ?: legs.size
+
     /** Replaces a ride only after its actual trip confirms both stops and the boarding visit. */
     fun withDeparture(legIndex: Int, departure: Departure, trip: Trip): Journey? {
         val leg = legs.getOrNull(legIndex) as? Leg.Transit ?: return null
@@ -220,7 +222,7 @@ data class Journey(
         val initial = legs.take(legIndex).none { it is Leg.Transit }
         val beforeShift = Duration.between(legs.getOrNull(legIndex - 1)?.end?.best ?: leg.start.best, start.best)
         val afterShift = Duration.between(leg.end.best, end.best)
-        val next = (legIndex + 1 until legs.size).firstOrNull { legs[it] is Leg.Transit } ?: legs.size
+        val next = nextTransit(legIndex)
         val changed = legs.mapIndexed { index, item ->
             val shifted = when {
                 index == legIndex -> replacement
@@ -229,14 +231,16 @@ data class Journey(
                 else -> item
             }
             // A route to a different platform must not keep the old walking instructions.
-            if (shifted is Leg.Street && index == legIndex - 1) {
-                val platformChanged = shifted.to.stopId != from.stopId || shifted.to.track != from.track
-                shifted.copy(to = from, geometry = if (platformChanged) emptyList() else shifted.geometry,
-                    steps = if (platformChanged) emptyList() else shifted.steps)
-            } else if (shifted is Leg.Street && index == legIndex + 1) {
-                val platformChanged = shifted.from.stopId != to.stopId || shifted.from.track != to.track
-                shifted.copy(from = to, geometry = if (platformChanged) emptyList() else shifted.geometry,
-                    steps = if (platformChanged) emptyList() else shifted.steps)
+            if (shifted is Leg.Street && index in legIndex - 1..legIndex + 1) {
+                val before = index == legIndex - 1
+                val endpoint = if (before) from else to
+                val platformChanged = !(if (before) shifted.to else shifted.from).samePlatformAs(endpoint)
+                shifted.copy(
+                    from = if (before) shifted.from else endpoint,
+                    to = if (before) endpoint else shifted.to,
+                    geometry = if (platformChanged) emptyList() else shifted.geometry,
+                    steps = if (platformChanged) emptyList() else shifted.steps,
+                )
             } else shifted
         }
         return copy(legs = changed, departure = changed.first().start, arrival = changed.last().end)
@@ -267,7 +271,7 @@ data class Journey(
             alerts = trip.alerts,
         )
         val shift = Duration.between(leg.end.best, updated.end.best)
-        val next = (legIndex + 1 until legs.size).firstOrNull { legs[it] is Leg.Transit } ?: legs.size
+        val next = nextTransit(legIndex)
         val newLegs = legs.mapIndexed { index, it ->
             when {
                 index == legIndex -> updated
@@ -278,6 +282,8 @@ data class Journey(
         return copy(legs = newLegs, departure = newLegs.first().start, arrival = newLegs.last().end)
     }
 }
+
+fun Stop.samePlatformAs(other: Stop): Boolean = stopId == other.stopId && track == other.track
 
 private fun Stop.sameStationAs(other: Stop): Boolean =
     (stopId != null && stopId == other.stopId) ||

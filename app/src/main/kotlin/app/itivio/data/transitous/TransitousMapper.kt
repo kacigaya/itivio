@@ -47,9 +47,9 @@ internal fun parseColor(hex: String?): Int? = hex
     ?.takeIf { it.length == 6 && it.all { c -> c in '0'..'9' || c in 'a'..'f' || c in 'A'..'F' } }
     ?.toInt(16)?.or(0xFF000000.toInt())
 
-private fun line(short: String?, display: String?, trip: String?, long: String?, color: String?, text: String?, agency: String?, id: String?) =
+private fun line(short: String?, display: String?, trip: String?, long: String?, color: String?, text: String?, id: String?) =
     Line(listOfNotNull(short, display, trip, long).firstOrNull { it.isNotBlank() } ?: "",
-        long?.takeIf { it.isNotBlank() }, parseColor(color), parseColor(text), agency, id)
+        long?.takeIf { it.isNotBlank() }, parseColor(color), parseColor(text), id)
 
 internal fun Match.toDomain(): Location {
     val default = areas.firstOrNull { it.default && it.name != name }?.name
@@ -79,13 +79,15 @@ internal fun Place.toDomain(coordinateName: String? = null): DomainStop = Domain
     stationId = parentId,
 )
 
+private val MISSION_CODE = Regex("[A-Z]{4}")
+
 /**
  * Some feeds, such as the RER in Île-de-France, put the mission code in the headsign: "QOKA" for
  * trip "QOKA52". The headsign then names no place, so the trip's final stop replaces it.
  */
 private class Heading(headsign: String?, tripShortName: String?, tripTo: Place?, agency: String?) {
     private val code = !headsign.isNullOrBlank() && !tripShortName.isNullOrBlank() && tripShortName.startsWith(headsign)
-    private val missionCode = headsign?.takeIf { agency == "Transilien" && it.matches(Regex("[A-Z]{4}")) }
+    private val missionCode = headsign?.takeIf { agency == "Transilien" && it.matches(MISSION_CODE) }
     val headsign: String? = if (code || missionCode != null) tripTo?.name ?: headsign else headsign?.takeIf { it.isNotBlank() } ?: tripTo?.name
     val tripCode: String? = if (code) tripShortName else missionCode
 }
@@ -100,7 +102,7 @@ internal fun Leg.toDomain(fromName: String? = null, toName: String? = null): Dom
     if (!mode.isTransit) return DomainLeg.Street(mode, from, to, start, end, geometry, distance ?: 0.0, steps.map { it.toDomain() })
     val heading = Heading(headsign, tripShortName, tripTo, agencyName)
     return DomainLeg.Transit(mode, from, to, start, end, geometry,
-        line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName, routeId),
+        line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, routeId),
         heading.headsign, tripId, intermediateStops.map { it.toDomain() }, cancelled,
         alerts.map { it.toDomain() }, directionId, heading.tripCode)
 }
@@ -126,7 +128,6 @@ internal fun Alert.toDomain() = app.itivio.domain.Alert(
 )
 
 internal fun StepInstruction.toDomain(): WalkStep = WalkStep(
-    distanceMeters = distance,
     streetName = streetName?.takeIf { it.isNotBlank() },
     geometry = polyline?.let { decodePolyline(it.points, it.precision) }.orEmpty(),
     kind = when (relativeDirection) {
@@ -187,7 +188,7 @@ internal fun StopTime.arrivalAt(matches: (Place) -> Boolean): DomainTime? =
 internal fun StopTime.toDomain(): Departure {
     val heading = Heading(headsign, tripShortName, tripTo, agencyName)
     return Departure(
-        place.toDomain(), line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, agencyName, routeId),
+        place.toDomain(), line(routeShortName, displayName, tripShortName, routeLongName, routeColor, routeTextColor, routeId),
         // A trip's last stop has only an arrival; fall back to it instead of failing the whole list.
         transitMode(mode), heading.headsign,
         requireNotNull(

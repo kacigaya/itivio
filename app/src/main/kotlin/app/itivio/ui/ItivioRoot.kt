@@ -182,14 +182,15 @@ fun ItivioRoot(
     val now by rememberNow()
 
     var trackedJourney by remember { mutableStateOf<Journey?>(null) }
+    fun journeyFor(id: String) = trackedJourney?.takeIf { it.id == id } ?: state.journey(id)
     val reroute by rerouter.reroute.collectAsStateWithLifecycle()
     val plannedWalkLeg = (top as? WalkRoute)?.let { route ->
-        (trackedJourney?.takeIf { it.id == route.journeyId } ?: state.journey(route.journeyId))?.legs?.getOrNull(route.legIndex) as? Leg.Street
+        journeyFor(route.journeyId)?.legs?.getOrNull(route.legIndex) as? Leg.Street
     }
     val walkKey = (top as? WalkRoute)?.let { route -> plannedWalkLeg?.let { rerouteKey(route, it, state.options) } }
     val walkLeg = plannedWalkLeg?.rerouted(walkKey, reroute)
     val mapJourney = when (top) {
-        is ItineraryRoute -> trackedJourney?.takeIf { it.id == top.journeyId } ?: state.journey(top.journeyId)
+        is ItineraryRoute -> journeyFor(top.journeyId)
         ResultsRoute -> state.highlighted
         // The walking view draws only its walk, from its start to its end.
         is WalkRoute -> walkLeg?.let { Journey("${top.journeyId}-walk-${top.legIndex}", listOf(it), it.start, it.end, 0) }
@@ -419,7 +420,7 @@ fun ItivioRoot(
                             }
                         }
                         entry<WalkRoute> { route ->
-                            val leg = ((trackedJourney?.takeIf { it.id == route.journeyId } ?: state.journey(route.journeyId))?.legs?.getOrNull(route.legIndex) as? Leg.Street)
+                            val leg = (journeyFor(route.journeyId)?.legs?.getOrNull(route.legIndex) as? Leg.Street)
                                 ?.let { it.rerouted(rerouteKey(route, it, state.options), reroute) }
                             if (leg == null) {
                                 SessionFallback(wide, state.results) { backStack.pop(planner) }

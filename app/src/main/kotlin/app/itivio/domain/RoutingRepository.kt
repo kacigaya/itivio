@@ -22,8 +22,6 @@ interface RoutingRepository {
     /** Upcoming departures around [point], sorted by time. [withAlerts] adds the service alerts of each departure. */
     suspend fun nearbyDepartures(
         point: GeoPoint,
-        radiusMeters: Int = 400,
-        limit: Int = 20,
         withAlerts: Boolean = false,
     ): List<Departure>
 

@@ -76,7 +76,6 @@ internal data class Leg(
 @Serializable
 internal data class StepInstruction(
     val relativeDirection: String? = null,
-    val distance: Double = 0.0,
     val streetName: String? = null,
     val polyline: EncodedPolyline? = null,
 )

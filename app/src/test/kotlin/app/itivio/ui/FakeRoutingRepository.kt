@@ -44,7 +44,7 @@ class FakeRoutingRepository : RoutingRepository {
     /** The points of the calls that asked for alerts. */
     val nearbyAlertCalls = mutableListOf<GeoPoint>()
 
-    override suspend fun nearbyDepartures(point: GeoPoint, radiusMeters: Int, limit: Int, withAlerts: Boolean): List<Departure> {
+    override suspend fun nearbyDepartures(point: GeoPoint, withAlerts: Boolean): List<Departure> {
         nearbyCalls += point
         if (withAlerts) nearbyAlertCalls += point
         return nearbyResult(point)

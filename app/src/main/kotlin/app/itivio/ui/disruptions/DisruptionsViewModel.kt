@@ -2,7 +2,6 @@ package app.itivio.ui.disruptions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.itivio.domain.Departure
 import app.itivio.domain.Disruption
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.PlacesRepository
@@ -14,7 +13,7 @@ import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.UserLocation
 import app.itivio.ui.common.closeTogether
 import app.itivio.ui.common.toFailure
-import kotlinx.coroutines.CancellationException
+import app.itivio.ui.common.attempt
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -90,15 +89,6 @@ class DisruptionsViewModel(
         val onSaved = disruptionsOf(savedResults.flatMap { it.getOrDefault(emptyList()) })
         val onNearby = disruptionsOf(nearbyResult?.getOrNull().orEmpty(), shown = onSaved.map { it.alert }.toSet())
         DisruptionGroups(onSaved, onNearby) to failure
-    }
-
-    /** Like `runCatching`, but a cancellation stops the load. */
-    private suspend fun attempt(request: suspend () -> List<Departure>): Result<List<Departure>> = try {
-        Result.success(request())
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Result.failure(e)
     }
 
     companion object {

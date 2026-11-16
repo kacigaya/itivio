@@ -18,3 +18,11 @@ fun Throwable.toFailure(): Failure = when (this) {
     is RoutingException.Server -> Failure.SERVER
     else -> Failure.UNEXPECTED
 }
+
+suspend fun <T> attempt(action: suspend () -> T): Result<T> = try {
+    Result.success(action())
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Exception) {
+    Result.failure(e)
+}

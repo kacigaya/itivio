@@ -17,6 +17,8 @@ val releaseKeyAlias = providers.environmentVariable("ITIVIO_KEY_ALIAS")
 val releaseKeyPassword = providers.environmentVariable("ITIVIO_KEY_PASSWORD")
     .orElse(providers.gradleProperty("itivio.keyPassword"))
 
+val abiVersionCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
+
 android {
     namespace = "app.itivio"
     compileSdk = 37
@@ -28,11 +30,10 @@ android {
         versionCode = 16
         versionName = "0.10.1"
         // MapLibre Native ships these ABIs; 32-bit x86 is not supported by the runtime.
-        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
+        ndk { abiFilters += abiVersionCodes.keys }
 
         val contact = providers.gradleProperty("itivio.contact").getOrElse("")
         buildConfigField("String", "CONTACT", "\"$contact\"")
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -51,7 +52,7 @@ android {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            include(*abiVersionCodes.keys.toTypedArray())
             isUniversalApk = true
         }
     }
@@ -92,7 +93,6 @@ room {
 
 androidComponents {
     val baseVersionCode = requireNotNull(android.defaultConfig.versionCode)
-    val abiVersionCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
     onVariants { variant ->
         variant.outputs.forEach { output ->
             val abi = output.filters.find { it.filterType == FilterConfiguration.FilterType.ABI }
@@ -113,10 +113,8 @@ dependencies {
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material3.adaptive)
-    debugImplementation(libs.androidx.compose.ui.tooling)
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)

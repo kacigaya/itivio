@@ -7,6 +7,7 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 ## Toolchain
 
 - Gradle wrapper 9.9.0, AGP 9.5.1 (built-in Kotlin), Kotlin 2.4.21, JDK 21.
+- Verified local Java runtime: OpenJDK 21.0.13 on aarch64 Linux (2026-11-16).
 - Android SDK: `/home/ubuntu/android-sdk` (in `local.properties`, not committed).
 - Host is aarch64 Linux. `~/.gradle/gradle.properties` overrides aapt2 with a native arm64 build.
 - Disk space on this host is low. Do not add large dependencies without need.

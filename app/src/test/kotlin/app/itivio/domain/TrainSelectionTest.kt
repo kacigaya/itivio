@@ -49,7 +49,7 @@ class TrainSelectionTest {
 
     @Test fun `changed platforms discard walking directions for the old platforms`() {
         val geometry = listOf(GeoPoint(48.0, 2.0), GeoPoint(48.001, 2.001))
-        val routedWalk = walk.copy(geometry = geometry, steps = listOf(WalkStep(90.0, "Old platform", geometry)))
+        val routedWalk = walk.copy(geometry = geometry, steps = listOf(WalkStep("Old platform", geometry)))
         val original = journey.copy(legs = listOf(routedWalk, ride, transfer.copy(geometry = geometry), onward))
         val updated = requireNotNull(original.withDeparture(1, departure, trip))
         assertTrue(updated.legs[0].geometry.isEmpty())
