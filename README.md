@@ -17,10 +17,8 @@
   <a href="https://github.com/kacigaya/itivio/blob/main/LICENSE"><img alt="GPL-3.0-or-later License" src="https://shieldcn.dev/github/license/kacigaya/itivio.svg?variant=secondary"></a>
 </p>
 
-https://github.com/user-attachments/assets/7e3c4580-aaad-45cc-9b80-27f59540e0b4
-
 <p align="center">
-  <a href="https://github.com/kacigaya/itivio/releases/download/v0.10.1/demo.mp4"><img src="assets/demo-poster.jpg" alt="itivio demo video: know where to board, and which train is yours" width="720"></a>
+  <a href="https://github.com/kacigaya/itivio/releases/download/v0.10.1/demo.mp4"><img src="assets/demo.gif" alt="itivio demo: know where to board, and which train is yours" width="720"></a>
 </p>
 
 ## Features
