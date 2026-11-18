@@ -298,6 +298,8 @@
     <string name="mode_suburban">Train de banlieue</string>
     <string name="mode_rail">Train</string>
     <string name="mode_highspeed_rail">Train à grande vitesse</string>
+    <string name="mode_chip_suburban">Banlieue</string>
+    <string name="mode_chip_highspeed_rail">TGV</string>
     <string name="mode_ferry">Ferry</string>
     <string name="mode_airplane">Vol</string>
     <string name="mode_aerial_lift">Téléphérique</string>

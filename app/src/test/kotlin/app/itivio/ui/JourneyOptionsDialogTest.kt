@@ -17,6 +17,7 @@ import app.itivio.domain.WalkingSpeed
 import app.itivio.ui.results.JourneyOptionsDialog
 import app.itivio.ui.theme.ItivioTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -112,5 +113,26 @@ class JourneyOptionsDialogTest {
 
         compose.mainClock.advanceTimeBy(300)
         compose.runOnIdle { assertEquals(1, dismissed) }
+    }
+
+    @Test
+    fun `mode chips share one width in rows of three`() {
+        show()
+        val labels = listOf("Bus", "Coach", "Tram", "Metro", "Suburban", "Train", "Express", "Ferry")
+        val bounds = labels.map { compose.onNodeWithText(it).fetchSemanticsNode().boundsInRoot }
+        compose.onNodeWithContentDescription("High-speed train").assertExists()
+
+        assertEquals(1, bounds.map { it.width }.distinct().size)
+        assertEquals(3, bounds.map { it.top }.distinct().size)
+    }
+
+    @Test
+    @Config(qualifiers = "w360dp-h800dp-xxhdpi")
+    fun `a narrow screen puts the mode chips in two columns`() {
+        show()
+        val tops = listOf("Bus", "Coach", "Tram").map { compose.onNodeWithText(it).fetchSemanticsNode().boundsInRoot.top }
+
+        assertEquals(listOf(tops[0], tops[0]), tops.take(2))
+        assertTrue(tops[2] > tops[0])
     }
 }

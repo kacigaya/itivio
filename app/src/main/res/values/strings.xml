@@ -307,6 +307,8 @@
     <string name="mode_suburban">Suburban train</string>
     <string name="mode_rail">Train</string>
     <string name="mode_highspeed_rail">High-speed train</string>
+    <string name="mode_chip_suburban">Suburban</string>
+    <string name="mode_chip_highspeed_rail">Express</string>
     <string name="mode_ferry">Ferry</string>
     <string name="mode_airplane">Flight</string>
     <string name="mode_aerial_lift">Cable car</string>

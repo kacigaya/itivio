@@ -2,7 +2,6 @@ package app.itivio.ui.results
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,11 +9,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.listSaver
@@ -22,16 +23,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.itivio.R
 import app.itivio.domain.JourneyOptions
 import app.itivio.domain.TransitMode
@@ -78,17 +85,24 @@ fun JourneyOptionsDialog(options: JourneyOptions, onDismiss: () -> Unit, onConfi
 
 @Composable
 private fun JourneyOptionsFields(options: JourneyOptions, onChange: (JourneyOptions) -> Unit) {
-    val chipSpacing = Arrangement.spacedBy(8.dp)
-
     SectionTitle(R.string.options_modes)
-    FlowRow(horizontalArrangement = chipSpacing) {
+    EqualWidthGrid(columns = 3, spacing = 8.dp) {
         JourneyOptions.SELECTABLE_MODES.forEach { mode ->
             val allowed = mode !in options.excludedModes
+            val name = stringResource(mode.label())
             FilterChip(
                 selected = allowed,
                 onClick = { onChange(options.withMode(mode, !allowed)) },
-                label = { Text(stringResource(mode.label())) },
+                label = {
+                    // A short name keeps three chips on one line. A screen reader gets the full name.
+                    Text(
+                        stringResource(mode.chipLabel()),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 leadingIcon = { Icon(painterResource(mode.icon()), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                modifier = Modifier.semantics { contentDescription = name },
             )
         }
     }
@@ -138,6 +152,44 @@ private fun JourneyOptionsFields(options: JourneyOptions, onChange: (JourneyOpti
     if (options.wheelchair) SupportingText(stringResource(R.string.options_walking_speed_unused))
 }
 
+/**
+ * Puts the items in a grid of up to [columns] equal columns. A column is at least [MinChipWidth]
+ * plus [MinLabelWidth], so the grid has fewer columns on a narrow screen or with large text. The
+ * items of a row share the height of the tallest, at least [MinTouchHeight], so each item is its
+ * own full touch target and no padding hides its real height.
+ */
+@Composable
+private fun EqualWidthGrid(columns: Int, spacing: Dp, content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+        Layout(content) { measurables, constraints ->
+            val gap = spacing.roundToPx()
+            val width = constraints.maxWidth
+            val minCell = MinChipWidth.roundToPx() + MinLabelWidth.roundToPx()
+            val count = ((width + gap) / (minCell + gap)).coerceIn(1, columns)
+            val cell = ((width - gap * (count - 1)) / count).coerceAtLeast(0)
+            val rows = measurables.chunked(count).map { row ->
+                val height = maxOf(MinTouchHeight.roundToPx(), row.maxOf { it.maxIntrinsicHeight(cell) })
+                row.map { it.measure(Constraints.fixed(cell, height)) }
+            }
+            layout(width, rows.sumOf { it.first().height } + gap * (rows.size - 1).coerceAtLeast(0)) {
+                var y = 0
+                rows.forEach { row ->
+                    row.forEachIndexed { index, item -> item.placeRelative(index * (cell + gap), y) }
+                    y += row.first().height + gap
+                }
+            }
+        }
+    }
+}
+
+private val MinTouchHeight = 48.dp
+
+/** The padding and the icon of a filter chip. */
+private val MinChipWidth = 50.dp
+
+/** The longest short mode label, "Suburban", at the label size of a chip. */
+private val MinLabelWidth = 64.sp
+
 @Composable
 private fun SectionTitle(text: Int) {
     Text(
@@ -163,6 +215,12 @@ private fun transferLimitLabel(limit: Int?): String = when (limit) {
     null -> stringResource(R.string.options_no_limit)
     0 -> stringResource(R.string.no_transfers)
     else -> pluralStringResource(R.plurals.transfers, limit, limit)
+}
+
+private fun TransitMode.chipLabel(): Int = when (this) {
+    TransitMode.SUBURBAN -> R.string.mode_chip_suburban
+    TransitMode.HIGHSPEED_RAIL -> R.string.mode_chip_highspeed_rail
+    else -> label()
 }
 
 private fun WalkingSpeed.label(): Int = when (this) {
