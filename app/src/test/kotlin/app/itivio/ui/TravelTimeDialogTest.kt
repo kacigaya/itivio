@@ -54,4 +54,18 @@ class TravelTimeDialogTest {
         compose.onNodeWithText("Done").assertIsDisplayed()
     }
 
+    @Test
+    fun `keyboard toggle switches from scroll to input and keeps the time`() {
+        val time = LocalDate.now().atTime(12, 34).atZone(ZoneId.systemDefault()).toInstant()
+        var confirmed: Pair<Instant?, Boolean>? = null
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                TravelTimeDialog(time, false, onDismiss = {}, onConfirm = { picked, arrive -> confirmed = picked to arrive })
+            }
+        }
+        compose.onNodeWithContentDescription("Switch to text input mode").performClick()
+        compose.onNodeWithContentDescription("Switch to scroll mode").assertIsDisplayed()
+        compose.onNodeWithText("Done").performClick()
+        compose.runOnIdle { assertEquals(time to false, confirmed) }
+    }
 }

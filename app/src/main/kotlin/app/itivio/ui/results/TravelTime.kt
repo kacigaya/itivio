@@ -7,17 +7,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.TimePickerLayoutType
+import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.TimePickerDialogDefaults
 import androidx.compose.material3.TimePickerDisplayMode
 import androidx.compose.material3.TimePickerState
+import androidx.compose.material3.TimeScroll
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -34,6 +31,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.itivio.R
+import app.itivio.ui.common.Choice
+import app.itivio.ui.common.ChoiceButtons
 import app.itivio.ui.common.formatTime
 import java.time.Clock
 import java.time.Instant
@@ -102,7 +101,7 @@ fun TravelTimeDialog(
     var day by rememberSaveable {
         mutableIntStateOf(ChronoUnit.DAYS.between(today, initial.toLocalDate()).toInt().coerceIn(0, DAYS_AHEAD - 1))
     }
-    var displayMode by rememberSaveable(stateSaver = TimePickerDisplayModeSaver) { mutableStateOf(TimePickerDisplayMode.Picker) }
+    var displayMode by rememberSaveable(stateSaver = TimePickerDisplayModeSaver) { mutableStateOf(TimePickerDisplayMode.Scroll) }
     val clock = rememberTimePickerState(
         initialHour = initial.hour,
         initialMinute = initial.minute,
@@ -113,9 +112,9 @@ fun TravelTimeDialog(
         title = stringResource(R.string.travel_title),
         onDismiss = onDismiss,
         buttons = { close ->
-            TimePickerDialogDefaults.DisplayModeToggle(
+            TimePickerDialogDefaults.ScrollDisplayModeToggle(
                 onDisplayModeChange = {
-                    displayMode = if (displayMode == TimePickerDisplayMode.Picker) TimePickerDisplayMode.Input else TimePickerDisplayMode.Picker
+                    displayMode = if (displayMode == TimePickerDisplayMode.Scroll) TimePickerDisplayMode.Input else TimePickerDisplayMode.Scroll
                 },
                 displayMode = displayMode,
             )
@@ -140,25 +139,22 @@ private fun TravelTimeFields(
     displayMode: TimePickerDisplayMode,
     clock: TimePickerState,
 ) {
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-        listOf(false to R.string.travel_leave, true to R.string.travel_arrive).forEachIndexed { index, (value, label) ->
-            SegmentedButton(
-                selected = arrive == value,
-                onClick = { onArrive(value) },
-                shape = SegmentedButtonDefaults.itemShape(index, 2),
-                label = { Text(stringResource(label)) },
-            )
-        }
-    }
+    ChoiceButtons(
+        choices = listOf(Choice(stringResource(R.string.travel_leave)), Choice(stringResource(R.string.travel_arrive))),
+        selected = if (arrive) 1 else 0,
+        onSelect = { onArrive(it == 1) },
+        modifier = Modifier.padding(bottom = 12.dp),
+    )
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
         items(DAYS_AHEAD) { offset ->
             FilterChip(selected = day == offset, onClick = { onDay(offset) }, label = { Text(dayLabel(offset)) })
         }
     }
-    if (displayMode == TimePickerDisplayMode.Picker) TimePicker(clock, layoutType = TimePickerLayoutType.Vertical) else TimeInput(clock)
+    val shapes = TimePickerDefaults.shapes()
+    if (displayMode == TimePickerDisplayMode.Scroll) TimeScroll(clock, shapes) else TimeInput(clock, shapes)
 }
 
 private val TimePickerDisplayModeSaver = Saver<TimePickerDisplayMode, Boolean>(
-    save = { it == TimePickerDisplayMode.Picker },
-    restore = { if (it) TimePickerDisplayMode.Picker else TimePickerDisplayMode.Input },
+    save = { it == TimePickerDisplayMode.Scroll },
+    restore = { if (it) TimePickerDisplayMode.Scroll else TimePickerDisplayMode.Input },
 )

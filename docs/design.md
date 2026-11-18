@@ -99,13 +99,13 @@ Departures within 400 m, on one card for each stop name. The cards are in order 
 
 ## Travel time
 
-The results filters are tonal toggle buttons, the same as the saved places on home. A checked button has the `secondary` color. The travel time button, before the sort buttons, opens a time picker bottom sheet. The sheet has a segmented button (Leave at, Arrive by), day chips for the next 7 days, and the M3 time picker with a keyboard input toggle. "Leave now" resets to the current time. Times use the device time zone. The button shows as checked when the time is not "now".
+The results filters are tonal toggle buttons, the same as the saved places on home. A checked button has the `secondary` color. The travel time button, before the sort buttons, opens a time picker bottom sheet. The sheet has a row of connected buttons (Leave at, Arrive by), the same as the walking speed, day chips for the next 7 days, and the M3 Expressive scroll time picker with a keyboard input toggle. "Leave now" resets to the current time. Times use the device time zone. The button shows as checked when the time is not "now".
 
 ## Journey options
 
 The options button, after the travel time button, opens a bottom sheet with the same layout as the travel time sheet. Both sheets come up from the bottom edge, and a swipe down or a tap outside closes them without changes. "Done", "Cancel", and "Leave now" send the sheet down in the time and easing of "Back" between screens, then apply their action. The button shows as checked when an option is not at its default.
 
-- Transport modes: one filter chip for each mode, with the mode icon. The chips are in a grid of equal columns: three on a 411 dp phone, fewer on a narrow screen or with large text. Each chip has one line with a short name ("Suburban", "Express"; in French "Banlieue", "TGV"). A screen reader gets the full name. The chips of a row have one height, at least 48 dp, with 8 dp between rows. All chips have the width of the widest chip, in as many equal columns as fit: two on a phone, one at large text sizes. A tap on the last selected mode changes nothing, and a line of text says why.
+- Transport modes: one filter chip for each mode, with the mode icon. The chips are in a grid of equal columns: three on a 411 dp phone, fewer on a narrow screen or with large text. Each chip has one line with a short name ("Suburban", "Express"; in French "Banlieue", "TGV"). A screen reader gets the full name. The chips of a row have one height, at least 48 dp, with 8 dp between rows. A tap on the last selected mode changes nothing, and a line of text says why.
 - Maximum transfers: one row of five connected buttons: an infinity icon for no limit, then 0 to 3. A line of text below the row gives the choice in words. A screen reader gets the full name of each button.
 - Walking: a "Wheelchair accessible" switch with its icon and a text that gives its limits, then a row of connected buttons for the walking speed (Slow, Normal, Fast). Each speed has one, two, or three arrows. The wheelchair switch disables the walking speed, and a line of text says why.
 
