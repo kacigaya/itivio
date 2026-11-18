@@ -29,12 +29,13 @@ class JourneyOptionsDialogTest {
     @get:Rule val compose = createComposeRule()
 
     private var confirmed: JourneyOptions? = null
+    private var dismissed = 0
 
     private fun show(options: JourneyOptions = JourneyOptions(), fontScale: Float = 1f) {
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
                 ItivioTheme(dynamicColor = false) {
-                    JourneyOptionsDialog(options, onDismiss = {}, onConfirm = { confirmed = it })
+                    JourneyOptionsDialog(options, onDismiss = { dismissed++ }, onConfirm = { confirmed = it })
                 }
             }
         }
@@ -97,5 +98,19 @@ class JourneyOptionsDialogTest {
         compose.onNodeWithText("Done").assertIsDisplayed().performClick()
 
         compose.runOnIdle { assertEquals(JourneyOptions(walkingSpeed = WalkingSpeed.FAST), confirmed) }
+    }
+
+    @Test
+    fun `cancel slides the sheet down before it dismisses once`() {
+        show()
+        compose.mainClock.autoAdvance = false
+
+        compose.onNodeWithText("Cancel").performClick()
+        compose.onNodeWithText("Cancel").performClick()
+        compose.mainClock.advanceTimeBy(150)
+        compose.runOnIdle { assertEquals(0, dismissed) }
+
+        compose.mainClock.advanceTimeBy(300)
+        compose.runOnIdle { assertEquals(1, dismissed) }
     }
 }

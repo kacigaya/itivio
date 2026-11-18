@@ -65,12 +65,12 @@ fun JourneyOptionsDialog(options: JourneyOptions, onDismiss: () -> Unit, onConfi
     PickerDialog(
         title = stringResource(R.string.options_title),
         onDismiss = onDismiss,
-        buttons = {
+        buttons = { close ->
             TextButton(onClick = { draft = JourneyOptions() }, enabled = !draft.isDefault) {
                 Text(stringResource(R.string.options_reset))
             }
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
-            TextButton(onClick = { onConfirm(draft) }) { Text(stringResource(R.string.done)) }
+            TextButton(onClick = { close(onDismiss) }) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = { close { onConfirm(draft) } }) { Text(stringResource(R.string.done)) }
         },
         fieldsArrangement = Arrangement.spacedBy(8.dp),
     ) { JourneyOptionsFields(draft, onChange = { draft = it }) }

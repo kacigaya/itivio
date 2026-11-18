@@ -112,18 +112,18 @@ fun TravelTimeDialog(
     PickerDialog(
         title = stringResource(R.string.travel_title),
         onDismiss = onDismiss,
-        buttons = {
+        buttons = { close ->
             TimePickerDialogDefaults.DisplayModeToggle(
                 onDisplayModeChange = {
                     displayMode = if (displayMode == TimePickerDisplayMode.Picker) TimePickerDisplayMode.Input else TimePickerDisplayMode.Picker
                 },
                 displayMode = displayMode,
             )
-            TextButton(onClick = { onConfirm(null, false) }) { Text(stringResource(R.string.travel_now)) }
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = { close { onConfirm(null, false) } }) { Text(stringResource(R.string.travel_now)) }
+            TextButton(onClick = { close(onDismiss) }) { Text(stringResource(R.string.cancel)) }
             TextButton(onClick = {
                 val picked = today.plusDays(day.toLong()).atTime(clock.hour, clock.minute).atZone(zone).toInstant()
-                onConfirm(picked, arrive)
+                close { onConfirm(picked, arrive) }
             }) { Text(stringResource(R.string.done)) }
         },
         fieldsAlignment = Alignment.CenterHorizontally,
