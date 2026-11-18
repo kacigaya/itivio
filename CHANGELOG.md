@@ -5,7 +5,13 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.12.0
+
+Beta prerelease for Android 8.0 and later.
+
 - Open the travel time and journey options as bottom sheets that come up from the bottom edge. Swipe down to close them without changes. A back gesture pulls the sheet down, the same as a screen, and "Done" and "Cancel" slide it down.
+- Pick the travel time with the scroll time picker. "Leave at" and "Arrive by" are connected buttons, the same as the walking speed.
+- Show the transport modes in a grid of equal chips: three on each row on most phones, fewer on a narrow screen or with large text. Each chip has a short name, and a screen reader gets the full name.
 
 ## 0.11.0
 
