@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Open the travel time and journey options as bottom sheets that come up from the bottom edge. Swipe down to close them without changes. A back gesture pulls the sheet down, the same as a screen.
+
 ## 0.11.0
 
 Beta prerelease for Android 8.0 and later.

@@ -60,6 +60,7 @@ The app shows a preview during a back gesture, as in the Android [predictive bac
 
 - Between screens: the card on top goes down by up to 15% of the screen height, and the screen below fades in. A release sends the card down below the edge of the screen. The content of the card does not update during the gesture.
 - Disruptions page of the home sheet: the Departures page comes into view by 30% of its width.
+- Travel time and journey options sheets: the sheet goes down by up to 15% of the screen height, and the scrim fades out. A release sends the sheet down below the edge of the screen in the time and easing of "Back" between screens.
 - Search view, dialogs, and menus: the Material components supply their own behavior.
 - Home: the system shows the launcher behind the app.
 
@@ -98,11 +99,11 @@ Departures within 400 m, on one card for each stop name. The cards are in order 
 
 ## Travel time
 
-The results filters are tonal toggle buttons, the same as the saved places on home. A checked button has the `secondary` color. The travel time button, before the sort buttons, opens a time picker dialog. The dialog has a segmented button (Leave at, Arrive by), day chips for the next 7 days, and the M3 time picker with a keyboard input toggle. "Leave now" resets to the current time. Times use the device time zone. The button shows as checked when the time is not "now".
+The results filters are tonal toggle buttons, the same as the saved places on home. A checked button has the `secondary` color. The travel time button, before the sort buttons, opens a time picker bottom sheet. The sheet has a segmented button (Leave at, Arrive by), day chips for the next 7 days, and the M3 time picker with a keyboard input toggle. "Leave now" resets to the current time. Times use the device time zone. The button shows as checked when the time is not "now".
 
 ## Journey options
 
-The options button, after the travel time button, opens a dialog with the same layout as the travel time dialog. The button shows as checked when an option is not at its default.
+The options button, after the travel time button, opens a bottom sheet with the same layout as the travel time sheet. Both sheets come up from the bottom edge, and a swipe down or a tap outside closes them without changes. The button shows as checked when an option is not at its default.
 
 - Transport modes: one filter chip for each mode, with the mode icon. A tap on the last selected mode changes nothing, and a line of text says why.
 - Maximum transfers: one row of five connected buttons: an infinity icon for no limit, then 0 to 3. A line of text below the row gives the choice in words. A screen reader gets the full name of each button.

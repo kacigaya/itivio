@@ -33,7 +33,7 @@ private const val ForwardMillis = 450
  * The time of a back screen change from start to end. A release continues the change from the
  * point of the gesture, so a short gesture gets a longer commit animation.
  */
-private const val BackMillis = 300
+internal const val BackMillis = 300
 
 /** How far down the card is at the end of the gesture preview, as a part of the screen height. */
 internal const val PreviewDrop = 0.15f
@@ -43,7 +43,7 @@ private const val FloatRange = 0.125f
 
 /** The Material emphasized easings: a card slows down when it comes in and speeds up when it goes. */
 private val CardEnterEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
-private val CardExitEasing = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
+internal val CardExitEasing = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
 
 /** The motion of the screen around the content. Null outside the app root, such as in tests. */
 private val LocalScreenMotion = compositionLocalOf<(() -> ScreenMotionState)?> { null }
