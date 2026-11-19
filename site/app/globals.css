@@ -118,6 +118,13 @@ footer {
   justify-content: space-between;
   gap: 16px;
   min-height: 72px;
+  padding-top: 16px;
+}
+
+@media (min-width: 960px) {
+  .bar {
+    padding-top: 32px;
+  }
 }
 
 .bar a {
