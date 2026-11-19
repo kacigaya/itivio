@@ -105,6 +105,10 @@ The workflow runs tests and lint before uploading the APKs. These are debug buil
 
 See [Quality checks](docs/quality.md) for screenshot references and the manual accessibility checks.
 
+### Website
+
+`site/` holds the project website, a static Next.js export. It links the APKs of the newest release. `.github/workflows/pages.yml` deploys it to GitHub Pages. See `AGENTS.md` for the commands.
+
 ### Release builds
 
 Run `./gradlew :app:assembleRelease` to build one APK per CPU type (`arm64-v8a`, `armeabi-v7a`, and `x86_64`) plus a universal APK.

@@ -46,6 +46,15 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 - The typeface is Google Sans Flex, bundled unmodified in `res/font/google_sans_flex.ttf` under the SIL Open Font License 1.1. Keep `licenses/GoogleSansFlex-OFL.txt` with it.
 - A string with `<b>` markup is read with `markedStringResource`. Keep the markup escaped (`&lt;b>`).
 
+## Website
+
+- `site/` is a Next.js 16 static export (`output: "export"`), npm, Node 24 in CI (verified locally on Node 26.13.1). No Tailwind or UI library: plain CSS with the app's Material 3 color tokens from `Theme.kt`.
+- Commands, in `site/`: `npm ci`, `npm test` (node:test on `app/*.test.ts`), `npm run build` (writes `out/`), `npm run dev`.
+- The build reads the newest non-draft GitHub release (prereleases included) and links its universal APK. It fails when that release has no universal APK. Set `GITHUB_TOKEN` to avoid the API rate limit. `PAGES_BASE_PATH` sets the base path (`/itivio` on GitHub Pages).
+- `.github/workflows/pages.yml` deploys to GitHub Pages on pushes to `main` that change `site/`, `assets/logo.svg`, or the workflow, and when a release is published, edited, or deleted. The repository Pages source must be "GitHub Actions".
+- `site/app/fonts/google-sans-flex.woff2` is Google Sans Flex instanced to `ROND=100`, `wdth=100`, `opsz=18`, `slnt=0`, weights 300 to 800, and subset to Latin (fontTools `varLib.instancer` and `pyftsubset`). `site/public/demo.mp4` is the `demo.mp4` asset of release v0.10.1, scaled to 1280x720 with ffmpeg (H.264 CRF 24, AAC 96 kbit/s, `+faststart`). `demo-poster.webp` is its frame at 13.5 s. Make them again when the demo changes.
+- `npm run build` and `npm run dev` copy `assets/logo.svg` into `site/public/`.
+
 ## Docker Android accessibility checks
 
 - Container: `velin-android`, image `redroid/redroid:15.0.0_64only-latest`, Android 15 (SDK 35), arm64. Use `sudo -n docker` on this host. Do not restart the container for an app check.
