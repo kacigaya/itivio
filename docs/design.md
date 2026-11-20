@@ -12,9 +12,13 @@ Material 3 Expressive on Jetpack Compose. The map is the canvas. The UI floats o
 ## Color
 
 - Dynamic color on Android 12+. Fallback scheme: tonal spot from seed `#1B6B5A`.
-- Map style: OpenFreeMap Liberty in the light theme. The dark theme uses `assets/map/dark.json`: the Liberty layers with dark colors, so both themes show the same roads, stops, and places. `tools/dark-map-style.py` builds this file.
+- Map style: the OpenFreeMap Liberty layers with the colors of each theme, in `assets/map/light.json` and `assets/map/dark.json`, so both themes show the same roads, stops, and places. `tools/map-style.py` builds both files. Both drop the shaded relief. The light theme has calm neutral land (`#eef1ee`), white streets on grey casings, a pale warm tint on major roads, and muted blue-grey water (`#b9d5e4`). Labels are grey with white halos; stop labels use the `tertiary` hue. Thus the line colors of routes and stops are the strongest colors on the map, and the map matches the cool tonal surfaces of the app.
 - Route lines on the map: transit legs in the line color with a `surface` casing. Walking legs are dotted in `onSurfaceVariant`. A walk that the map draws alone is dotted in `primary`. The walking view draws round dots: the part ahead in `primary` with `surface` rings, the part walked in `outline`.
 - The position dot on the map uses `primary` with a `surface` border, the same as the casing of the stop pins. A white border merges with the dot in a dark scheme that has a light `primary`.
+
+## Launch screen
+
+The Android 12+ splash screen shows the walking pin (the launcher foreground) on a `#1B6B5A` brand icon background, in the icon shape of the device. Its background is the fallback `surface` of the theme (`#F5FBF7` light, `#0E1513` dark), and the window background before the first frame has the same color on all versions. Thus the launch has no white flash. The splash follows the theme of the device: the window starts before the app reads its own theme setting. `res/values/colors.xml` holds the colors; `Theme.kt` keeps the full schemes.
 
 ## Type
 

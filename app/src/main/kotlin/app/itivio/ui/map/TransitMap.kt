@@ -123,9 +123,10 @@ import org.maplibre.spatialk.geojson.Position
 import kotlinx.serialization.json.JsonObject
 
 // OpenFreeMap: free OpenStreetMap vector tiles, no API key, no tracking.
-private const val LIGHT_STYLE = "https://tiles.openfreemap.org/styles/liberty"
-// The Liberty layers with dark colors, built by tools/dark-map-style.py. The OpenFreeMap dark
-// style has too little contrast and no stop or place labels.
+// The Liberty layers with the colors of each theme, built by tools/map-style.py. The light
+// colors are calm, so the line colors stand out. The OpenFreeMap dark style has too little
+// contrast and no stop or place labels.
+private const val LIGHT_STYLE = "asset://map/light.json"
 private const val DARK_STYLE = "asset://map/dark.json"
 
 /** Europe-wide view until the first location fix or route arrives. */
