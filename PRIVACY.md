@@ -37,7 +37,7 @@ The app uses these services to provide search, transport information, and maps:
 |---|---|---|
 | [Transitous](https://transitous.org/) | Search text, search language, rounded location bias, journey start and end points, travel time, journey options, nearby position, stop and trip IDs, and the map area at street-level zoom | Search, journey planning, departures, disruptions, live trip times, and stops on the map |
 | [IGN Géoplateforme](https://cartes.gouv.fr/) | Address search text, without location bias | French address search, only when the text looks like an address and the first Transitous match identifies France |
-| [OpenFreeMap](https://openfreemap.org/) | Requests for map styles, fonts, and tiles for the area you view | Map display |
+| [OpenFreeMap](https://openfreemap.org/) | Requests for map icons, fonts, and tiles for the area you view | Map display |
 
 The disruptions list sends the IDs of up to 10 saved stops to Transitous. On a phone, the list is a page of the home screen, and the home screen shows the number of alerts. The app then sends these IDs while the home screen is open. On a tablet, it sends them only while the Disruptions page is open. These can be Home, Work, or favorites. Saved places that are not stops are not sent for this feature. Selecting a saved place for a journey sends its stop ID or coordinates as part of the journey request.
 
