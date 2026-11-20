@@ -1,5 +1,16 @@
 package app.itivio.ui.results
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import app.itivio.ui.common.JourneyStatusTag
+import java.time.Duration
+import java.time.Instant
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,7 +50,7 @@ import app.itivio.ui.common.formatDuration
 import app.itivio.ui.common.formatTime
 
 @Composable
-fun RouteCard(journey: Journey, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun RouteCard(journey: Journey, selected: Boolean, now: Instant, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val firstTransit = journey.legs.firstOrNull { it is Leg.Transit } as Leg.Transit?
     val startZone = journey.legs.first().from.zone
     val endZone = journey.legs.last().to.zone
@@ -57,23 +68,26 @@ fun RouteCard(journey: Journey, selected: Boolean, onClick: () -> Unit, modifier
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    stringResource(
-                        R.string.time_range,
-                        formatTime(journey.departure.best, startZone),
-                        formatTime(journey.arrival.best, endZone),
-                    ),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.weight(1f),
-                )
+            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    JourneyStatusTag(journey, now)
+                    Text(
+                        stringResource(
+                            R.string.time_range,
+                            formatTime(journey.departure.best, startZone),
+                            formatTime(journey.arrival.best, endZone),
+                        ),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                    )
+                }
                 Text(
                     amountText(formatDuration(journey.duration), unitScale = 0.7f),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                 )
             }
+            LegBar(journey, walkColor = secondary)
             LegChain(journey)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (firstTransit != null) {
@@ -119,6 +133,7 @@ fun RouteCardSkeleton(modifier: Modifier = Modifier) {
                 SkeletonText(type.titleMedium, Modifier.fillMaxWidth(0.4f))
                 SkeletonText(type.titleLarge, Modifier.width(72.dp))
             }
+            SkeletonBlock(Modifier.fillMaxWidth().height(LegBarHeight))
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 SkeletonBlock(Modifier.size(width = 40.dp, height = 28.dp))
                 SkeletonBlock(Modifier.size(width = 64.dp, height = 28.dp))
@@ -126,6 +141,58 @@ fun RouteCardSkeleton(modifier: Modifier = Modifier) {
             }
             SkeletonText(type.bodyMedium, Modifier.fillMaxWidth(0.6f))
             SkeletonText(type.bodySmall, Modifier.fillMaxWidth(0.45f))
+        }
+    }
+}
+
+private val LegBarHeight = 8.dp
+
+/** One leg on the [LegBar], as fractions of the journey time from its departure. */
+internal data class BarSegment(val leg: Leg, val start: Float, val end: Float)
+
+/** The legs placed on a 0..1 time axis. A wait between two legs stays empty. Legs with no time are left out. */
+internal fun barSegments(journey: Journey): List<BarSegment> {
+    val total = journey.duration.toMillis().toFloat()
+    if (total <= 0f) return emptyList()
+    fun at(time: Instant) = (Duration.between(journey.departure.best, time).toMillis() / total).coerceIn(0f, 1f)
+    return journey.legs.mapNotNull { leg ->
+        val start = at(leg.start.best)
+        val end = at(leg.end.best)
+        if (end > start) BarSegment(leg, start, end) else null
+    }
+}
+
+/**
+ * The legs on a bar in proportion to their time: a line in its color, a walk as dots, a wait as
+ * a gap. It is for the eye only; the leg chain below names each line for a screen reader.
+ */
+@Composable
+private fun LegBar(journey: Journey, walkColor: Color) {
+    val segments = barSegments(journey)
+    if (segments.isEmpty()) return
+    // A line without a color gets secondary, which shows on both card colors.
+    val fallback = MaterialTheme.colorScheme.secondary
+    val colors = segments.map { (it.leg as? Leg.Transit)?.let { leg -> leg.line.color?.let(::Color) ?: fallback } }
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    Canvas(Modifier.fillMaxWidth().height(LegBarHeight)) {
+        val gap = 2.dp.toPx()
+        val dot = 1.5.dp.toPx()
+        val step = 6.dp.toPx()
+        segments.forEachIndexed { index, segment ->
+            var left = segment.start * size.width + gap
+            var right = segment.end * size.width - gap
+            if (rtl) left = size.width - right.also { right = size.width - left }
+            val color = colors[index]
+            if (color != null) {
+                val width = (right - left).coerceAtLeast(size.height)
+                drawRoundRect(color, Offset(left, 0f), Size(width, size.height), CornerRadius(size.height / 2))
+            } else {
+                var x = left + dot
+                while (x <= right - dot) {
+                    drawCircle(walkColor, dot, Offset(x, size.height / 2))
+                    x += step
+                }
+            }
         }
     }
 }

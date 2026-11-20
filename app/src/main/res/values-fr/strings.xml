@@ -20,6 +20,7 @@
     <string name="shortcut_set_work">Définir le travail</string>
     <string name="shortcut_search_home">Cherchez votre domicile</string>
     <string name="shortcut_search_work">Cherchez votre lieu de travail</string>
+    <string name="search_set_shortcut_hint">Cherchez un lieu, puis choisissez-le</string>
     <string name="saved_favorites">Favoris</string>
     <string name="saved_recents">Recherches récentes</string>
     <string name="saved_clear_recents">Effacer les recherches récentes</string>
@@ -60,6 +61,7 @@
 
     <!-- Stop departures -->
     <string name="stop_directions">Itinéraire vers cet arrêt</string>
+    <string name="stop_favorite">Favori</string>
     <string name="stop_departures">Départs</string>
     <string name="stop_empty_title">Aucun départ à venir</string>
     <string name="stop_empty_body">Les horaires n’ont aucun départ prochain à cet arrêt, ou ils ne couvrent pas cet arrêt.</string>

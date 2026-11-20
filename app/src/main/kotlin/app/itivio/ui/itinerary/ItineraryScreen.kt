@@ -85,6 +85,7 @@ import app.itivio.domain.Leg
 import app.itivio.domain.Stop
 import app.itivio.domain.TransitMode
 import app.itivio.ui.common.IconTile
+import app.itivio.ui.common.JourneyStatusTag
 import app.itivio.ui.common.LegChain
 import app.itivio.ui.common.LineBadge
 import app.itivio.ui.common.MapPanel
@@ -203,19 +204,6 @@ private fun Step(current: Boolean, card: Boolean, content: @Composable () -> Uni
     )
 }
 
-/** Time to the departure before the journey starts, then time to the arrival. Null after the arrival. */
-@Composable
-private fun trackerStatus(journey: Journey, now: Instant): String? = when {
-    now < journey.departure.best -> {
-        val wait = clockMinutesUntil(now, journey.departure.best)
-        if (wait < 1) stringResource(R.string.itinerary_leave_now)
-        else stringResource(R.string.itinerary_leave_in, formatDuration(Duration.ofMinutes(wait)))
-    }
-    now < journey.arrival.best ->
-        stringResource(R.string.itinerary_arrive_in, formatDuration(Duration.ofMinutes(clockMinutesUntil(now, journey.arrival.best))))
-    else -> null
-}
-
 /**
  * The hero card: the tracker status, the duration, the times, and the legs of the journey. In the
  * [wide] pane it sits in the corner, so its radius is the pane corner minus the margin.
@@ -234,14 +222,7 @@ private fun Summary(journey: Journey, now: Instant, wide: Boolean) {
     ) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                trackerStatus(journey, now)?.let {
-                    // The status follows live times only when the journey has them.
-                    if (journey.hasRealtime) {
-                        Tag(R.drawable.ic_sensors, it, color = scheme.tertiary, contentColor = scheme.onTertiary)
-                    } else {
-                        Tag(R.drawable.ic_schedule, it)
-                    }
-                }
+                JourneyStatusTag(journey, now)
                 Tag(
                     R.drawable.ic_sync_alt,
                     if (journey.transfers == 0) stringResource(R.string.no_transfers)

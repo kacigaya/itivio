@@ -18,6 +18,7 @@ import app.itivio.ui.common.UserLocation
 import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.search.LocationSearchView
 import app.itivio.ui.search.SavedPlacesViewModel
+import app.itivio.ui.search.highlightMatch
 import app.itivio.ui.search.SearchViewModel
 import app.itivio.ui.theme.ItivioTheme
 import java.time.Duration
@@ -114,6 +115,31 @@ class LocationSearchTest {
             assertEquals(listOf(recent), places.saved.value.favorites)
             assertEquals(recent, places.saved.value.home)
         }
+    }
+
+    @Test
+    fun `a set home row makes the next pick the home and keeps the search open`() {
+        val recent = FakeRoutingRepository.location("Tempelhofer Feld")
+        val places = FakePlacesRepository(SavedPlaces(recents = listOf(recent)))
+        var picked: Endpoint? = null
+        showSearch(places) { picked = it }
+
+        compose.onNodeWithText("Set home").performClick()
+        compose.onNodeWithText(recent.name).performClick()
+
+        compose.runOnIdle {
+            assertEquals(recent, places.saved.value.home)
+            assertEquals(null, picked)
+        }
+        compose.onNodeWithText("Home").assertIsDisplayed()
+    }
+
+    @Test
+    fun `the match of the query is bold and case is ignored`() {
+        val name = highlightMatch("Place de la Nation", "nation")
+        assertEquals("Place de la Nation", name.text)
+        assertEquals(listOf(12 to 18), name.spanStyles.map { it.start to it.end })
+        assertTrue(highlightMatch("Nation", "Bastille").spanStyles.isEmpty())
     }
 
     private fun showSearch(places: FakePlacesRepository, onPick: (Endpoint) -> Unit) {

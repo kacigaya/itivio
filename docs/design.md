@@ -74,7 +74,7 @@ The preview uses the easing of the system back animations, `(0.1, 0.1, 0, 1)`. T
 | Search | Full-screen search view: origin and destination fields, swap button, saved places or suggestions list | Same, in the side pane |
 | Results | Sheet with a travel time button, an options button, sort buttons, and route cards. The row of buttons scrolls to the two edges of the sheet. "Earlier departures" is above the cards and "Later departures" is below them. Map shows the selected route | Side pane with route cards |
 | Itinerary | Sheet with leg timeline. Map fits the route | Side pane timeline |
-| Stop | Sheet with the stop name, "Directions to here", and the departures. Map centers on the stop | Side pane |
+| Stop | Sheet with the stop name, "Directions to here", the favorite toggle, and the departures. Map centers on the stop | Side pane |
 | Walking | Instruction card at the top. Sheet with the remaining time, distance, and arrival, then all instructions. Map follows the user | Instruction card above the side pane |
 
 ## Navigation
@@ -91,11 +91,11 @@ Settings and About are full pages that cover the map. On a wide window, Disrupti
 
 A row of tonal buttons with filled icons sits below the search bar on home: Home, Work, then the favorites in the order the user added them. A tap on a button plans a journey to the place. When Home or Work is empty, the button reads "Set home" or "Set work". A tap opens the search view, and the picked place becomes the shortcut. The row keeps its height while storage loads.
 
-With an empty query, the search view shows Home and Work, then "Favorites", then "Recent searches" with a "Clear" button. With a query, it shows the suggestions. Each place row has a menu button with three actions: add to or remove from favorites, set or remove as home, and set or remove as work. Clear needs no confirmation, because it removes only search history.
+The search view lists its rows in groups, in the M3 Expressive list style: `surfaceContainerHigh` rows on `surfaceContainerLow`, 2dp apart, with 20dp outer corners and 4dp inner corners. With an empty query, the first group is "My location", Home, and Work. An empty Home or Work shows "Set home" or "Set work" with an outlined icon. A tap on it makes the next pick the shortcut: the placeholder asks for the place, and the search stays open, so the rider sees the new row. Then come "Favorites" and "Recent searches" with a "Clear" button. With a query, it shows the suggestions. The part of each name that matches the query is bold. A stop row names its modes after the area ("Paris 12e · Metro · Bus"), so stops with the same name differ. Each place row has a menu button with three actions: add to or remove from favorites, set or remove as home, and set or remove as work. Clear needs no confirmation, because it removes only search history.
 
 ## Nearby departures
 
-Departures within 400 m, on one card for each stop name. The cards are in order of their first departure. The card header shows the stop name and the straight-line distance to the nearest platform. A card has one row for each line and direction, not one row for each departure. Each row shows the line badge, headsign, platform, and the countdown to the next departure, with a heavy number and a light unit. A line below the countdown gives up to 3 later departures: "then 4 · 8 min". Departures 60 min or more away show the clock time. Live countdowns use the tertiary role and the live icon, the same as `TimeText`. A live "Now" is a `tertiary` pill. A screen reader also gets the clock time of the next departure. Without location access, the sheet shows an intro and an "Allow location" button. The list refreshes once a minute while it is visible, and when the user moves more than 150 m. Nearby stops show as small rings on the map.
+Departures within 400 m, on one card for each stop name. The cards are in order of their first departure. The card header shows the stop name and the straight-line distance to the nearest platform. A card has one row for each line and direction, not one row for each departure. Each row shows the line badge, headsign, platform, and the countdown to the next departure, with a heavy number and a light unit. A line below the countdown gives up to 3 later departures: "then 4 · 8 min". Departures 60 min or more away show the clock time. A live countdown sits on a `tertiaryContainer` pill with the live icon, so it is the strongest number on its row. A timetable countdown is plain, in `onSurfaceVariant`. A live "Now" is a `tertiary` pill. A screen reader also gets the clock time of the next departure. Without location access, the sheet shows an intro and an "Allow location" button. The list refreshes once a minute while it is visible, and when the user moves more than 150 m. Nearby stops show as small rings on the map.
 
 ## Travel time
 
@@ -139,7 +139,7 @@ The itinerary shows departure skeletons until all eligible legs finish their fir
 
 The list shows the service alerts in two groups: "Your saved stops" (Home, Work, and favorites that are stops), then "Near you" (stops within 400 m). An alert shows only one time, also when it applies to more than one stop or to both groups. The most severe disruptions come first in each group. The rating of the provider gives the severity. Without a rating, the effect gives it: "no service" is severe.
 
-Each disruption is a card: a tag with the effect and the cause, the badges of the lines, the header, the time period, the stops, the description, and a "More information" button when the alert has a web link. A severe disruption uses `errorContainer`. The card shows 3 lines of the description; a tap shows all of it. The time period is the one in progress ("Until …") or the next one ("From … to …").
+Each disruption is a `surfaceContainerHigh` card: a tag with the effect, the badges of the lines, the header, the time period and the cause ("From Sunday, 3:45 AM · Works"), the stops, the description, and a "More information" button when the alert has a web link. A severe disruption has `errorContainer` only on its header band, with the tag in `error`. Its body keeps the card colors, so the long text stays easy to read. Within the next week a date is the weekday ("Sunday, 3:45 AM"). Later dates this year have no year. The weekday reads well in the "From" and "Until" sentences of each language; "today" does not in French. The card shows 3 lines of the description; a tap shows all of it. The time period is the one in progress ("Until …") or the next one ("From … to …").
 
 The empty state says that some regions publish no alerts. On a compact window, the list is the second page of the home sheet, without the page title and the scope text. It loads while home is open, because the home title shows the number of alerts. On a wide window, the list is a full page, and it loads only while the page is on screen. See `architecture.md` for the requests.
 
@@ -157,7 +157,7 @@ On home, the map shows the nearby stops as pins: a disc in the color of the next
 
 ## Stop
 
-The departure board is one card with the rows of the nearby departures: one row for each line and direction. It refreshes once a minute while it is visible. "Directions to here" plans a journey to the stop.
+The departure board is one card with the rows of the nearby departures: one row for each line and direction. It refreshes once a minute while it is visible. "Directions to here" is a filled button: it is the one main action of the sheet. It plans a journey to the stop. A star toggle button beside it adds the stop to the favorites or removes it, so the stop shows in "Your saved stops" of the disruptions. A saved stop has a `secondary` button, the checked color of the app. The toggle is disabled while storage loads.
 
 ## Walking view
 
@@ -171,21 +171,23 @@ The departure board is one card with the rows of the nearby departures: one row 
 - The arrow and the map turn to the heading of the device. Without a heading, they turn to the route ahead.
 - A round compass button at the bottom start of the map, above the sheet, turns the map between "north up" (flat) and "turn with you". Its arrow points north, in `error` red.
 - A gesture on the map stops the camera, and a "Recenter" button shows below the compass button.
-- The summary row in the sheet has the close button at the start, in `errorContainer`. In the middle are the remaining time and, below it, the distance and the arrival time. At the end, a tonal button shows the full route; the "Recenter" button then shows.
+- The summary row in the sheet has the close button at the start, in `surfaceContainerHighest`. Ending a walk is normal, so it is not red: red is for the off-route banner. In the middle are the remaining time and, below it, the distance and the arrival time. At the end, a tonal button shows the full route; the "Recenter" button then shows.
 - A wavy progress bar below the summary shows the part of the walk that is done.
 - The walk has markers at its start and its end.
 
 ## Route card
 
 ```
-12:04 – 12:31                         27 min
+(•) Leave in 4 min                    27 min
+12:04 – 12:31
+∙∙∙∙  ━━━━━━━━  ∙∙∙  ━━━━━━━━
 walk 4 › [U2] › [M41]
 12:08 Alexanderplatz
 1 transfer · 450 m walk
 ⚠ Diversion at Potsdamer Platz        [+1]
 ```
 
-The departure and arrival times are heavy. The leg chain shows a badge for each line. A walk is an icon and its minutes, with no container. A first or last walk shows from 2 min. A walk between two lines shows from 5 min. The itinerary shows all walks. The itinerary summary uses the same chain.
+The status tag of the trip tracker comes first: "Leave in 4 min" before the departure, the same tag as on the itinerary, `tertiary` with the live icon when the journey has live times. It follows the clock of the app, which ticks every 15 s. The departure and arrival times are heavy. A bar below them places each leg in proportion to its time: a line in its color (`secondary` without one), a walk as dots in the muted text color, a wait as a gap. The bar is for the eye only; the leg chain gives the same facts to a screen reader. The leg chain shows a badge for each line. A walk is an icon and its minutes, with no container. A first or last walk shows from 2 min. A walk between two lines shows from 5 min. The itinerary shows all walks. The itinerary summary uses the same chain.
 
 The alert line shows the first alert of the journey on one line, and the number of the others on an `errorContainer` pill. It shows only when the journey has an alert.
 

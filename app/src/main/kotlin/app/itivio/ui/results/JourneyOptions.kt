@@ -47,6 +47,7 @@ import app.itivio.ui.common.Choice
 import app.itivio.ui.common.ChoiceButtons
 import app.itivio.ui.common.icon
 import app.itivio.ui.common.label
+import app.itivio.ui.common.shortLabel
 
 /** Opens the journey options. Selected when an option is not at its default. */
 @Composable
@@ -96,7 +97,7 @@ private fun JourneyOptionsFields(options: JourneyOptions, onChange: (JourneyOpti
                 label = {
                     // A short name keeps three chips on one line. A screen reader gets the full name.
                     Text(
-                        stringResource(mode.chipLabel()),
+                        stringResource(mode.shortLabel()),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -215,12 +216,6 @@ private fun transferLimitLabel(limit: Int?): String = when (limit) {
     null -> stringResource(R.string.options_no_limit)
     0 -> stringResource(R.string.no_transfers)
     else -> pluralStringResource(R.plurals.transfers, limit, limit)
-}
-
-private fun TransitMode.chipLabel(): Int = when (this) {
-    TransitMode.SUBURBAN -> R.string.mode_chip_suburban
-    TransitMode.HIGHSPEED_RAIL -> R.string.mode_chip_highspeed_rail
-    else -> label()
 }
 
 private fun WalkingSpeed.label(): Int = when (this) {

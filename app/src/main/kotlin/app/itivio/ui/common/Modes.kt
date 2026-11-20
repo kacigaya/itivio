@@ -40,3 +40,11 @@ fun TransitMode.label(): Int = when (this) {
     TransitMode.ON_DEMAND -> R.string.mode_on_demand
     TransitMode.OTHER -> R.string.mode_other
 }
+
+/** A one-word name for chips and short lines, such as "Suburban" for a suburban train. */
+@StringRes
+fun TransitMode.shortLabel(): Int = when (this) {
+    TransitMode.SUBURBAN -> R.string.mode_chip_suburban
+    TransitMode.HIGHSPEED_RAIL -> R.string.mode_chip_highspeed_rail
+    else -> label()
+}

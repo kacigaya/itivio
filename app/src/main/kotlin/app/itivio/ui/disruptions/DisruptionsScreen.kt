@@ -1,5 +1,6 @@
 package app.itivio.ui.disruptions
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,9 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -60,6 +59,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.time.temporal.ChronoUnit
 
 /**
  * The service disruptions on the saved stops and on the stops near the device. [now] picks the
@@ -158,8 +158,9 @@ private val BlankLines = Regex("\\n\\s*\\n")
 private const val CLOSED_LINES = 3
 
 /**
- * One disruption: its effect and cause, the lines, the header, the time period, the stops, the
- * description, and the link. A severe disruption uses the error container. A tap shows the full
+ * One disruption: its effect, the lines, the header, the time period and the cause, the stops, the
+ * description, and the link. A severe disruption has the error container only on its header band;
+ * the body stays on the card color, so the long text is easy to read. A tap shows the full
  * description.
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -175,53 +176,68 @@ private fun DisruptionCard(disruption: Disruption, now: Instant, modifier: Modif
         AnnotatedString.fromHtml(alert.description).text.trim().replace(BlankLines, "\n")
     }
     Surface(
-        color = if (severe) scheme.errorContainer else scheme.surfaceContainerHigh,
-        contentColor = if (severe) scheme.onErrorContainer else scheme.onSurface,
+        color = scheme.surfaceContainerHigh,
+        contentColor = scheme.onSurface,
         shape = MaterialTheme.shapes.largeIncreased,
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .clickable(
-                    enabled = description.isNotEmpty(),
-                    onClickLabel = stringResource(if (open) R.string.disruption_show_less else R.string.disruption_show_more),
-                ) { open = !open }
-                .padding(16.dp),
+            Modifier.clickable(
+                enabled = description.isNotEmpty(),
+                onClickLabel = stringResource(if (open) R.string.disruption_show_less else R.string.disruption_show_more),
+            ) { open = !open },
         ) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
+            Surface(
+                color = if (severe) scheme.errorContainer else Color.Transparent,
+                contentColor = if (severe) scheme.onErrorContainer else scheme.onSurface,
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Tag(
-                    icon = if (alert.level >= AlertSeverity.WARNING) R.drawable.ic_warning else R.drawable.ic_info,
-                    text = listOfNotNull(stringResource(alert.effect.label()), alert.cause?.let { stringResource(it.label()) }).joinToString(" · "),
-                )
-                disruption.lines.forEach { LineBadge(it.line, it.mode) }
-            }
-            Text(alert.header, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            val muted = LocalContentColor.current.copy(alpha = 0.8f)
-            periodText(alert.impactPeriods, now)?.let { Detail(R.drawable.ic_schedule, it, muted) }
-            if (disruption.stops.isNotEmpty()) Detail(R.drawable.ic_location_on, disruption.stops.joinToString(", "), muted)
-            if (description.isNotEmpty() && description != alert.header) {
-                Text(
-                    description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = if (open) Int.MAX_VALUE else CLOSED_LINES,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            // The link comes from the provider: only web links open.
-            alert.url?.takeIf { it.startsWith("https://") || it.startsWith("http://") }?.let { url ->
-                val uriHandler = LocalUriHandler.current
-                // The content color of the card, so the link is readable on the error container too.
-                TextButton(
-                    onClick = { uriHandler.openUri(url) },
-                    colors = ButtonDefaults.textButtonColors(contentColor = LocalContentColor.current),
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = if (severe) 16.dp else 0.dp),
                 ) {
-                    Icon(painterResource(R.drawable.ic_open_in_new), contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text(stringResource(R.string.disruption_more_information), modifier = Modifier.padding(start = 8.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        itemVerticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        val effect = stringResource(alert.effect.label())
+                        when {
+                            severe -> Tag(R.drawable.ic_warning, effect, color = scheme.error, contentColor = scheme.onError)
+                            alert.level >= AlertSeverity.WARNING -> Tag(R.drawable.ic_warning, effect)
+                            else -> Tag(R.drawable.ic_info, effect)
+                        }
+                        disruption.lines.forEach { LineBadge(it.line, it.mode) }
+                    }
+                    Text(alert.header, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = if (severe) 12.dp else 8.dp, bottom = 16.dp),
+            ) {
+                val muted = scheme.onSurfaceVariant
+                val period = periodText(alert.impactPeriods, now)
+                val cause = alert.cause?.let { stringResource(it.label()) }
+                listOfNotNull(period, cause).takeIf { it.isNotEmpty() }?.let {
+                    Detail(if (period != null) R.drawable.ic_schedule else R.drawable.ic_info, it.joinToString(" · "), muted)
+                }
+                if (disruption.stops.isNotEmpty()) Detail(R.drawable.ic_location_on, disruption.stops.joinToString(", "), muted)
+                if (description.isNotEmpty() && description != alert.header) {
+                    Text(
+                        description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = if (open) Int.MAX_VALUE else CLOSED_LINES,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                // The link comes from the provider: only web links open.
+                alert.url?.takeIf { it.startsWith("https://") || it.startsWith("http://") }?.let { url ->
+                    val uriHandler = LocalUriHandler.current
+                    TextButton(onClick = { uriHandler.openUri(url) }) {
+                        Icon(painterResource(R.drawable.ic_open_in_new), contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(stringResource(R.string.disruption_more_information), modifier = Modifier.padding(start = 8.dp))
+                    }
                 }
             }
         }
@@ -250,20 +266,34 @@ private fun periodText(periods: List<TimeRange>, now: Instant): String? {
     // Some feeds give a period that ends when it starts. Only its start has a meaning.
     val end = period.end?.takeIf { period.start == null || it > period.start }
     return when {
-        start != null && end != null -> stringResource(R.string.disruption_from_to, formatMoment(start), formatMoment(end))
-        start != null -> stringResource(R.string.disruption_from, formatMoment(start))
-        end != null -> stringResource(R.string.disruption_until, formatMoment(end))
+        start != null && end != null -> stringResource(R.string.disruption_from_to, formatMoment(start, now), formatMoment(end, now))
+        start != null -> stringResource(R.string.disruption_from, formatMoment(start, now))
+        end != null -> stringResource(R.string.disruption_until, formatMoment(end, now))
         else -> null
     }
 }
 
-/** A date and a time in the zone of the device, such as "12 Nov 2026, 14:30". */
+/**
+ * A date and a time in the zone of the device. Within the next week the day is its name, such as
+ * "Sunday, 14:30". Later dates this year have no year. A weekday reads well in the "From" and
+ * "Until" sentences of each language, where "today" would not.
+ */
 @Composable
-private fun formatMoment(instant: Instant): String {
+private fun formatMoment(instant: Instant, now: Instant): String {
     val locale = LocalConfiguration.current.locales[0]
     val zone = ZoneId.systemDefault()
-    val date = remember(locale) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
-    return stringResource(R.string.travel_day_time, date.withZone(zone).format(instant), formatTime(instant, zone))
+    val date = instant.atZone(zone).toLocalDate()
+    val today = now.atZone(zone).toLocalDate()
+    val skeleton = when {
+        ChronoUnit.DAYS.between(today, date) in 0..6 -> "EEEE"
+        date.year == today.year -> "EEEdMMM"
+        else -> null
+    }
+    val formatter = remember(locale, skeleton) {
+        if (skeleton == null) DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+        else DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, skeleton), locale)
+    }
+    return stringResource(R.string.travel_day_time, formatter.format(date), formatTime(instant, zone))
 }
 
 private fun AlertEffect?.label(): Int = when (this) {

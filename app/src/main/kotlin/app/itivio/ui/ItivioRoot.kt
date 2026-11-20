@@ -87,6 +87,7 @@ import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.planner.PlannerViewModel
 import app.itivio.ui.results.ResultsPeekHeight
 import app.itivio.ui.results.ResultsScreen
+import app.itivio.ui.search.SavedPlacesViewModel
 import app.itivio.ui.stop.StopDeparturesViewModel
 import app.itivio.ui.stop.StopPeekHeight
 import app.itivio.ui.stop.StopScreen
@@ -341,18 +342,24 @@ fun ItivioRoot(
                         entry<StopRoute> { route ->
                             // Scoped to this entry, so the board refreshes only while it is open.
                             val board: StopDeparturesViewModel = koinViewModel()
+                            val places: SavedPlacesViewModel = koinViewModel()
                             LaunchedEffect(route.stopId) { board.show(route.stopId) }
+                            val stop = Location(
+                                route.stopId, route.name, LocationKind.STOP,
+                                GeoPoint(route.latitude, route.longitude), stopId = route.stopId,
+                            )
                             StopScreen(
                                 wide = wide,
                                 name = route.name,
                                 departures = board.departures.collectAsStateWithLifecycle().value,
                                 now = now,
+                                favorite = places.saved.collectAsStateWithLifecycle().value?.isFavorite(stop),
                                 onBack = { backStack.pop(planner) },
                                 onDirections = {
-                                    val point = GeoPoint(route.latitude, route.longitude)
-                                    planner.setDestination(Endpoint.Place(Location(route.stopId, route.name, LocationKind.STOP, point, stopId = route.stopId)))
+                                    planner.setDestination(Endpoint.Place(stop))
                                     backStack.add(ResultsRoute)
                                 },
+                                onToggleFavorite = { places.toggleFavorite(stop) },
                                 onRetry = board::retry,
                             )
                         }
@@ -360,6 +367,7 @@ fun ItivioRoot(
                             ResultsScreen(
                                 wide = wide,
                                 state = keptWhileLeaving(state),
+                                now = now,
                                 onBack = { backStack.pop(planner) },
                                 onOrigin = { endpoint ->
                                     if (endpoint == Endpoint.MyLocation && !locationGranted) locationState.requestPermission()
