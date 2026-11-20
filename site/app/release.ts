@@ -43,12 +43,8 @@ export function pickDownloads(releases: Release[]): Downloads {
   };
 }
 
-export async function latestDownloads(): Promise<Downloads> {
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.github+json",
-    "User-Agent": "itivio-site-build",
-  };
-  if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+export async function latestDownloads(token?: string): Promise<Downloads> {
+  const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
   const res = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=10`, { headers });
   if (!res.ok) throw new Error(`GitHub releases request failed: ${res.status}`);
   return pickDownloads((await res.json()) as Release[]);
