@@ -73,6 +73,7 @@ private val ListMargin = 16.dp
 fun ResultsScreen(
     wide: Boolean,
     state: PlannerState,
+    now: Instant,
     onBack: () -> Unit,
     onOrigin: (Endpoint) -> Unit,
     onDestination: (Endpoint) -> Unit,
@@ -110,6 +111,7 @@ fun ResultsScreen(
     ) {
         ResultsList(
             state,
+            now,
             onPickTime = { pickingTime = true },
             onPickOptions = { pickingOptions = true },
             onSort, onSelect, onOpen, onEarlier, onLater, onRetry,
@@ -201,6 +203,7 @@ private fun EndpointField(label: String, value: String, icon: Int, onClick: () -
 @Composable
 private fun ResultsList(
     state: PlannerState,
+    now: Instant,
     onPickTime: () -> Unit,
     onPickOptions: () -> Unit,
     onSort: (RouteSort) -> Unit,
@@ -241,6 +244,7 @@ private fun ResultsList(
                     RouteCard(
                         journey = journey,
                         selected = journey.id == highlighted,
+                        now = now,
                         onClick = {
                             onSelect(journey.id)
                             onOpen(journey.id)

@@ -22,6 +22,7 @@
     <string name="shortcut_set_work">Set work</string>
     <string name="shortcut_search_home">Search for your home</string>
     <string name="shortcut_search_work">Search for your work</string>
+    <string name="search_set_shortcut_hint">Search for a place, then pick it</string>
     <string name="saved_favorites">Favorites</string>
     <string name="saved_recents">Recent searches</string>
     <string name="saved_clear_recents">Clear recent searches</string>
@@ -61,6 +62,7 @@
 
     <!-- Stop departures -->
     <string name="stop_directions">Directions to here</string>
+    <string name="stop_favorite">Favorite</string>
     <string name="stop_departures">Departures</string>
     <string name="stop_empty_title">No upcoming departures</string>
     <string name="stop_empty_body">The timetable has no departures from this stop soon, or it does not cover this stop.</string>

@@ -51,6 +51,8 @@ import app.itivio.domain.Leg
 import app.itivio.domain.Line
 import app.itivio.domain.StopTime
 import app.itivio.domain.TransitMode
+import java.time.Duration
+import java.time.Instant
 import java.time.ZoneId
 
 /**
@@ -143,6 +145,30 @@ fun Tag(
             Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(16.dp))
             Text(text, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, maxLines = 1)
         }
+    }
+}
+
+/**
+ * The trip tracker status: "Leave in 4 min" before the departure, then "Arrive in 12 min". It is
+ * tertiary with the live icon only when the journey has live times. Nothing after the arrival.
+ */
+@Composable
+fun JourneyStatusTag(journey: Journey, now: Instant, modifier: Modifier = Modifier) {
+    val text = when {
+        now < journey.departure.best -> {
+            val wait = clockMinutesUntil(now, journey.departure.best)
+            if (wait < 1) stringResource(R.string.itinerary_leave_now)
+            else stringResource(R.string.itinerary_leave_in, formatDuration(Duration.ofMinutes(wait)))
+        }
+        now < journey.arrival.best ->
+            stringResource(R.string.itinerary_arrive_in, formatDuration(Duration.ofMinutes(clockMinutesUntil(now, journey.arrival.best))))
+        else -> return
+    }
+    if (journey.hasRealtime) {
+        val scheme = MaterialTheme.colorScheme
+        Tag(R.drawable.ic_sensors, text, modifier, color = scheme.tertiary, contentColor = scheme.onTertiary)
+    } else {
+        Tag(R.drawable.ic_schedule, text, modifier)
     }
 }
 
@@ -280,9 +306,10 @@ fun TimeText(time: StopTime, zone: ZoneId?, modifier: Modifier = Modifier, empha
 }
 
 /**
- * Minutes until a departure, with a heavy number and a light unit. Live countdowns use the same
- * tertiary role and icon as [TimeText], so riders can tell live data from the timetable. A live
- * "Now" is a tertiary pill: it is the departure that needs the rider's attention.
+ * Minutes until a departure, with a heavy number and a light unit. A live countdown sits on a
+ * tertiary container pill with the live icon, so it is the strongest number on its row. A timetable
+ * countdown stays plain in onSurfaceVariant. A live "Now" is a tertiary pill: it is the departure
+ * that needs the rider's attention.
  */
 @Composable
 fun CountdownText(
@@ -295,22 +322,25 @@ fun CountdownText(
     val countdown = if (now) stringResource(R.string.nearby_now) else stringResource(R.string.duration_min, minutes.toInt())
     val status = stringResource(if (live) R.string.live else R.string.scheduled)
     val scheme = MaterialTheme.colorScheme
-    val pill = now && live
     Surface(
-        color = if (pill) scheme.tertiary else Color.Transparent,
+        color = when {
+            now && live -> scheme.tertiary
+            live -> scheme.tertiaryContainer
+            else -> Color.Transparent
+        },
         contentColor = when {
-            pill -> scheme.onTertiary
-            live -> scheme.tertiary
-            else -> scheme.onSurface
+            now && live -> scheme.onTertiary
+            live -> scheme.onTertiaryContainer
+            else -> scheme.onSurfaceVariant
         },
         // A surface clips to its shape; only the pill has the padding for round ends.
-        shape = if (pill) CircleShape else RectangleShape,
+        shape = if (live) CircleShape else RectangleShape,
         modifier = modifier.clearAndSetSemantics { contentDescription = "$countdown, $status" },
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = if (pill) Modifier.padding(start = 8.dp, end = 10.dp, top = 2.dp, bottom = 2.dp) else Modifier,
+            modifier = if (live) Modifier.padding(start = 8.dp, end = 12.dp, top = 2.dp, bottom = 2.dp) else Modifier,
         ) {
             if (live) Icon(painterResource(R.drawable.ic_sensors), contentDescription = null, modifier = Modifier.size(16.dp))
             if (now) {

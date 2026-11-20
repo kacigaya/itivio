@@ -249,6 +249,7 @@ open class ScreenshotTest {
     fun resultsArriveBy() = capture("results_arrive_by") {
         ResultsScreen(
             wide = false,
+            now = t0.minusSeconds(240),
             state = PlannerState(
                 optionsLoaded = true,
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
@@ -279,6 +280,7 @@ open class ScreenshotTest {
     fun results() = capture("results") {
         ResultsScreen(
             wide = false,
+            now = t0.minusSeconds(240),
             state = PlannerState(
                 optionsLoaded = true,
                 origin = Endpoint.MyLocation,
@@ -297,6 +299,7 @@ open class ScreenshotTest {
     fun resultsOffline() = capture("results_offline") {
         ResultsScreen(
             wide = false,
+            now = t0.minusSeconds(240),
             state = PlannerState(
                 optionsLoaded = true,
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
@@ -311,6 +314,7 @@ open class ScreenshotTest {
     fun resultsLoading() = capture("results_loading") {
         ResultsScreen(
             wide = false,
+            now = t0.minusSeconds(240),
             state = PlannerState(
                 optionsLoaded = true,
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
@@ -329,6 +333,7 @@ open class ScreenshotTest {
     ) {
         ResultsScreen(
             wide = false,
+            now = t0.minusSeconds(240),
             state = PlannerState(
                 optionsLoaded = true,
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
@@ -406,15 +411,16 @@ open class ScreenshotTest {
             name = "S+U Alexanderplatz",
             departures = LoadState.Ready(sampleDepartures.flatMap { it.departures }),
             now = t0,
-            onBack = {}, onDirections = {}, onRetry = {},
+            favorite = true,
+            onBack = {}, onDirections = {}, onToggleFavorite = {}, onRetry = {},
         )
     }
 
     @Test
     fun stopLoading() = capture("stop_loading") {
         StopScreen(
-            wide = false, name = "S+U Alexanderplatz", departures = LoadState.Loading, now = t0,
-            onBack = {}, onDirections = {}, onRetry = {},
+            wide = false, name = "S+U Alexanderplatz", departures = LoadState.Loading, now = t0, favorite = false,
+            onBack = {}, onDirections = {}, onToggleFavorite = {}, onRetry = {},
         )
     }
 
@@ -511,6 +517,7 @@ open class ScreenshotTest {
     fun resultsWide() = capture("results_wide") {
         ResultsScreen(
             wide = true,
+            now = t0.minusSeconds(240),
             state = PlannerState(
                 optionsLoaded = true,
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),

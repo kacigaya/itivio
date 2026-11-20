@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -17,7 +16,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExpandedFullScreenSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -46,6 +44,21 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.SearchBarValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import app.itivio.R
 import app.itivio.domain.Location
 import app.itivio.domain.LocationKind
@@ -60,6 +73,7 @@ import app.itivio.ui.common.SkeletonBlock
 import app.itivio.ui.common.SkeletonText
 import app.itivio.ui.common.icon
 import app.itivio.ui.planner.Endpoint
+import app.itivio.ui.common.shortLabel
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -143,8 +157,8 @@ fun LocationSearchView(
     }
 
     @Composable
-    fun PlaceRow(location: Location, icon: Int, title: String, subtitle: String?, onClick: () -> Unit) {
-        SuggestionRow(icon, title, subtitle, onClick) {
+    fun PlaceRow(location: Location, icon: Int, title: AnnotatedString, subtitle: String?, shape: Shape, onClick: () -> Unit) {
+        SuggestionRow(icon, title, subtitle, shape, onClick = onClick) {
             PlaceMenu(
                 location, saved, places,
                 onDepartures = onDepartures?.takeIf { location.stopId != null }?.let { show ->
@@ -157,43 +171,79 @@ fun LocationSearchView(
         }
     }
 
+    // Set while a "Set home" or "Set work" row waits for its place. The pick then fills the
+    // shortcut, and the search stays open, so the rider sees the new row.
+    var assigning by rememberSaveable { mutableStateOf<Shortcut?>(null) }
+    LaunchedEffect(searchBarState) {
+        snapshotFlow { searchBarState.currentValue }.collect { if (it == SearchBarValue.Collapsed) assigning = null }
+    }
+    fun pickPlace(location: Location, recent: Boolean) {
+        val shortcut = assigning
+        if (shortcut != null) {
+            places.setShortcut(shortcut, location)
+            assigning = null
+            textFieldState.clearText()
+        } else if (recent) {
+            pickRecent(location)
+        } else {
+            pick(Endpoint.Place(location))
+        }
+    }
+    val query = textFieldState.text.trim().toString()
+
     ExpandedFullScreenSearchBar(
         state = searchBarState,
+        colors = SearchBarDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         inputField = {
             LocationInputField(
                 textFieldState = textFieldState,
                 searchBarState = searchBarState,
-                placeholder = placeholder,
+                placeholder = when (assigning) {
+                    Shortcut.HOME -> stringResource(R.string.shortcut_search_home)
+                    Shortcut.WORK -> stringResource(R.string.shortcut_search_work)
+                    null -> placeholder
+                },
                 onBack = { scope.launch { searchBarState.animateToCollapsed() } },
             )
         },
     ) {
-        LazyColumn(modifier = Modifier.fillMaxWidth()) {
-            if (offerMyLocation) {
-                item(key = "my-location") {
-                    SuggestionRow(
-                        icon = R.drawable.ic_my_location,
-                        title = stringResource(R.string.search_my_location),
-                        subtitle = null,
-                        onClick = { pick(Endpoint.MyLocation) },
-                    )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)) {
+            val myLocation = offerMyLocation && assigning == null
+            if (query.isEmpty()) {
+                // My location, Home, and Work are one group. An empty shortcut offers to set it.
+                val shortcuts = Shortcut.entries.filter { assigning == null || it == assigning }
+                val count = shortcuts.size + if (myLocation) 1 else 0
+                if (myLocation) {
+                    item(key = "my-location") {
+                        SuggestionRow(R.drawable.ic_my_location, stringResource(R.string.search_my_location), null, groupShape(0, count)) {
+                            pick(Endpoint.MyLocation)
+                        }
+                    }
                 }
-            }
-            if (textFieldState.text.isBlank()) {
-                Shortcut.entries.forEach { shortcut ->
-                    val location = saved.shortcut(shortcut) ?: return@forEach
+                shortcuts.forEachIndexed { index, shortcut ->
+                    val shape = groupShape(index + if (myLocation) 1 else 0, count)
+                    val location = saved.shortcut(shortcut)
                     item(key = "shortcut:$shortcut") {
-                        PlaceRow(location, shortcut.iconRes(), stringResource(shortcut.labelRes()), location.name) {
-                            pick(Endpoint.Place(location))
+                        if (location != null) {
+                            PlaceRow(location, shortcut.iconRes(), AnnotatedString(stringResource(shortcut.labelRes())), location.name, shape) {
+                                pickPlace(location, recent = false)
+                            }
+                        } else {
+                            SuggestionRow(
+                                icon = shortcut.iconRes(),
+                                title = stringResource(shortcut.setLabelRes()),
+                                subtitle = stringResource(R.string.search_set_shortcut_hint),
+                                shape = shape,
+                                outlinedIcon = true,
+                            ) { assigning = if (assigning == shortcut) null else shortcut }
                         }
                     }
                 }
                 if (saved.favorites.isNotEmpty()) {
                     item(key = "favorites") { SectionHeader(stringResource(R.string.saved_favorites)) }
-                    items(saved.favorites, key = { "favorite:${it.savedKey}" }) { location ->
-                        PlaceRow(location, R.drawable.ic_star_filled, location.name, location.subtitle()) {
-                            pick(Endpoint.Place(location))
+                    itemsIndexed(saved.favorites, key = { _, it -> "favorite:${it.savedKey}" }) { index, location ->
+                        PlaceRow(location, R.drawable.ic_star_filled, AnnotatedString(location.name), location.subtitle(), groupShape(index, saved.favorites.size)) {
+                            pickPlace(location, recent = false)
                         }
                     }
                 }
@@ -207,11 +257,21 @@ fun LocationSearchView(
                             ) { Text(stringResource(R.string.search_clear)) }
                         }
                     }
-                    items(saved.recents, key = { "recent:${it.savedKey}" }) { location ->
-                        PlaceRow(location, R.drawable.ic_history, location.name, location.subtitle()) { pickRecent(location) }
+                    itemsIndexed(saved.recents, key = { _, it -> "recent:${it.savedKey}" }) { index, location ->
+                        PlaceRow(location, R.drawable.ic_history, AnnotatedString(location.name), location.subtitle(), groupShape(index, saved.recents.size)) {
+                            pickPlace(location, recent = true)
+                        }
                     }
                 }
                 return@LazyColumn
+            }
+            if (myLocation) {
+                item(key = "my-location") {
+                    SuggestionRow(R.drawable.ic_my_location, stringResource(R.string.search_my_location), null, groupShape(0, 1)) {
+                        pick(Endpoint.MyLocation)
+                    }
+                }
+                item(key = "my-location-gap") { Spacer(Modifier.height(16.dp)) }
             }
             when (val state = suggestions) {
                 LoadState.Idle -> item(key = "hint") {
@@ -230,18 +290,43 @@ fun LocationSearchView(
                     item(key = "empty") {
                         MessageState(
                             icon = R.drawable.ic_search,
-                            title = stringResource(R.string.search_no_results, textFieldState.text.trim()),
+                            title = stringResource(R.string.search_no_results, query),
                             body = "",
                         )
                     }
                 } else {
                     // Geocoding IDs can be blank or repeated. These rows use position keys.
-                    items(state.value) { location ->
-                        PlaceRow(location, location.iconRes(), location.name, location.subtitle()) { pickRecent(location) }
+                    itemsIndexed(state.value) { index, location ->
+                        PlaceRow(
+                            location, location.iconRes(), highlightMatch(location.name, query), location.subtitle(),
+                            groupShape(index, state.value.size),
+                        ) { pickPlace(location, recent = true) }
                     }
                 }
             }
         }
+    }
+}
+
+/** The shape of row [index] in a group of [count]: round outer corners, small inner ones. */
+private fun groupShape(index: Int, count: Int): Shape {
+    val outer = 20.dp
+    val inner = 4.dp
+    return RoundedCornerShape(
+        topStart = if (index == 0) outer else inner,
+        topEnd = if (index == 0) outer else inner,
+        bottomStart = if (index == count - 1) outer else inner,
+        bottomEnd = if (index == count - 1) outer else inner,
+    )
+}
+
+/** [name] with the first match of [query] in bold, so the eye finds what differs between rows. Case is ignored. */
+internal fun highlightMatch(name: String, query: String): AnnotatedString {
+    val start = if (query.isBlank()) -1 else name.indexOf(query.trim(), ignoreCase = true)
+    if (start < 0) return AnnotatedString(name)
+    return buildAnnotatedString {
+        append(name)
+        addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, start + query.trim().length)
     }
 }
 
@@ -309,28 +394,52 @@ private fun SuggestionRow(
     icon: Int,
     title: String,
     subtitle: String?,
+    shape: Shape,
+    outlinedIcon: Boolean = false,
     onClick: () -> Unit,
-    trailing: (@Composable () -> Unit)? = null,
+) = SuggestionRow(icon, AnnotatedString(title), subtitle, shape, outlinedIcon, onClick, null)
+
+/**
+ * One row of a group: a tile with the icon, the title and the subtitle, and an optional menu. An
+ * [outlinedIcon] marks a row that sets something up, such as "Set home", not a place.
+ */
+@Composable
+private fun SuggestionRow(
+    icon: Int,
+    title: AnnotatedString,
+    subtitle: String?,
+    shape: Shape,
+    outlinedIcon: Boolean = false,
+    onClick: () -> Unit,
+    trailing: (@Composable () -> Unit)?,
 ) {
-    ListItem(
-        onClick = onClick,
-        leadingContent = {
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                shape = MaterialTheme.shapes.extraLarge,
-                modifier = Modifier.size(40.dp),
-            ) {
-                Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(20.dp))
-                }
-            }
-        },
-        supportingContent = subtitle?.let { { Text(it, maxLines = 1) } },
-        trailingContent = trailing,
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        color = scheme.surfaceContainerHigh,
+        shape = shape,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 1.dp),
     ) {
-        Text(title, maxLines = 1)
+        ListItem(
+            onClick = onClick,
+            leadingContent = {
+                Surface(
+                    color = if (outlinedIcon) Color.Transparent else scheme.secondaryContainer,
+                    contentColor = if (outlinedIcon) scheme.onSurfaceVariant else scheme.onSecondaryContainer,
+                    border = if (outlinedIcon) BorderStroke(1.dp, scheme.outlineVariant) else null,
+                    shape = MaterialTheme.shapes.extraLarge,
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(20.dp))
+                    }
+                }
+            },
+            supportingContent = subtitle?.let { { Text(it, maxLines = 1, overflow = TextOverflow.Ellipsis) } },
+            trailingContent = trailing,
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        ) {
+            Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
 }
 
@@ -341,7 +450,7 @@ private fun SuggestionRowSkeleton(wide: Boolean) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         // The height and the margins of a two-line list item.
-        modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(horizontal = 32.dp, vertical = 8.dp),
     ) {
         SkeletonBlock(Modifier.size(40.dp))
         Column {
@@ -351,8 +460,17 @@ private fun SuggestionRowSkeleton(wide: Boolean) {
     }
 }
 
+/** The area, or the kind of place. A stop also names its modes, so stops with one name differ. */
 @Composable
-private fun Location.subtitle(): String = area ?: stringResource(kindLabel())
+private fun Location.subtitle(): String {
+    val modes = modes.filter { it.isTransit }.sortedBy { it.ordinal }.map { stringResource(it.shortLabel()) }.distinct()
+    return listOfNotNull(area ?: stringResource(kindLabel()).takeIf { modes.isEmpty() }, *modes.toTypedArray()).joinToString(" · ")
+}
+
+fun Shortcut.setLabelRes(): Int = when (this) {
+    Shortcut.HOME -> R.string.shortcut_set_home
+    Shortcut.WORK -> R.string.shortcut_set_work
+}
 
 fun Shortcut.iconRes(): Int = when (this) {
     Shortcut.HOME -> R.drawable.ic_home

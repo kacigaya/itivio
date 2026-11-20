@@ -73,6 +73,7 @@ import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.search.LocationInputField
 import app.itivio.ui.search.LocationSearchView
 import app.itivio.ui.search.SavedPlacesViewModel
+import app.itivio.ui.search.setLabelRes
 import app.itivio.ui.search.iconRes
 import app.itivio.ui.search.labelRes
 import app.itivio.ui.search.rememberLocationSearchBarState
@@ -307,10 +308,7 @@ private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit
     }
 }
 
-private fun Shortcut.setLabelRes(): Int = when (this) {
-    Shortcut.HOME -> R.string.shortcut_set_home
-    Shortcut.WORK -> R.string.shortcut_set_work
-}
+
 
 /**
  * A button with the height of the search bar. Its shape and its primary container color set it

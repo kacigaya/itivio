@@ -1,14 +1,20 @@
 package app.itivio.ui.stop
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedIconToggleButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -30,15 +36,20 @@ import java.time.Instant
 
 val StopPeekHeight = 360.dp
 
-/** The next departures from one stop. [onDirections] plans a journey to the stop. */
+/**
+ * The next departures from one stop. [onDirections] plans a journey to the stop. [favorite] is
+ * null while saved places load; the toggle then waits, so it never shows a wrong state.
+ */
 @Composable
 fun StopScreen(
     wide: Boolean,
     name: String,
     departures: LoadState<List<Departure>>,
     now: Instant,
+    favorite: Boolean?,
     onBack: () -> Unit,
     onDirections: () -> Unit,
+    onToggleFavorite: () -> Unit,
     onRetry: () -> Unit,
 ) {
     MapPanel(
@@ -59,10 +70,17 @@ fun StopScreen(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp).semantics { heading() },
                 )
             }
-            item(key = "directions") {
-                FilledTonalButton(onClick = onDirections, modifier = Modifier.padding(horizontal = 24.dp)) {
-                    Icon(painterResource(R.drawable.ic_directions), contentDescription = null)
-                    Text(stringResource(R.string.stop_directions), modifier = Modifier.padding(start = 8.dp))
+            item(key = "actions") {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                ) {
+                    Button(onClick = onDirections) {
+                        Icon(painterResource(R.drawable.ic_directions), contentDescription = null)
+                        Text(stringResource(R.string.stop_directions), modifier = Modifier.padding(start = 8.dp))
+                    }
+                    FavoriteToggle(favorite, onToggleFavorite)
                 }
             }
             item(key = "departures-title") {
@@ -96,5 +114,23 @@ fun StopScreen(
                 }
             }
         }
+    }
+}
+
+/** Saved: a filled star on secondary, the checked color of the app. Not saved: an outlined button. */
+@Composable
+private fun FavoriteToggle(favorite: Boolean?, onToggle: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    OutlinedIconToggleButton(
+        checked = favorite == true,
+        onCheckedChange = { onToggle() },
+        enabled = favorite != null,
+        colors = IconButtonDefaults.outlinedIconToggleButtonColors(
+            checkedContainerColor = scheme.secondary,
+            checkedContentColor = scheme.onSecondary,
+        ),
+        modifier = Modifier.size(48.dp),
+    ) {
+        Icon(painterResource(R.drawable.ic_star_filled), contentDescription = stringResource(R.string.stop_favorite))
     }
 }
