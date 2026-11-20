@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The fallback surface of Theme.kt. -->
+    <color name="window_background">#FFF5FBF7</color>
+    <!-- The seed of the theme and the background of the launcher icon. -->
+    <color name="brand">#FF1B6B5A</color>
+</resources>
