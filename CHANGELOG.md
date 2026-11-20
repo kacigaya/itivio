@@ -5,6 +5,19 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.13.0
+
+Beta prerelease for Android 8.0 and later.
+
+- Put live countdowns on a pill, so a live time is the strongest number on its row. Timetable countdowns stay plain.
+- Show "Leave in 4 min" on each route card, with a bar that shows each leg by its time: lines in their color, walks as dots, and waits as gaps.
+- Keep the red of a severe disruption on its header only, so the description is easy to read. Dates within a week show the weekday, and dates later this year have no year.
+- Save a stop to your favorites from its sheet with the star button. Saved stops show in "Your saved stops" of the disruptions.
+- Close the walking view with a grey button. Red is now only for the off-route banner.
+- Group the search results. Stops name their modes, so stops with the same name differ, and the part that matches your search is bold. "Set home" and "Set work" show in the search when they are empty.
+- Show a calm light map in the colors of the app, so the lines of routes and stops stand out. The app now has the map style built in.
+- Show the launch screen in the colors of the app, with no white flash.
+
 ## 0.12.0
 
 Beta prerelease for Android 8.0 and later.

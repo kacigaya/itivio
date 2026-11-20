@@ -27,8 +27,8 @@ android {
         applicationId = "app.itivio"
         minSdk = 26
         targetSdk = 37
-        versionCode = 18
-        versionName = "0.12.0"
+        versionCode = 19
+        versionName = "0.13.0"
         // MapLibre Native ships these ABIs; 32-bit x86 is not supported by the runtime.
         ndk { abiFilters += abiVersionCodes.keys }
 
