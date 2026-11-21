@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -26,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.MotionDurationScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -55,6 +57,8 @@ import app.itivio.domain.Leg
 import app.itivio.domain.hints
 import app.itivio.domain.Location
 import app.itivio.domain.LocationKind
+import app.itivio.ui.common.DisruptionsPage
+import app.itivio.ui.common.FullScreenPage
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.LoadingState
 import app.itivio.ui.common.MapPanel
@@ -86,6 +90,7 @@ import app.itivio.ui.nearby.rememberNow
 import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.planner.PlannerViewModel
 import app.itivio.ui.results.ResultsPeekHeight
+import app.itivio.ui.results.ResultsPlacementMillis
 import app.itivio.ui.results.ResultsScreen
 import app.itivio.ui.search.SavedPlacesViewModel
 import app.itivio.ui.stop.StopDeparturesViewModel
@@ -176,7 +181,8 @@ fun ItivioRoot(
     } else {
         LoadState.Idle
     }
-    val areaStops = mapStops.stops.collectAsStateWithLifecycle().value.takeIf { top == ExploreRoute }.orEmpty()
+    val mapShowsExplore = top == ExploreRoute || top == DisruptionsRoute
+    val areaStops = mapStops.stops.collectAsStateWithLifecycle().value.takeIf { mapShowsExplore }.orEmpty()
     val now by rememberNow()
 
     var trackedJourney by remember { mutableStateOf<Journey?>(null) }
@@ -189,7 +195,19 @@ fun ItivioRoot(
     val walkLeg = plannedWalkLeg?.rerouted(walkKey, reroute)
     val mapJourney = when (top) {
         is ItineraryRoute -> journeyFor(top.journeyId)
-        ResultsRoute -> state.highlighted
+        ResultsRoute -> {
+            val highlighted = state.highlighted
+            var shown by remember { mutableStateOf(state.sort to highlighted) }
+            LaunchedEffect(state.sort, highlighted) {
+                val (shownSort, shownJourney) = shown
+                if (shownSort != state.sort && shownJourney != null && highlighted != null && shownJourney.id != highlighted.id) {
+                    val scale = coroutineContext[MotionDurationScale]?.scaleFactor ?: 1f
+                    delay((ResultsPlacementMillis * scale).toLong())
+                }
+                shown = state.sort to highlighted
+            }
+            shown.second
+        }
         // The walking view draws only its walk, from its start to its end.
         is WalkRoute -> walkLeg?.let { Journey("${top.journeyId}-walk-${top.legIndex}", listOf(it), it.start, it.end, 0) }
         else -> null
@@ -229,9 +247,14 @@ fun ItivioRoot(
     }
     val stopPoint = (top as? StopRoute)?.let { GeoPoint(it.latitude, it.longitude) }
     val destinationPoint = stopPoint ?: (state.destination as? Endpoint.Place)?.location?.point?.takeIf { top.needsSession }
-    val stops = (nearbyState as? LoadState.Ready)?.value.orEmpty()
-        .flatMap { group -> group.departures.mapNotNull { departure -> departure.toMapStop() } }
-        .distinctBy { it.stopId }
+    var lastNearby by remember { mutableStateOf(nearbyState) }
+    if (top == ExploreRoute) SideEffect { lastNearby = nearbyState }
+    val mapNearby = if (top == DisruptionsRoute && locationGranted) lastNearby else nearbyState
+    val stops = remember(mapNearby) {
+        (mapNearby as? LoadState.Ready)?.value.orEmpty()
+            .flatMap { group -> group.departures.mapNotNull { departure -> departure.toMapStop() } }
+            .distinctBy { it.stopId }
+    }
 
     fun openStop(stop: MapStop) {
         backStack.add(StopRoute(stop.stopId, stop.name, stop.point.latitude, stop.point.longitude))
@@ -248,6 +271,7 @@ fun ItivioRoot(
         TransitMap(
             locationState = locationState,
             journey = mapJourney,
+            results = top == ResultsRoute,
             destination = destinationPoint,
             stops = stops,
             insets = panelInsets(wide, peek, headerHeight.value, navigation = if (topLevel && wide) navigationSize else 0.dp),
@@ -312,7 +336,7 @@ fun ItivioRoot(
                                 onSettings = { backStack.add(SettingsRoute) },
                             )
                         }
-                        entry<DisruptionsRoute> {
+                        entry<DisruptionsRoute>(metadata = DisruptionsPage) {
                             // Scoped to this entry, so the alerts load only while the page is open.
                             val disruptions: DisruptionsViewModel = koinViewModel()
                             DisruptionsScreen(
@@ -323,7 +347,7 @@ fun ItivioRoot(
                                 onBack = if (wide) null else ({ backStack.pop(planner) }),
                             )
                         }
-                        entry<SettingsRoute> {
+                        entry<SettingsRoute>(metadata = FullScreenPage) {
                             val settings: SettingsViewModel = koinViewModel()
                             SettingsScreen(
                                 theme = settings.theme.collectAsStateWithLifecycle().value,
@@ -336,7 +360,7 @@ fun ItivioRoot(
                                 onAbout = { backStack.add(AboutRoute) },
                             )
                         }
-                        entry<AboutRoute> {
+                        entry<AboutRoute>(metadata = FullScreenPage) {
                             AboutScreen(version = BuildConfig.VERSION_NAME, onBack = { backStack.pop(planner) })
                         }
                         entry<StopRoute> { route ->

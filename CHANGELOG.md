@@ -5,6 +5,15 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.13.1
+
+Beta prerelease for Android 8.0 and later.
+
+- Keep the map covered when Settings and About slide between screens.
+- Move the journey cards before updating the map when sorting. Fit the itinerary map in one step when leaving walking directions.
+- Keep the map pane steady when opening Disruptions in the wide layout.
+- Update the Android build tools and dependencies. The travel-time picker shows more of the adjacent hours and minutes.
+
 ## 0.13.0
 
 Beta prerelease for Android 8.0 and later.

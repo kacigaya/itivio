@@ -21,16 +21,20 @@ val abiVersionCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 3)
 
 android {
     namespace = "app.itivio"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 2
+        }
+    }
 
     defaultConfig {
         applicationId = "app.itivio"
         minSdk = 26
         targetSdk = 37
-        versionCode = 19
-        versionName = "0.13.0"
+        versionCode = 20
+        versionName = "0.13.1"
         // MapLibre Native ships these ABIs; 32-bit x86 is not supported by the runtime.
-        ndk { abiFilters += abiVersionCodes.keys }
+        ndk { abiFilters += setOf("armeabi-v7a", "arm64-v8a", "x86_64") }
 
         val contact = providers.gradleProperty("itivio.contact").getOrElse("")
         buildConfigField("String", "CONTACT", "\"$contact\"")
@@ -52,7 +56,7 @@ android {
         abi {
             isEnable = true
             reset()
-            include(*abiVersionCodes.keys.toTypedArray())
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
             isUniversalApk = true
         }
     }

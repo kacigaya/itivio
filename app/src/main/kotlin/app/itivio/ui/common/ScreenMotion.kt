@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.navigation3.runtime.NavEntryDecorator
+import androidx.navigation3.scene.Scene
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigationevent.NavigationEventTransitionState
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
@@ -48,6 +49,11 @@ internal val CardExitEasing = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
 /** The motion of the screen around the content. Null outside the app root, such as in tests. */
 private val LocalScreenMotion = compositionLocalOf<(() -> ScreenMotionState)?> { null }
 
+private const val FullScreenPageKey = "itivio.fullScreenPage"
+private const val OpaqueUnderlayKey = "itivio.opaqueUnderlay"
+internal val FullScreenPage = mapOf(FullScreenPageKey to true)
+internal val DisruptionsPage = FullScreenPage + (OpaqueUnderlayKey to true)
+
 /**
  * The direction of the screen change in progress. NavDisplay gives it: each of its three
  * transition specs must return [transform]. The transform keeps the two screens until the change
@@ -56,18 +62,28 @@ private val LocalScreenMotion = compositionLocalOf<(() -> ScreenMotionState)?> {
 class ScreenChange {
     internal var back = false
         private set
+    internal var keepBackgroundOpaque = false
+        private set
 
-    fun transform(scope: AnimatedContentTransitionScope<*>, back: Boolean): ContentTransform {
+    fun <T : Any> transform(scope: AnimatedContentTransitionScope<Scene<T>>, back: Boolean): ContentTransform {
         this.back = back
+        keepBackgroundOpaque = keepsUnderlayOpaque(
+            scope.initialState.entries.singleOrNull()?.metadata.orEmpty(),
+            scope.targetState.entries.singleOrNull()?.metadata.orEmpty(),
+        )
         return with(scope) { EnterTransition.None togetherWith ExitTransition.KeepUntilTransitionsFinished }
     }
 }
 
+internal fun keepsUnderlayOpaque(from: Map<String, Any>, to: Map<String, Any>): Boolean =
+    from[OpaqueUnderlayKey] == true || to[OpaqueUnderlayKey] == true ||
+        (from[FullScreenPageKey] == true && to[FullScreenPageKey] == true)
+
 /**
  * Moves the screen on top as a card. A new screen comes up from the bottom edge, and the screen
- * below it fades out. "Back" sends the card down again, and the screen below fades in. A back
- * gesture pulls the card down by [PreviewDrop] and shows the screen below. A release sends the
- * card down. A cancelled gesture puts the card back.
+ * below it can fade. "Back" sends the card down again. A back gesture pulls the card down by
+ * [PreviewDrop] and shows the screen below. A release sends the card down. A cancelled gesture
+ * puts the card back.
  *
  * NavDisplay moves its transition with the gesture, so the gesture and the button share one motion.
  */
@@ -89,6 +105,7 @@ fun <T : Any> screenMotionDecorator(change: ScreenChange): NavEntryDecorator<T> 
                 entering = transition.currentState == EnterExitState.PreEnter,
                 back = change.back,
                 away = away.value,
+                keepBackgroundOpaque = change.keepBackgroundOpaque,
             )
             state
         }
@@ -163,7 +180,14 @@ internal class ScreenMotionState {
      * Reads one frame. [back] is the direction of the change. [entering] is true for the screen
      * that comes into view. [away] is 0 when the screen is in view and 1 when it is not.
      */
-    fun update(gesture: NavigationEventTransitionState?, running: Boolean, entering: Boolean, back: Boolean, away: Float) {
+    fun update(
+        gesture: NavigationEventTransitionState?,
+        running: Boolean,
+        entering: Boolean,
+        back: Boolean,
+        away: Float,
+        keepBackgroundOpaque: Boolean = false,
+    ) {
         val inGesture = gesture is NavigationEventTransitionState.InProgress
         val progress = if (entering) 1f - away else away
         if (!running) fromGesture = false
@@ -179,7 +203,7 @@ internal class ScreenMotionState {
         if (!fromGesture) {
             if (card) {
                 drop = if (entering) 1f - CardEnterEasing.transform(progress) else CardExitEasing.transform(progress)
-            } else {
+            } else if (!keepBackgroundOpaque) {
                 // The screen below changes in the first half, so two headers do not show together.
                 alpha = (if (entering) progress * 2f else 1f - progress * 2f).coerceIn(0f, 1f)
             }
@@ -195,7 +219,7 @@ internal class ScreenMotionState {
         if (card) {
             val preview = PreviewDrop * amount
             drop = preview + (1f - preview) * CardExitEasing.transform(commit)
-        } else {
+        } else if (!keepBackgroundOpaque) {
             alpha = amount + (1f - amount) * commit
         }
     }

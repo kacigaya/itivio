@@ -2,6 +2,7 @@ package app.itivio.ui.results
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -46,6 +47,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.clickable
 import app.itivio.R
 import app.itivio.domain.JourneyOptions
@@ -66,6 +68,9 @@ import kotlinx.coroutines.launch
 
 val ResultsPeekHeight = 360.dp
 
+internal const val ResultsPlacementMillis = 220
+private val RouteFade = tween<Float>(ResultsPlacementMillis)
+private val RoutePlacement = tween<IntOffset>(ResultsPlacementMillis)
 private val ListMargin = 16.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -249,7 +254,11 @@ private fun ResultsList(
                             onSelect(journey.id)
                             onOpen(journey.id)
                         },
-                        modifier = Modifier.animateItem(),
+                        modifier = Modifier.animateItem(
+                            fadeInSpec = RouteFade,
+                            placementSpec = RoutePlacement,
+                            fadeOutSpec = RouteFade,
+                        ),
                     )
                 }
                 if (state.canLoadLater) {

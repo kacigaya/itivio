@@ -190,6 +190,7 @@ fun TransitMap(
     walkProgress: WalkProgress? = null,
     northUp: Boolean = false,
     overviewRequest: Int = 0,
+    results: Boolean = false,
     onBearing: (Double) -> Unit = {},
     onStop: (MapStop) -> Unit = {},
     onFollowStopped: () -> Unit = {},
@@ -267,11 +268,14 @@ fun TransitMap(
         overlay = { MapCredits(mapState.style) },
     )
 
-    LaunchedEffect(journey?.id) {
+    val routeCameraFit = remember { RouteCameraFit() }
+    LaunchedEffect(journey?.id, walk != null) {
+        val moveImmediately = routeCameraFit.moveImmediately(journey?.id, results, walking = walk != null)
         // While the camera follows the walker, a fit to the route would fight it.
         if (follow) return@LaunchedEffect
         val box = journey?.bounds() ?: return@LaunchedEffect
-        mapState.animateCameraToBounds(box, CameraFit(fitPadding = DpPadding(48.dp, 48.dp, 48.dp, 48.dp)))
+        val fit = CameraFit(fitPadding = DpPadding(48.dp, 48.dp, 48.dp, 48.dp))
+        if (moveImmediately) mapState.fitCameraToBounds(box, fit) else mapState.animateCameraToBounds(box, fit)
     }
     LaunchedEffect(recenterRequest) {
         if (recenterRequest == 0) return@LaunchedEffect
@@ -349,6 +353,18 @@ fun TransitMap(
     LaunchedEffect(hasFix) {
         val here = locationState.lastLocation?.position ?: return@LaunchedEffect
         if (journey == null && !follow) mapState.animateCamera(CameraUpdate(center = here, zoom = 15.0))
+    }
+}
+
+internal class RouteCameraFit {
+    private var hadJourney = false
+    private var wasWalking = false
+
+    fun moveImmediately(journeyId: String?, results: Boolean, walking: Boolean): Boolean {
+        val immediate = (wasWalking && !walking) || (results && hadJourney)
+        hadJourney = journeyId != null
+        wasWalking = walking
+        return immediate
     }
 }
 

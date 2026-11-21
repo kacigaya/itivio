@@ -49,8 +49,10 @@ Material Symbols Rounded, filled, as vector drawables. A row without a line colo
 
 The screen on top is a card. The same motion serves a new screen, the back button, and the back gesture.
 
-- A new screen comes up from the bottom edge in 450 ms, with the Material emphasized decelerate easing. A spring would go past the rest position and show the map below the card. The screen below fades out in the first half of the time.
-- "Back" sends the card down in 300 ms, with the emphasized accelerate easing. The screen below fades in during the first half of the time.
+- A new screen comes up from the bottom edge in 450 ms, with the Material emphasized decelerate easing. A spring would go past the rest position and show the map below the card.
+- "Back" sends the card down in 300 ms, with the emphasized accelerate easing.
+- Between two full-screen pages, the lower page stays opaque throughout the transition and keeps the map covered. The wide-layout Disruptions page slides over the steady map pane. In other transitions with a map screen, the lower screen fades during the first half of the transition.
+- The first set of results flies to the route. Sorting moves the cards first, then the map fits the new route in one step. When Back leaves walking directions, the map fits the itinerary in one step during the screen change.
 - On a map screen, the card is the sheet or the side pane. The header and the map buttons of a compact window move with the card, but they show only in the last eighth of the way. Thus they fade in near their position and do not cross the map.
 - A full-screen page gets the top corners of the screen while it moves.
 - "Back" on the results resets the journey search at once. The card keeps its last content while it goes down.
@@ -62,7 +64,7 @@ The screen on top is a card. The same motion serves a new screen, the back butto
 
 The app shows a preview during a back gesture, as in the Android [predictive back guidance](https://developer.android.com/design/ui/mobile/guides/patterns/predictive-back). The preview follows the finger. A release before the commit point puts the screen back.
 
-- Between screens: the card on top goes down by up to 15% of the screen height, and the screen below fades in. A release sends the card down below the edge of the screen. The content of the card does not update during the gesture.
+- Between screens: the card on top goes down by up to 15% of the screen height. If either screen shows the map, the screen below fades in. A release sends the card down below the edge of the screen. The content of the card does not update during the gesture.
 - Disruptions page of the home sheet: the Departures page comes into view by 30% of its width.
 - Travel time and journey options sheets: the sheet goes down by up to 15% of the screen height, and the scrim fades out. A release sends the sheet down below the edge of the screen in the time and easing of "Back" between screens.
 - Search view, dialogs, and menus: the Material components supply their own behavior.

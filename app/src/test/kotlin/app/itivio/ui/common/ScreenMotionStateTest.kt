@@ -3,12 +3,22 @@ package app.itivio.ui.common
 import androidx.navigationevent.NavigationEvent
 import androidx.navigationevent.NavigationEventTransitionState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ScreenMotionStateTest {
     private val card = ScreenMotionState()
     private val below = ScreenMotionState()
+
+    @Test
+    fun `wide disruptions keep the map pane opaque in both directions`() {
+        assertTrue(keepsUnderlayOpaque(emptyMap(), DisruptionsPage))
+        assertTrue(keepsUnderlayOpaque(DisruptionsPage, emptyMap()))
+        assertTrue(keepsUnderlayOpaque(FullScreenPage, FullScreenPage))
+        assertFalse(keepsUnderlayOpaque(FullScreenPage, emptyMap()))
+        assertFalse(keepsUnderlayOpaque(emptyMap(), emptyMap()))
+    }
 
     private fun gesture(progress: Float) = NavigationEventTransitionState.InProgress(
         NavigationEvent(swipeEdge = NavigationEvent.EDGE_LEFT, progress = progress),
@@ -48,6 +58,21 @@ class ScreenMotionStateTest {
 
         back(null, 1f)
         assertEquals(1f, card.drop, 1e-6f)
+        assertEquals(1f, below.alpha)
+    }
+
+    @Test
+    fun `the lower page stays opaque when both pages cover the map`() {
+        below.update(null, running = true, entering = false, back = false, away = 0.5f, keepBackgroundOpaque = true)
+        assertEquals(1f, below.alpha)
+
+        below.update(null, running = true, entering = true, back = true, away = 1f, keepBackgroundOpaque = true)
+        assertEquals(1f, below.alpha)
+
+        below.update(gesture(0.3f), running = true, entering = true, back = true, away = 0.7f, keepBackgroundOpaque = true)
+        assertEquals(1f, below.alpha)
+
+        below.update(null, running = true, entering = true, back = true, away = 0.9f, keepBackgroundOpaque = true)
         assertEquals(1f, below.alpha)
     }
 
