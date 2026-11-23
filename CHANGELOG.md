@@ -5,6 +5,12 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.14.1
+
+Beta prerelease for Android 8.0 and later. It updates 0.14.0 in place.
+
+- Fix a double tap that opened a screen twice. A double tap on a saved place no longer leaves an empty results screen after Back.
+
 ## 0.14.0
 
 Beta prerelease for Android 8.0 and later.
