@@ -5,6 +5,10 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.14.2
+
+Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.
+
 - Make the search bar and other screens smoother after an install or an update. The app now ships a baseline profile, so Android compiles its code ahead of time, the next time it optimizes apps in the background.
 
 ## 0.14.1
