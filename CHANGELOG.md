@@ -5,6 +5,18 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+## 0.14.0
+
+Beta prerelease for Android 8.0 and later.
+
+**This release needs one reinstall.** From now on, the APKs are signed with the project key. Versions up to 0.13.1 used a debug key, and Android cannot update across a key change. Uninstall itivio, then install this version. Uninstalling deletes your saved places, recent searches, and settings. Later releases update in place. See the README for the certificate fingerprint.
+
+- Show one card for each route: journeys on the same lines from the same stations share a card. The card shows the next departures of the first line, with a live countdown, and the arrival time.
+- Remove "Earlier departures" and "Later departures". The travel time button sets the time of the search.
+- When you pick another train on a leg, each later leg moves to the first train you can still catch. Reset puts the planned trains back when you can still catch them.
+- Publish signed APKs and checksums from a release workflow. The asset names have no `-debug` suffix any more.
+- Add F-Droid store metadata.
+
 ## 0.13.1
 
 Beta prerelease for Android 8.0 and later.
