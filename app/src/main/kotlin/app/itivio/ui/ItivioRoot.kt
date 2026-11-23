@@ -257,7 +257,7 @@ fun ItivioRoot(
     }
 
     fun openStop(stop: MapStop) {
-        backStack.add(StopRoute(stop.stopId, stop.name, stop.point.latitude, stop.point.longitude))
+        backStack.push(StopRoute(stop.stopId, stop.name, stop.point.latitude, stop.point.longitude))
     }
 
     // The screen on top measures its floating header, so the camera keeps routes below it.
@@ -294,7 +294,7 @@ fun ItivioRoot(
             visible = topLevel,
             disruptions = top == DisruptionsRoute,
             onMap = { if (backStack.last() == DisruptionsRoute) backStack.pop(planner) },
-            onDisruptions = { if (backStack.last() != DisruptionsRoute) backStack.add(DisruptionsRoute) },
+            onDisruptions = { backStack.push(DisruptionsRoute) },
             onSize = { navigationSize = it },
         ) {
             CompositionLocalProvider(LocalPanelHeaderHeight provides headerHeight) {
@@ -328,12 +328,12 @@ fun ItivioRoot(
                                 onRetryDisruptions = disruptions::retry,
                                 onDestination = { endpoint ->
                                     planner.setDestination(endpoint)
-                                    backStack.add(ResultsRoute)
+                                    backStack.push(ResultsRoute)
                                 },
                                 onStop = { location ->
                                     location.stopId?.let { openStop(MapStop(it, location.name, location.point)) }
                                 },
-                                onSettings = { backStack.add(SettingsRoute) },
+                                onSettings = { backStack.push(SettingsRoute) },
                             )
                         }
                         entry<DisruptionsRoute>(metadata = DisruptionsPage) {
@@ -357,7 +357,7 @@ fun ItivioRoot(
                                 onOptions = settings::setOptions,
                                 onClearRecents = settings::clearRecents,
                                 onDeleteAll = settings::deleteAll,
-                                onAbout = { backStack.add(AboutRoute) },
+                                onAbout = { backStack.push(AboutRoute) },
                             )
                         }
                         entry<AboutRoute>(metadata = FullScreenPage) {
@@ -381,7 +381,7 @@ fun ItivioRoot(
                                 onBack = { backStack.pop(planner) },
                                 onDirections = {
                                     planner.setDestination(Endpoint.Place(stop))
-                                    backStack.add(ResultsRoute)
+                                    backStack.push(ResultsRoute)
                                 },
                                 onToggleFavorite = { places.toggleFavorite(stop) },
                                 onRetry = board::retry,
@@ -403,7 +403,7 @@ fun ItivioRoot(
                                 onOptions = planner::setOptions,
                                 onSort = planner::setSort,
                                 onSelect = planner::select,
-                                onOpen = { id -> backStack.add(ItineraryRoute(id)) },
+                                onOpen = { id -> backStack.push(ItineraryRoute(id)) },
                                 onRetry = planner::retry,
                             )
                         }
@@ -442,7 +442,7 @@ fun ItivioRoot(
                                     onBack = { backStack.pop(planner) },
                                     onWalk = { index ->
                                         following = true
-                                        backStack.add(WalkRoute(journey.id, index))
+                                        backStack.push(WalkRoute(journey.id, index))
                                     },
                                 )
                             }
@@ -562,6 +562,10 @@ private object NoHeading : HeadingProvider {
 
 /** The departures are in time order, so a stop gets the line of its next departure. */
 private fun Departure.toMapStop(): MapStop? = stop.stopId?.let { MapStop(it, stop.name, stop.point, line, mode) }
+
+internal fun NavBackStack<NavKey>.push(key: NavKey) {
+    if (lastOrNull() != key) add(key)
+}
 
 private fun NavBackStack<NavKey>.pop(planner: PlannerViewModel) {
     if (size <= 1) return
