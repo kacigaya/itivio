@@ -204,7 +204,7 @@ v1.0.0 adds release signing and F-Droid. Feature work stops here. Only fixes go 
 
 v1.0.0 ships when all these conditions are true:
 
-- [ ] Replace pre-release dependencies with stable versions: Material 3 `1.5.0-rc01` and Robolectric `4.18-beta-1`.
+- [x] Replace pre-release dependencies with stable versions. Material 3 is `1.5.0` through the Compose BOM, and Robolectric is `4.18.1`.
 - [ ] No open bug causes a crash or data loss.
 - [ ] v0.9.x has had no new blocker for two weeks.
 - [ ] All validation gates pass on the release commit.
