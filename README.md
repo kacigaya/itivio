@@ -122,6 +122,8 @@ Set all four environment variables to sign the release APKs:
 
 You can also set `itivio.keystore`, `itivio.keystorePassword`, `itivio.keyAlias`, and `itivio.keyPassword` in `~/.gradle/gradle.properties`. Environment variables take priority. If any value is missing, the release APKs stay unsigned. Keep keys and passwords outside the repository.
 
+Published releases come from [Release](https://github.com/kacigaya/itivio/actions/workflows/release.yml). A `vX.Y.Z` tag runs tests and lint, builds the release APKs with the project key from the repository secrets, checks their signatures, and publishes them with `SHA256SUMS.txt`. The tag must match `versionName`, and `CHANGELOG.md` must have a section for the version.
+
 ### Transitous contact
 
 Transitous asks each app to send contact details with every request. The app puts the `itivio.contact` Gradle property in its User-Agent. If you publish a fork, change the contact to your own:
