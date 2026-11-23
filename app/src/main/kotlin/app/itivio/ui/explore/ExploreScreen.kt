@@ -47,6 +47,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -60,6 +61,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.itivio.R
+import app.itivio.ui.search.CoveredBySearch
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.LayoutCoordinates
 import app.itivio.domain.Location
 import app.itivio.domain.SavedPlaces
 import app.itivio.domain.Shortcut
@@ -125,71 +129,75 @@ fun ExploreScreen(
         },
     )
 
-    MapPanel(wide = wide, peekHeight = ExplorePeekHeight) {
-        // Search and locate sit on the sheet, in reach of the thumb. They stay in place while the list scrolls.
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(start = 16.dp, top = if (wide) 8.dp else 0.dp, end = 16.dp),
-        ) {
-            SearchBar(
-                state = searchBarState,
-                inputField = {
-                    LocationInputField(textState, searchBarState, placeholder, onBack = null, trailing = {
-                        IconButton(onClick = onSettings) {
-                            Icon(painterResource(R.drawable.ic_settings), contentDescription = stringResource(R.string.settings_title))
-                        }
-                    })
+    var bar by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
+    CoveredBySearch(searchBarState) {
+        MapPanel(wide = wide, peekHeight = ExplorePeekHeight) {
+            // Search and locate sit on the sheet, in reach of the thumb. They stay in place while the list scrolls.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(start = 16.dp, top = if (wide) 8.dp else 0.dp, end = 16.dp),
+            ) {
+                SearchBar(
+                    state = searchBarState,
+                    inputField = {
+                        LocationInputField(textState, searchBarState, placeholder, onBack = null, trailing = {
+                            IconButton(onClick = onSettings) {
+                                Icon(painterResource(R.drawable.ic_settings), contentDescription = stringResource(R.string.settings_title))
+                            }
+                        })
+                    },
+                    modifier = Modifier.weight(1f).onPlaced { bar = it },
+                )
+                LocateButton(locationGranted, onRequestLocation, onRecenter)
+            }
+            SavedChips(
+                saved = saved,
+                onOpen = { onDestination(Endpoint.Place(it)) },
+                onAssign = { shortcut ->
+                    assigning = shortcut
+                    scope.launch { searchBarState.animateToExpanded() }
                 },
-                modifier = Modifier.weight(1f),
             )
-            LocateButton(locationGranted, onRequestLocation, onRecenter)
-        }
-        SavedChips(
-            saved = saved,
-            onOpen = { onDestination(Endpoint.Place(it)) },
-            onAssign = { shortcut ->
-                assigning = shortcut
-                scope.launch { searchBarState.animateToExpanded() }
-            },
-        )
-        if (disruptions == null) {
-            LazyColumn(contentPadding = PaddingValues(bottom = 8.dp)) {
-                if (locationGranted) {
-                    nearbyDepartures(nearby, now, onRetryNearby)
-                } else {
-                    item(key = "intro") { Intro(onRequestLocation) }
+            if (disruptions == null) {
+                LazyColumn(contentPadding = PaddingValues(bottom = 8.dp)) {
+                    if (locationGranted) {
+                        nearbyDepartures(nearby, now, onRetryNearby)
+                    } else {
+                        item(key = "intro") { Intro(onRequestLocation) }
+                    }
                 }
-            }
-        } else {
-            // Two pages in place of a navigation bar. A swipe on the list or a tap on a title changes the page.
-            val pager = rememberPagerState { HomePage.entries.size }
-            // "Back" goes to the first page. During the gesture, the first page comes into view as a
-            // preview. The last scroll runs in the scope of the screen: a cancelled gesture stops this handler.
-            PredictiveBackHandler(enabled = pager.currentPage != 0) { gesture ->
-                val page = pager.currentPage
-                try {
-                    gesture.collect { pager.scrollToPage(page, -BackPreviewFraction * BackGestureEasing.transform(it.progress)) }
-                    scope.launch { pager.animateScrollToPage(0) }
-                } catch (cancelled: CancellationException) {
-                    scope.launch { pager.animateScrollToPage(page) }
-                    throw cancelled
+            } else {
+                // Two pages in place of a navigation bar. A swipe on the list or a tap on a title changes the page.
+                val pager = rememberPagerState { HomePage.entries.size }
+                // "Back" goes to the first page. During the gesture, the first page comes into view as a
+                // preview. The last scroll runs in the scope of the screen: a cancelled gesture stops this handler.
+                PredictiveBackHandler(enabled = pager.currentPage != 0) { gesture ->
+                    val page = pager.currentPage
+                    try {
+                        gesture.collect { pager.scrollToPage(page, -BackPreviewFraction * BackGestureEasing.transform(it.progress)) }
+                        scope.launch { pager.animateScrollToPage(0) }
+                    } catch (cancelled: CancellationException) {
+                        scope.launch { pager.animateScrollToPage(page) }
+                        throw cancelled
+                    }
                 }
-            }
-            HomeTitles(
-                selected = HomePage.entries[pager.currentPage],
-                alerts = (disruptions as? LoadState.Ready)?.value?.let { it.saved.size + it.nearby.size } ?: 0,
-                onSelect = { scope.launch { pager.animateScrollToPage(it.ordinal) } },
-            )
-            HorizontalPager(state = pager, verticalAlignment = Alignment.Top) { page ->
-                LazyColumn(contentPadding = PaddingValues(bottom = 8.dp), modifier = Modifier.fillMaxSize()) {
-                    when (HomePage.entries[page]) {
-                        HomePage.DEPARTURES -> if (locationGranted) {
-                            nearbyDepartures(nearby, now, onRetryNearby, title = false)
-                        } else {
-                            item(key = "intro") { Intro(onRequestLocation) }
+                HomeTitles(
+                    selected = HomePage.entries[pager.currentPage],
+                    alerts = (disruptions as? LoadState.Ready)?.value?.let { it.saved.size + it.nearby.size } ?: 0,
+                    onSelect = { scope.launch { pager.animateScrollToPage(it.ordinal) } },
+                )
+                HorizontalPager(state = pager, verticalAlignment = Alignment.Top) { page ->
+                    LazyColumn(contentPadding = PaddingValues(bottom = 8.dp), modifier = Modifier.fillMaxSize()) {
+                        when (HomePage.entries[page]) {
+                            HomePage.DEPARTURES -> if (locationGranted) {
+                                nearbyDepartures(nearby, now, onRetryNearby, title = false)
+                            } else {
+                                item(key = "intro") { Intro(onRequestLocation) }
+                            }
+                            HomePage.DISRUPTIONS -> disruptions(disruptions, now, onRetryDisruptions)
                         }
-                        HomePage.DISRUPTIONS -> disruptions(disruptions, now, onRetryDisruptions)
                     }
                 }
             }
@@ -198,6 +206,7 @@ fun ExploreScreen(
 
     LocationSearchView(
         searchBarState = searchBarState,
+        anchor = bar,
         textFieldState = textState,
         placeholder = placeholder,
         offerMyLocation = false,

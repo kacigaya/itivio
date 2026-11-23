@@ -14,7 +14,6 @@ import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExpandedFullScreenSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,6 +59,37 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import app.itivio.R
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.util.lerp
+import app.itivio.ui.common.BackGestureEasing
+import kotlin.coroutines.cancellation.CancellationException
 import app.itivio.domain.Location
 import app.itivio.domain.LocationKind
 import app.itivio.domain.SavedPlaces
@@ -134,6 +164,7 @@ fun LocationSearchView(
     offerMyLocation: Boolean,
     onPick: (Endpoint) -> Unit,
     onDepartures: ((Location) -> Unit)? = null,
+    anchor: LayoutCoordinates? = null,
     // Screens with two search views need separate ViewModels in the same store.
     viewModel: SearchViewModel = koinViewModel(key = placeholder),
     places: SavedPlacesViewModel = koinViewModel(),
@@ -191,10 +222,11 @@ fun LocationSearchView(
     }
     val query = textFieldState.text.trim().toString()
 
-    ExpandedFullScreenSearchBar(
+    SearchOverlay(
         state = searchBarState,
-        colors = SearchBarDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        inputField = {
+        anchor = anchor,
+        title = placeholder,
+        inputField = { fieldModifier ->
             LocationInputField(
                 textFieldState = textFieldState,
                 searchBarState = searchBarState,
@@ -204,10 +236,11 @@ fun LocationSearchView(
                     null -> placeholder
                 },
                 onBack = { scope.launch { searchBarState.animateToCollapsed() } },
+                modifier = fieldModifier,
             )
         },
     ) {
-        LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)) {
+        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 8.dp, bottom = 16.dp)) {
             val myLocation = offerMyLocation && assigning == null
             if (query.isEmpty()) {
                 // My location, Home, and Work are one group. An empty shortcut offers to set it.
@@ -307,6 +340,112 @@ fun LocationSearchView(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SearchOverlay(
+    state: SearchBarState,
+    anchor: LayoutCoordinates?,
+    title: String,
+    inputField: @Composable (Modifier) -> Unit,
+    content: @Composable () -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    val focus = remember { FocusRequester() }
+    val open by remember(state) {
+        derivedStateOf { state.targetValue == SearchBarValue.Expanded || state.progress > 0f }
+    }
+    var self by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    val insets = WindowInsets.safeDrawing
+    val scheme = MaterialTheme.colorScheme
+    val from = SearchBarDefaults.colors().containerColor
+    val to = scheme.surfaceContainerLow
+
+    LaunchedEffect(state) {
+        snapshotFlow { state.targetValue }.collect { if (it == SearchBarValue.Expanded) focus.requestFocus() }
+    }
+    PredictiveBackHandler(enabled = open) { gesture ->
+        try {
+            gesture.collect { state.snapTo(1f - SearchBackPreview * BackGestureEasing.transform(it.progress)) }
+            scope.launch { state.animateToCollapsed() }
+        } catch (cancelled: CancellationException) {
+            scope.launch { state.animateToExpanded() }
+            throw cancelled
+        }
+    }
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .layout { measurable, constraints ->
+                if (!open) return@layout layout(0, 0) {}
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+            }
+            .onPlaced { self = it }
+            .graphicsLayer {
+                val p = state.progress
+                val bar = self?.takeIf { it.isAttached }?.let { overlay ->
+                    anchor?.takeIf { it.isAttached }?.let { overlay.localBoundingBoxOf(it, clipBounds = false) }
+                }
+                if (bar == null) {
+                    alpha = p
+                    translationY = (1f - p) * SearchRise.toPx()
+                    return@graphicsLayer
+                }
+                val top = insets.getTop(this) * (1f - p)
+                val width = lerp(bar.width, size.width, p)
+                val height = lerp(bar.height, size.height, p)
+                translationX = bar.left * (1f - p)
+                translationY = (bar.top - insets.getTop(this)) * (1f - p)
+                clip = true
+                shape = ClipShape(Rect(0f, top, width, top + height), bar.height / 2 * (1f - p))
+            }
+            .drawBehind { drawRect(lerp(from, to, state.progress)) }
+            .pointerInput(Unit) {}
+            .semantics { paneTitle = title },
+    ) {
+        inputField(
+            Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(insets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+                .focusRequester(focus),
+        )
+        Box(
+            Modifier
+                .weight(1f)
+                .windowInsetsPadding(insets.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
+                .layout { measurable, constraints ->
+                    if (state.progress < SearchListDelay) return@layout layout(constraints.maxWidth, constraints.maxHeight) {}
+                    val placeable = measurable.measure(constraints)
+                    layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+                }
+                .graphicsLayer { alpha = ((state.progress - SearchListDelay) / (1f - SearchListDelay)).coerceIn(0f, 1f) },
+        ) { content() }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CoveredBySearch(vararg states: SearchBarState, content: @Composable () -> Unit) {
+    val covered by remember(*states) { derivedStateOf { states.any { it.progress == 1f } } }
+    Box(
+        if (covered) {
+            Modifier.clearAndSetSemantics {}.focusProperties { onEnter = { cancelFocusChange() } }.focusGroup()
+        } else {
+            Modifier
+        },
+    ) { content() }
+}
+
+private class ClipShape(private val rect: Rect, private val radius: Float) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density) =
+        Outline.Rounded(RoundRect(rect, CornerRadius(radius)))
+}
+
+private const val SearchListDelay = 0.1f
+private const val SearchBackPreview = 0.1f
+private val SearchRise = 48.dp
 
 /** The shape of row [index] in a group of [count]: round outer corners, small inner ones. */
 private fun groupShape(index: Int, count: Int): Shape {
