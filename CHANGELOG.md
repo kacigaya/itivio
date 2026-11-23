@@ -5,7 +5,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
-- Make the search bar and other screens smoother right after an install or an update. The app now ships a baseline profile, so Android compiles its code ahead of time.
+- Make the search bar and other screens smoother after an install or an update. The app now ships a baseline profile, so Android compiles its code ahead of time, the next time it optimizes apps in the background.
 
 ## 0.14.1
 
