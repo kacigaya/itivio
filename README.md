@@ -46,6 +46,28 @@
 - Light and dark themes with Material You colors.
 - Layout for phones, tablets, and foldables.
 
+## Install
+
+Download the APK from the [newest release](https://github.com/kacigaya/itivio/releases). The universal APK works on all devices. The app needs Android 8.0 or later.
+
+Releases from v0.14.0 on are signed with the project key. The SHA-256 fingerprint of its certificate is:
+
+```
+E7:15:4A:73:3D:EF:B1:DC:B6:8A:80:FD:C8:35:56:FF:88:B4:EA:2F:83:6D:36:A3:30:6A:DF:A0:C6:8A:29:81
+```
+
+To check a download, compare it with `SHA256SUMS.txt` of the release, or run `apksigner verify --print-certs` on the APK.
+
+### Update from v0.13.1 or earlier
+
+Versions up to v0.13.1 used a debug key. Android cannot update an app to a version with another key, so this change needs one reinstall:
+
+1. Uninstall itivio. This deletes your saved places, recent searches, and settings.
+2. Install v0.14.0 or later.
+3. Set your Home, Work, and favorites again.
+
+Later releases update in place.
+
 ## Privacy
 
 Read the [privacy policy](PRIVACY.md) for details about location, network services, stored data, and deletion.
