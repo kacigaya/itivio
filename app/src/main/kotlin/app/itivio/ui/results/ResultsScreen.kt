@@ -1,7 +1,6 @@
 package app.itivio.ui.results
 
 import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,11 +24,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,9 +40,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.clickable
@@ -57,9 +51,9 @@ import app.itivio.ui.common.MapPanel
 import app.itivio.ui.common.MessageState
 import app.itivio.ui.common.Skeleton
 import app.itivio.ui.planner.Endpoint
-import app.itivio.ui.planner.Paging
 import app.itivio.ui.planner.PlannerState
 import app.itivio.ui.planner.RouteSort
+import app.itivio.ui.planner.routeKey
 import app.itivio.ui.search.LocationSearchView
 import app.itivio.ui.search.rememberLocationSearchBarState
 import app.itivio.ui.search.rememberLocationTextState
@@ -88,8 +82,6 @@ fun ResultsScreen(
     onSort: (RouteSort) -> Unit,
     onSelect: (String) -> Unit,
     onOpen: (String) -> Unit,
-    onEarlier: () -> Unit,
-    onLater: () -> Unit,
     onRetry: () -> Unit,
 ) {
     var pickingTime by rememberSaveable { mutableStateOf(false) }
@@ -119,7 +111,7 @@ fun ResultsScreen(
             now,
             onPickTime = { pickingTime = true },
             onPickOptions = { pickingOptions = true },
-            onSort, onSelect, onOpen, onEarlier, onLater, onRetry,
+            onSort, onSelect, onOpen, onRetry,
         )
     }
 
@@ -214,8 +206,6 @@ private fun ResultsList(
     onSort: (RouteSort) -> Unit,
     onSelect: (String) -> Unit,
     onOpen: (String) -> Unit,
-    onEarlier: () -> Unit,
-    onLater: () -> Unit,
     onRetry: () -> Unit,
 ) {
     val highlighted = state.highlighted?.id
@@ -240,19 +230,14 @@ private fun ResultsList(
                     )
                 }
             } else {
-                if (state.canLoadEarlier) {
-                    item(key = "earlier") {
-                        PageButton(R.drawable.ic_arrow_upward, R.string.results_earlier, state.loadingPage, Paging.EARLIER, onEarlier)
-                    }
-                }
-                items(state.sortedJourneys, key = { it.id }) { journey ->
+                items(state.routes, key = { it.first().routeKey() }) { route ->
                     RouteCard(
-                        journey = journey,
-                        selected = journey.id == highlighted,
+                        route = route,
+                        selected = route.any { it.id == highlighted },
                         now = now,
                         onClick = {
-                            onSelect(journey.id)
-                            onOpen(journey.id)
+                            onSelect(route.first().id)
+                            onOpen(route.first().id)
                         },
                         modifier = Modifier.animateItem(
                             fadeInSpec = RouteFade,
@@ -261,39 +246,8 @@ private fun ResultsList(
                         ),
                     )
                 }
-                if (state.canLoadLater) {
-                    item(key = "later") {
-                        PageButton(R.drawable.ic_arrow_downward, R.string.results_later, state.loadingPage, Paging.LATER, onLater)
-                    }
-                }
             }
         }
-    }
-}
-
-/**
- * Loads the [page] of journeys before or after the list. A text button, so the route cards stay
- * the main content. The two buttons are disabled while a page loads, and the button of the page
- * in [loading] shows a loading indicator in place of its arrow.
- */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun PageButton(@DrawableRes icon: Int, @StringRes label: Int, loading: Paging?, page: Paging, onClick: () -> Unit) {
-    val busy = loading == page
-    val busyLabel = stringResource(R.string.loading)
-    TextButton(
-        onClick = onClick,
-        enabled = loading == null,
-        modifier = Modifier.fillMaxWidth().semantics { if (busy) stateDescription = busyLabel },
-    ) {
-        // The indicator is as large as the arrow, so the label does not move.
-        if (busy) {
-            LoadingIndicator(Modifier.size(ButtonDefaults.IconSize).clearAndSetSemantics {})
-        } else {
-            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-        }
-        Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-        Text(stringResource(label))
     }
 }
 

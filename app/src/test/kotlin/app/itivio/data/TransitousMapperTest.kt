@@ -97,8 +97,6 @@ class TransitousMapperTest {
         assertEquals("Home", named.legs.first().from.name)
         assertEquals("Work", named.legs.last().to.name)
         assertTrue(named.legs.dropLast(1).none { it.to.name == "Work" })
-        assertEquals(dto.previousPageCursor, page.earlierCursor)
-        assertEquals(dto.nextPageCursor, page.laterCursor)
         assertEquals(dto.itineraries.first().id, page.journeys.first().id)
         val noId = dto.itineraries.first().copy(id = null)
         assertEquals(noId.toDomain().id, noId.toDomain().id)

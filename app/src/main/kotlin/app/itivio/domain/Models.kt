@@ -357,12 +357,8 @@ data class JourneyRequest(
     val options: JourneyOptions = JourneyOptions(),
 )
 
-data class JourneyPage(
-    val journeys: List<Journey>,
-    /** Opaque cursors; pass to [RoutingRepository.planJourneys] to page earlier or later. */
-    val earlierCursor: String?,
-    val laterCursor: String?,
-)
+/** The journeys of one plan request. */
+data class JourneyPage(val journeys: List<Journey>)
 
 data class Departure(
     val stop: Stop,

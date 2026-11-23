@@ -47,7 +47,7 @@ class TransitousRoutingRepository(
     )
     private val lineCache = lru<LineKey, Cached<List<Departure>>>(32)
     private val tripCache = lru<Pair<String, String>, Cached<Trip>>(32)
-    private val planCache = lru<Triple<JourneyRequest, String?, String>, Cached<JourneyPage>>(16)
+    private val planCache = lru<Pair<JourneyRequest, String>, Cached<JourneyPage>>(16)
 
     /** A departure board: one stop ([stopId]), or the stops around [center]. Disruptions read the same boards. */
     private data class BoardKey(
@@ -109,18 +109,17 @@ class TransitousRoutingRepository(
         }.firstOrNull()?.toDomain()
     }
 
-    override suspend fun planJourneys(request: JourneyRequest, cursor: String?): JourneyPage {
+    override suspend fun planJourneys(request: JourneyRequest): JourneyPage {
         val language = language()
-        return planCache.cached(Triple(request, cursor, language)) { planRequest(request, cursor, language) }
+        return planCache.cached(request to language) { planRequest(request, language) }
     }
 
-    private suspend fun planRequest(request: JourneyRequest, cursor: String?, language: String): JourneyPage = mapped {
+    private suspend fun planRequest(request: JourneyRequest, language: String): JourneyPage = mapped {
         get<PlanResponse>("v6/plan") {
             parameter("fromPlace", request.from.stopId ?: request.from.point.coordinates())
             parameter("toPlace", request.to.stopId ?: request.to.point.coordinates())
             request.time?.let { parameter("time", it.motisTime()) }
             parameter("arriveBy", request.arriveBy)
-            cursor?.let { parameter("pageCursor", it) }
             val options = request.options
             // Always set: the list also keeps flights out of the journeys.
             parameter("transitModes", options.transitModes())

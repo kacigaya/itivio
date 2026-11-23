@@ -30,7 +30,7 @@
 - A departure board for each stop. Tap a stop on the map, or select "Show departures" for a stop in the search.
 - Journey planning with all public transport modes. Leave now, leave at a time, or arrive by a time.
 - Journey options: transport modes, a transfer limit, wheelchair-accessible routing, and walking speed. The app keeps them between starts.
-- Earlier and later departures for each search.
+- Routes grouped by line, with the next departures of each route.
 - Sort routes by duration, transfers, or walking distance.
 - Walk-only routes, when walking is a good choice.
 - Service alerts on the route cards and in the journey details.

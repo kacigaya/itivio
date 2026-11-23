@@ -15,6 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,51 +97,99 @@ class TripTrackerViewModel(
         planned.value = journey
     }
 
+    /**
+     * Follows [departure] on the leg [legIndex]. Each later leg then takes the first train it can
+     * still catch, or its planned train again when all trains before it are the planned ones and it
+     * can still be caught.
+     */
     fun selectDeparture(legIndex: Int, departure: Departure) {
         val baseline = original ?: return
         if (baseline.legs.getOrNull(legIndex) !is Leg.Transit) return
-        val tripId = departure.tripId?.takeIf { it.isNotBlank() } ?: return
-        if (departure.cancelled) return
+        if (departure.tripId.isNullOrBlank() || departure.cancelled) return
         selectionJob?.cancel()
         selectionState.value = selectionState.value.copy(loadingLeg = legIndex, failedLeg = null)
         selectionJob = viewModelScope.launch {
-            val trip = try {
-                repository.trip(tripId)
-            } catch (_: RoutingException) {
-                selectionState.value = selectionState.value.copy(loadingLeg = null, failedLeg = legIndex)
-                return@launch
-            }
-            ensureActive()
-            val current = shown?.takeIf { shownFor == planned.value } ?: planned.value ?: return@launch
-            var updated = current.withDeparture(legIndex, departure, trip)
-            if (updated == null) {
-                selectionState.value = selectionState.value.copy(loadingLeg = null, failedLeg = legIndex)
-                return@launch
-            }
-            val originalLeg = baseline.legs[legIndex] as Leg.Transit
-            if (tripId == originalLeg.tripId) {
-                val restored = updated.legs.mapIndexed { index, leg ->
-                    val originalWalk = baseline.legs.getOrNull(index) as? Leg.Street
-                    if (leg is Leg.Street && originalWalk != null && index in legIndex - 1..legIndex + 1 &&
-                        leg.from.samePlatformAs(originalWalk.from) && leg.to.samePlatformAs(originalWalk.to)
-                    ) leg.copy(geometry = originalWalk.geometry, steps = originalWalk.steps) else leg
+            var journey = apply(baseline, legIndex, departure) { shown?.takeIf { shownFor == planned.value } ?: planned.value }
+                ?: run {
+                    selectionState.value = selectionState.value.copy(loadingLeg = null, failedLeg = legIndex)
+                    return@launch
                 }
-                updated = updated.copy(legs = restored)
+            var index = journey.nextTransit(legIndex)
+            while (index != null) {
+                selectionState.value = selectionState.value.copy(loadingLeg = index)
+                val current = journey
+                val connection = connection(baseline, current, index)
+                if (connection != null && connection.tripId != (current.legs[index] as Leg.Transit).tripId) {
+                    journey = apply(baseline, index, connection) { current } ?: current
+                }
+                index = journey.nextTransit(index)
             }
-            val changed = selectionState.value.changedLegs.let { if (tripId == originalLeg.tripId) it - legIndex else it + legIndex }
-            val updatedLeg = updated.legs[legIndex] as Leg.Transit
-            val platformChanged = !originalLeg.from.samePlatformAs(updatedLeg.from) || !originalLeg.to.samePlatformAs(updatedLeg.to)
-            val platforms = selectionState.value.platformChangedLegs.let { if (platformChanged) it + legIndex else it - legIndex }
-            planned.value = updated
-            selectionState.value = TrainSelectionState(changedLegs = changed, platformChangedLegs = platforms)
+            selectionState.value = selectionState.value.copy(loadingLeg = null)
         }
+    }
+
+    /**
+     * Puts the trip of [departure] on the leg [legIndex] of the journey that [current] gives after
+     * the trip request, and shows the result. Null when the trip cannot replace the leg.
+     */
+    private suspend fun apply(baseline: Journey, legIndex: Int, departure: Departure, current: () -> Journey?): Journey? {
+        val tripId = departure.tripId ?: return null
+        val trip = try {
+            repository.trip(tripId)
+        } catch (_: RoutingException) {
+            return null
+        }
+        currentCoroutineContext().ensureActive()
+        var updated = current()?.withDeparture(legIndex, departure, trip) ?: return null
+        val originalLeg = baseline.legs[legIndex] as Leg.Transit
+        if (tripId == originalLeg.tripId) {
+            val restored = updated.legs.mapIndexed { index, leg ->
+                val originalWalk = baseline.legs.getOrNull(index) as? Leg.Street
+                if (leg is Leg.Street && originalWalk != null && index in legIndex - 1..legIndex + 1 &&
+                    leg.from.samePlatformAs(originalWalk.from) && leg.to.samePlatformAs(originalWalk.to)
+                ) leg.copy(geometry = originalWalk.geometry, steps = originalWalk.steps) else leg
+            }
+            updated = updated.copy(legs = restored)
+        }
+        val state = selectionState.value
+        val changed = if (tripId == originalLeg.tripId) state.changedLegs - legIndex else state.changedLegs + legIndex
+        val updatedLeg = updated.legs[legIndex] as Leg.Transit
+        val platformChanged = !originalLeg.from.samePlatformAs(updatedLeg.from) || !originalLeg.to.samePlatformAs(updatedLeg.to)
+        val platforms = if (platformChanged) state.platformChangedLegs + legIndex else state.platformChangedLegs - legIndex
+        planned.value = updated
+        selectionState.value = state.copy(changedLegs = changed, platformChangedLegs = platforms)
+        return updated
+    }
+
+    /**
+     * The train the leg [index] of [journey] takes after a change before it: the planned train while
+     * the trains before it are the planned ones and it can still be caught, else the first train
+     * after the incoming train and the walk. Null when no such train is known; the leg then keeps its train.
+     */
+    private suspend fun connection(baseline: Journey, journey: Journey, index: Int): Departure? {
+        val leg = journey.legs[index] as Leg.Transit
+        val previous = (0 until index).last { journey.legs[it] is Leg.Transit }
+        val ready = journey.legs.subList(previous + 1, index).fold(journey.legs[previous].end.best) { time, walk -> time.plus(walk.duration) }
+        val planned = baseline.legs[index] as Leg.Transit
+        if (selectionState.value.changedLegs.none { it < index } && planned.start.best >= ready) return planned.departure()
+        val stopId = leg.from.stopId ?: return null
+        val departures = try {
+            repository.lineDepartures(stopId, leg.line, leg.directionId, maxOf(clock(), ready), alightAt = leg.to)
+        } catch (_: RoutingException) {
+            return null
+        }
+        return departures.firstOrNull { !it.cancelled && !it.tripId.isNullOrBlank() }
     }
 
     fun resetTrain(legIndex: Int) {
         val leg = original?.legs?.getOrNull(legIndex) as? Leg.Transit ?: return
-        selectDeparture(legIndex, Departure(leg.from, leg.line, leg.mode, leg.headsign, leg.start,
-            leg.cancelled, leg.tripId, leg.directionId, leg.tripCode, leg.alerts))
+        selectDeparture(legIndex, leg.departure())
     }
+
+    private fun Leg.Transit.departure() =
+        Departure(from, line, mode, headsign, start, cancelled, tripId, directionId, tripCode, alerts)
+
+    private fun Journey.nextTransit(after: Int): Int? = (after + 1 until legs.size).firstOrNull { legs[it] is Leg.Transit }
 
     companion object {
         /** The same interval as the line times. */

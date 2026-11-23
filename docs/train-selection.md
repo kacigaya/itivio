@@ -10,8 +10,10 @@ The selected train updates the times, platforms, intermediate stops, alerts, and
 
 The tracker refreshes the selected trip while the itinerary is visible. Selections survive a return from the background. They stay in memory for that itinerary entry. They do not change the original search results or survive process death.
 
-Later trains keep their selection. A warning appears if the incoming train and transfer walk finish after the next train leaves. Select another departure on the next leg to repair that connection. The app does not send a new planning request by itself.
+A change moves the later legs. Each later leg takes the first departure of its line that leaves after the incoming train and the transfer walk, earlier or later than its train before. When all trains before a leg are the planned ones again, as after **Reset**, the leg takes its planned train again if it can still catch it. A late planned train can miss the planned connection; the leg then takes the first departure it can catch. A train that you selected on a later leg is replaced only when a leg before it changes. While a later leg changes, it shows the loading indicator, and no train can be selected.
+
+If no departure is known for a later leg, or its trip check fails, that leg keeps its train. A warning then appears if the incoming train and transfer walk finish after that train leaves. The app does not send a new planning request by itself.
 
 A platform change clears walking geometry and instructions that lead to the old platform. The app shows a notice to follow station signs. Walking times still come from the original plan. Rerouting inside stations would need confirmed accessible paths and platform transfer times from the provider.
 
-Departure scans use at most eight pages of 80 station events. This bounds each refresh. A busy station or a line with little service can still give fewer than four matches. Selection makes one explicit trip request. The normal trip and departure refreshes then follow the changed itinerary.
+Departure scans use at most eight pages of 80 station events. This bounds each refresh. A busy station or a line with little service can still give fewer than four matches. Selection makes one trip request for the selected train, then one departure request for each later leg and one trip request for each later leg that changes. The normal trip and departure refreshes then follow the changed itinerary.
