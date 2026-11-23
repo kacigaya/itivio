@@ -19,6 +19,7 @@ export type Downloads = {
   universal: Apk;
   perAbi: Apk[];
   checksumsUrl: string | null;
+  signed: boolean;
 };
 
 const ABI = /-(universal|arm64-v8a|armeabi-v7a|x86_64|x86)(?:-[a-z]+)?\.apk$/;
@@ -40,6 +41,7 @@ export function pickDownloads(releases: Release[]): Downloads {
     universal,
     perAbi: apks.filter((a) => a !== universal),
     checksumsUrl: release.assets.find((a) => a.name === "SHA256SUMS.txt")?.browser_download_url ?? null,
+    signed: !release.assets.some((a) => a.name.endsWith("-debug.apk")),
   };
 }
 
