@@ -23,10 +23,10 @@ class FakeRoutingRepository : RoutingRepository {
     val lineCalls = mutableListOf<Pair<String, Instant>>()
     var lineResult: suspend (String) -> List<Departure> = { emptyList() }
     val searches = mutableListOf<Pair<String, GeoPoint?>>()
-    val plans = mutableListOf<Pair<JourneyRequest, String?>>()
+    val plans = mutableListOf<JourneyRequest>()
     var searchResult: suspend (String) -> List<Location> = { listOf(location(it)) }
-    var planResult: suspend (JourneyRequest, String?) -> JourneyPage = { _, _ ->
-        JourneyPage(listOf(journey("a", minutes = 20, transfers = 1, walk = 300.0)), earlierCursor = null, laterCursor = "next")
+    var planResult: suspend (JourneyRequest) -> JourneyPage = {
+        JourneyPage(listOf(journey("a", minutes = 20, transfers = 1, walk = 300.0)))
     }
 
     override suspend fun searchLocations(query: String, near: GeoPoint?): List<Location> {
@@ -36,9 +36,9 @@ class FakeRoutingRepository : RoutingRepository {
 
     override suspend fun reverseGeocode(point: GeoPoint): Location? = null
 
-    override suspend fun planJourneys(request: JourneyRequest, cursor: String?): JourneyPage {
-        plans += request to cursor
-        return planResult(request, cursor)
+    override suspend fun planJourneys(request: JourneyRequest): JourneyPage {
+        plans += request
+        return planResult(request)
     }
 
     /** The points of the calls that asked for alerts. */
@@ -94,16 +94,17 @@ class FakeRoutingRepository : RoutingRepository {
 
         private val base: Instant = Instant.parse("2026-11-09T10:00:00Z")
 
-        fun journey(id: String, minutes: Long, transfers: Int, walk: Double): Journey {
-            val start = StopTime(base)
-            val mid = StopTime(base.plusSeconds(300))
-            val end = StopTime(base.plusSeconds(minutes * 60))
+        fun journey(id: String, minutes: Long, transfers: Int, walk: Double, line: String = "M41", startMinute: Long = 0): Journey {
+            val first = base.plusSeconds(startMinute * 60)
+            val start = StopTime(first)
+            val mid = StopTime(first.plusSeconds(300))
+            val end = StopTime(first.plusSeconds(minutes * 60))
             val a = Stop("A", GeoPoint(52.5, 13.4))
             val b = Stop("B", GeoPoint(52.51, 13.41))
             val c = Stop("C", GeoPoint(52.52, 13.42))
             val legs = listOf(
                 Leg.Street(TransitMode.WALK, a, b, start, mid, emptyList(), walk),
-                Leg.Transit(TransitMode.BUS, b, c, mid, end, emptyList(), Line("M41"), "Somewhere", "trip-$id", emptyList()),
+                Leg.Transit(TransitMode.BUS, b, c, mid, end, emptyList(), Line(line), "Somewhere", "trip-$id", emptyList()),
             )
             return Journey(id = id, legs = legs, departure = start, arrival = end, transfers = transfers)
         }

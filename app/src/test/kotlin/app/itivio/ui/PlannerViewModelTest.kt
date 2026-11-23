@@ -13,7 +13,6 @@ import app.itivio.ui.common.Failure
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.UserLocation
 import app.itivio.ui.planner.Endpoint
-import app.itivio.ui.planner.Paging
 import app.itivio.ui.planner.PlannerViewModel
 import app.itivio.ui.planner.RouteSort
 import java.time.Instant
@@ -71,26 +70,24 @@ class PlannerViewModelTest {
         assertEquals(LoadState.Loading, viewModel.state.value.results)
         advanceUntilIdle()
 
-        val (request, cursor) = repository.plans.single()
+        val request = repository.plans.single()
         assertEquals(GeoPoint(52.52, 13.405), request.from.point)
         assertEquals("Zoo", request.to.name)
-        assertEquals(null, cursor)
         assertEquals(1, viewModel.state.value.journeys.size)
-        assertTrue(viewModel.state.value.canLoadLater)
     }
 
     @Test
     fun `a new destination cancels the request in flight`() = runTest(main.dispatcher) {
         val gate = CompletableDeferred<JourneyPage>()
-        repository.planResult = { request, _ ->
-            if (request.to.name == "Slow") gate.await() else JourneyPage(listOf(journey("fast", 10, 0, 0.0)), null, null)
+        repository.planResult = { request ->
+            if (request.to.name == "Slow") gate.await() else JourneyPage(listOf(journey("fast", 10, 0, 0.0)))
         }
         viewModel.setOrigin(Endpoint.Place(location("Home")))
         viewModel.setDestination(Endpoint.Place(location("Slow")))
         advanceUntilIdle()
         viewModel.setDestination(Endpoint.Place(location("Fast")))
         advanceUntilIdle()
-        gate.complete(JourneyPage(listOf(journey("stale", 99, 0, 0.0)), null, null))
+        gate.complete(JourneyPage(listOf(journey("stale", 99, 0, 0.0))))
         advanceUntilIdle()
 
         assertEquals(listOf("fast"), viewModel.state.value.journeys.map { it.id })
@@ -98,140 +95,16 @@ class PlannerViewModelTest {
 
     @Test
     fun `service errors map to failure states`() = runTest(main.dispatcher) {
-        repository.planResult = { _, _ -> throw RoutingException.Offline() }
+        repository.planResult = { throw RoutingException.Offline() }
         viewModel.setOrigin(Endpoint.Place(location("Home")))
         viewModel.setDestination(Endpoint.Place(location("Zoo")))
         advanceUntilIdle()
         assertEquals(LoadState.Failed(Failure.OFFLINE), viewModel.state.value.results)
 
-        repository.planResult = { _, _ -> throw RoutingException.Server(503) }
+        repository.planResult = { throw RoutingException.Server(503) }
         viewModel.retry()
         advanceUntilIdle()
         assertEquals(LoadState.Failed(Failure.SERVER), viewModel.state.value.results)
-    }
-
-    @Test
-    fun `later page appends new journeys without duplicates`() = runTest(main.dispatcher) {
-        repository.planResult = { _, cursor ->
-            if (cursor == null) JourneyPage(listOf(journey("a", 20, 0, 0.0)), null, "c1")
-            else JourneyPage(listOf(journey("a", 20, 0, 0.0), journey("b", 25, 0, 0.0)), null, null)
-        }
-        viewModel.setOrigin(Endpoint.Place(location("Home")))
-        viewModel.setDestination(Endpoint.Place(location("Zoo")))
-        advanceUntilIdle()
-        viewModel.loadLater()
-        advanceUntilIdle()
-
-        assertEquals(listOf("a", "b"), viewModel.state.value.journeys.map { it.id })
-        assertEquals("c1", repository.plans.last().second)
-        assertFalse(viewModel.state.value.canLoadLater)
-    }
-
-    @Test
-    fun `earlier page puts new journeys first and keeps the shown journey`() = runTest(main.dispatcher) {
-        repository.planResult = { _, cursor ->
-            when (cursor) {
-                null -> JourneyPage(listOf(journey("b", 20, 0, 0.0)), "e1", "l1")
-                "e1" -> JourneyPage(listOf(journey("a", 25, 0, 0.0), journey("b", 20, 0, 0.0)), null, "l0")
-                else -> JourneyPage(listOf(journey("c", 30, 0, 0.0)), "e2", null)
-            }
-        }
-        viewModel.setOrigin(Endpoint.Place(location("Home")))
-        viewModel.setDestination(Endpoint.Place(location("Zoo")))
-        advanceUntilIdle()
-        assertTrue(viewModel.state.value.canLoadEarlier)
-
-        viewModel.loadEarlier()
-        assertEquals(Paging.EARLIER, viewModel.state.value.loadingPage)
-        advanceUntilIdle()
-
-        assertEquals(listOf("a", "b"), viewModel.state.value.journeys.map { it.id })
-        assertEquals("b", viewModel.state.value.highlighted?.id)
-        assertEquals("e1", repository.plans.last().second)
-        assertFalse(viewModel.state.value.canLoadEarlier)
-        assertEquals(null, viewModel.state.value.loadingPage)
-
-        // The earlier page does not change where the later pages continue.
-        viewModel.loadLater()
-        advanceUntilIdle()
-        assertEquals("l1", repository.plans.last().second)
-        assertEquals(listOf("a", "b", "c"), viewModel.state.value.journeys.map { it.id })
-    }
-
-    @Test
-    fun `only one page loads at a time`() = runTest(main.dispatcher) {
-        val gate = CompletableDeferred<JourneyPage>()
-        repository.planResult = { _, cursor ->
-            if (cursor == null) JourneyPage(listOf(journey("b", 20, 0, 0.0)), "e1", "l1") else gate.await()
-        }
-        viewModel.setOrigin(Endpoint.Place(location("Home")))
-        viewModel.setDestination(Endpoint.Place(location("Zoo")))
-        advanceUntilIdle()
-
-        viewModel.loadEarlier()
-        viewModel.loadLater()
-        advanceUntilIdle()
-
-        assertEquals(listOf(null, "e1"), repository.plans.map { it.second })
-    }
-
-    @Test
-    fun `a new search drops a page in flight`() = runTest(main.dispatcher) {
-        val gate = CompletableDeferred<JourneyPage>()
-        repository.planResult = { request, cursor ->
-            when {
-                cursor != null -> gate.await()
-                else -> JourneyPage(listOf(journey(request.to.name, 20, 0, 0.0)), "e1", null)
-            }
-        }
-        viewModel.setOrigin(Endpoint.Place(location("Home")))
-        viewModel.setDestination(Endpoint.Place(location("Zoo")))
-        advanceUntilIdle()
-        viewModel.loadEarlier()
-        advanceUntilIdle()
-
-        viewModel.setDestination(Endpoint.Place(location("Park")))
-        advanceUntilIdle()
-        gate.complete(JourneyPage(listOf(journey("stale", 99, 0, 0.0)), null, null))
-        advanceUntilIdle()
-
-        assertEquals(listOf("Park"), viewModel.state.value.journeys.map { it.id })
-        assertEquals(null, viewModel.state.value.loadingPage)
-    }
-
-    @Test
-    fun `a failed earlier page keeps the results and retries the same request`() = runTest(main.dispatcher) {
-        var failPage = true
-        repository.planResult = { _, cursor ->
-            when {
-                cursor == null -> JourneyPage(listOf(journey("b", 20, 0, 0.0)), "e1", "l1")
-                failPage -> throw RoutingException.Offline()
-                else -> JourneyPage(listOf(journey("a", 25, 0, 0.0)), null, "l0")
-            }
-        }
-        val changed = JourneyOptions(maxTransfers = 0, wheelchair = true)
-        viewModel.setOptions(changed)
-        viewModel.setOrigin(Endpoint.Place(location("Home")))
-        viewModel.setDestination(Endpoint.Place(location("Zoo")))
-        advanceUntilIdle()
-        val initialRequest = repository.plans.single().first
-
-        viewModel.loadEarlier()
-        advanceUntilIdle()
-
-        assertEquals(listOf("b"), viewModel.state.value.journeys.map { it.id })
-        assertEquals(null, viewModel.state.value.loadingPage)
-        assertTrue(viewModel.state.value.canLoadEarlier)
-        assertTrue(viewModel.state.value.canLoadLater)
-
-        failPage = false
-        viewModel.loadEarlier()
-        advanceUntilIdle()
-
-        assertEquals(listOf(null, "e1", "e1"), repository.plans.map { it.second })
-        assertTrue(repository.plans.all { it.first == initialRequest })
-        assertEquals(changed, repository.plans.last().first.options)
-        assertEquals(listOf("a", "b"), viewModel.state.value.journeys.map { it.id })
     }
 
     @Test
@@ -256,7 +129,7 @@ class PlannerViewModelTest {
         assertEquals(stored, viewModel.state.value.options)
         viewModel.setDestination(Endpoint.Place(location("Zoo")))
         advanceUntilIdle()
-        assertEquals(stored, repository.plans.single().first.options)
+        assertEquals(stored, repository.plans.single().options)
     }
 
     @Test
@@ -267,7 +140,7 @@ class PlannerViewModelTest {
         viewModel.setDestination(Endpoint.Place(location("Zoo")))
         advanceUntilIdle()
 
-        assertEquals(stored, repository.plans.single().first.options)
+        assertEquals(stored, repository.plans.single().options)
         assertEquals(stored, viewModel.state.value.options)
     }
 
@@ -284,7 +157,7 @@ class PlannerViewModelTest {
         advanceUntilIdle()
 
         assertEquals(2, repository.plans.size)
-        assertEquals(changed, repository.plans.last().first.options)
+        assertEquals(changed, repository.plans.last().options)
         assertEquals(changed, options.stored.value)
     }
 
@@ -299,7 +172,7 @@ class PlannerViewModelTest {
         advanceUntilIdle()
 
         assertEquals(changed, viewModel.state.value.options)
-        assertEquals(changed, repository.plans.single().first.options)
+        assertEquals(changed, repository.plans.single().options)
     }
 
     @Test
@@ -317,7 +190,7 @@ class PlannerViewModelTest {
         viewModel.setOrigin(Endpoint.Place(location("Home")))
         viewModel.setDestination(Endpoint.Place(location("Zoo")))
         advanceUntilIdle()
-        assertEquals(changed, repository.plans.single().first.options)
+        assertEquals(changed, repository.plans.single().options)
     }
 
     @Test
@@ -326,24 +199,22 @@ class PlannerViewModelTest {
         viewModel.setOrigin(Endpoint.Place(location("Home")))
         viewModel.setDestination(Endpoint.Place(location("Zoo")))
         advanceUntilIdle()
-        assertEquals(JourneyOptions(), repository.plans.single().first.options)
+        assertEquals(JourneyOptions(), repository.plans.single().options)
         assertTrue(viewModel.state.value.optionsLoaded)
 
         val changed = JourneyOptions(wheelchair = true)
         viewModel.setOptions(changed)
         advanceUntilIdle()
 
-        assertEquals(changed, repository.plans.last().first.options)
+        assertEquals(changed, repository.plans.last().options)
         assertEquals(1, viewModel.state.value.journeys.size)
     }
 
     @Test
     fun `sorting orders by the chosen criterion`() = runTest(main.dispatcher) {
-        repository.planResult = { _, _ ->
+        repository.planResult = {
             JourneyPage(
-                listOf(journey("slow", 40, 0, 100.0), journey("fast", 20, 2, 900.0), journey("mid", 30, 1, 50.0)),
-                null,
-                null,
+                listOf(journey("slow", 40, 0, 100.0, "U1"), journey("fast", 20, 2, 900.0, "U2"), journey("mid", 30, 1, 50.0, "U3")),
             )
         }
         viewModel.setOrigin(Endpoint.Place(location("Home")))
@@ -351,12 +222,33 @@ class PlannerViewModelTest {
         advanceUntilIdle()
 
         viewModel.setSort(RouteSort.FASTEST)
-        assertEquals(listOf("fast", "mid", "slow"), viewModel.state.value.sortedJourneys.map { it.id })
+        assertEquals(listOf("fast", "mid", "slow"), viewModel.state.value.routes.map { it.single().id })
         viewModel.setSort(RouteSort.FEWEST_TRANSFERS)
-        assertEquals(listOf("slow", "mid", "fast"), viewModel.state.value.sortedJourneys.map { it.id })
+        assertEquals(listOf("slow", "mid", "fast"), viewModel.state.value.routes.map { it.single().id })
         viewModel.setSort(RouteSort.LEAST_WALKING)
-        assertEquals(listOf("mid", "slow", "fast"), viewModel.state.value.sortedJourneys.map { it.id })
+        assertEquals(listOf("mid", "slow", "fast"), viewModel.state.value.routes.map { it.single().id })
         assertEquals("mid", viewModel.state.value.highlighted?.id)
+    }
+
+    @Test
+    fun `journeys with the same lines and boarding stops share one route`() = runTest(main.dispatcher) {
+        repository.planResult = {
+            JourneyPage(
+                listOf(
+                    journey("late", 20, 0, 0.0, "U2", startMinute = 10),
+                    journey("other", 30, 0, 0.0, "S1", startMinute = 2),
+                    journey("early", 25, 0, 0.0, "U2", startMinute = 5),
+                ),
+            )
+        }
+        viewModel.setOrigin(Endpoint.Place(location("Home")))
+        viewModel.setDestination(Endpoint.Place(location("Zoo")))
+        advanceUntilIdle()
+
+        assertEquals(listOf(listOf("early", "late"), listOf("other")), viewModel.state.value.routes.map { route -> route.map { it.id } })
+        assertEquals("early", viewModel.state.value.highlighted?.id)
+        viewModel.setSort(RouteSort.FASTEST)
+        assertEquals(listOf("early", "other"), viewModel.state.value.routes.map { it.first().id })
     }
 
     @Test
@@ -367,7 +259,7 @@ class PlannerViewModelTest {
         viewModel.swap()
         advanceUntilIdle()
 
-        val request = repository.plans.last().first
+        val request = repository.plans.last()
         assertEquals("Zoo", request.from.name)
         assertEquals("Home", request.to.name)
     }
@@ -383,7 +275,7 @@ class PlannerViewModelTest {
         advanceUntilIdle()
 
         assertEquals(2, repository.plans.size)
-        val request = repository.plans.last().first
+        val request = repository.plans.last()
         assertEquals(time, request.time)
         assertTrue(request.arriveBy)
         assertEquals(time, viewModel.state.value.time)
@@ -401,7 +293,7 @@ class PlannerViewModelTest {
         advanceUntilIdle()
 
         assertEquals(2, repository.plans.size)
-        val request = repository.plans.last().first
+        val request = repository.plans.last()
         assertEquals(null, request.time)
         assertFalse(request.arriveBy)
         assertEquals(null, viewModel.state.value.time)
@@ -451,7 +343,7 @@ class PlannerViewModelTest {
         assertEquals(time, state.time)
         assertTrue(state.arriveBy)
         assertEquals(2, repository.plans.size)
-        assertEquals(repository.plans[0].first, repository.plans[1].first)
+        assertEquals(repository.plans[0], repository.plans[1])
         assertEquals(1, state.journeys.size)
     }
 
@@ -471,7 +363,7 @@ class PlannerViewModelTest {
 
         fresh.point.value = GeoPoint(52.5, 13.4)
         advanceUntilIdle()
-        assertEquals(GeoPoint(52.5, 13.4), repository.plans.last().first.from.point)
+        assertEquals(GeoPoint(52.5, 13.4), repository.plans.last().from.point)
         assertEquals(1, restored.state.value.journeys.size)
     }
 
@@ -501,7 +393,7 @@ class PlannerViewModelTest {
         viewModel.replanFromHere()
         advanceUntilIdle()
 
-        val request = repository.plans.last().first
+        val request = repository.plans.last()
         assertEquals(GeoPoint(52.51, 13.39), request.from.point)
         assertEquals("Zoo", request.to.name)
         assertEquals(null, request.time)

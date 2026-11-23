@@ -404,8 +404,6 @@ fun ItivioRoot(
                                 onSort = planner::setSort,
                                 onSelect = planner::select,
                                 onOpen = { id -> backStack.add(ItineraryRoute(id)) },
-                                onEarlier = planner::loadEarlier,
-                                onLater = planner::loadLater,
                                 onRetry = planner::retry,
                             )
                         }

@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.domain.Departure
-import app.itivio.ui.common.CountdownText
+import app.itivio.ui.common.DepartureCountdown
 import app.itivio.ui.common.FailureState
 import app.itivio.ui.common.LoadState
 import app.itivio.ui.common.LineBadge
@@ -42,8 +42,8 @@ import app.itivio.ui.common.SkeletonBlock
 import app.itivio.ui.common.SkeletonText
 import app.itivio.ui.common.TimeText
 import app.itivio.ui.common.clockMinutesUntil
+import app.itivio.ui.common.laterDeparturesText
 import app.itivio.ui.common.formatDistance
-import app.itivio.ui.common.formatTime
 import java.time.Instant
 import kotlinx.coroutines.delay
 
@@ -265,8 +265,8 @@ private fun LineRow(departures: List<Departure>, now: Instant) {
         }
         Column(horizontalAlignment = Alignment.End) {
             val minutes = clockMinutesUntil(now, next.time.best)
-            if (minutes < 60) Countdown(next, minutes) else TimeText(next.time, next.stop.zone, emphasized = true)
-            laterText(departures, now)?.let {
+            if (minutes < 60) DepartureCountdown(next.time, next.stop.zone, minutes) else TimeText(next.time, next.stop.zone, emphasized = true)
+            laterDeparturesText(departures.drop(1).filterNot { it.cancelled }.take(LATER_DEPARTURES).map { it.time.best }, departures.first().stop.zone, now)?.let {
                 Text(
                     it,
                     style = MaterialTheme.typography.bodySmall,
@@ -279,32 +279,3 @@ private fun LineRow(departures: List<Departure>, now: Instant) {
     }
 }
 
-/**
- * The departures after the first one: "then 4 · 8 min". Departures an hour or more away have no
- * countdown, so the text gives the clock time of the first of them.
- */
-@Composable
-private fun laterText(departures: List<Departure>, now: Instant): String? {
-    val later = departures.drop(1).filterNot { it.cancelled }.take(LATER_DEPARTURES)
-    val minutes = later.map { clockMinutesUntil(now, it.time.best) }.filter { it < 60 }
-    return when {
-        minutes.isNotEmpty() -> stringResource(R.string.nearby_then_minutes, minutes.joinToString(" · "))
-        later.isNotEmpty() -> stringResource(R.string.nearby_then, formatTime(later.first().time.best, later.first().stop.zone))
-        else -> null
-    }
-}
-
-/** Minutes until departure. A screen reader also gets the clock time. */
-@Composable
-private fun Countdown(departure: Departure, minutes: Long) {
-    val live = departure.time.isRealtime
-    val countdown = if (minutes <= 0) stringResource(R.string.nearby_now) else stringResource(R.string.duration_min, minutes.toInt())
-    val clock = formatTime(departure.time.best, departure.stop.zone)
-    val status = stringResource(if (live) R.string.live else R.string.scheduled)
-    val description = if (minutes <= 0) {
-        stringResource(R.string.nearby_departing_now_description, clock, status)
-    } else {
-        stringResource(R.string.nearby_countdown_description, countdown, clock, status)
-    }
-    CountdownText(minutes, live, Modifier.clearAndSetSemantics { contentDescription = description })
-}

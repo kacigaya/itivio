@@ -178,7 +178,6 @@ internal fun Itinerary.toDomain(fromName: String? = null, toName: String? = null
 /** Journeys without transit come after the others, so "Best" keeps the order of the provider. */
 internal fun PlanResponse.toDomain(fromName: String? = null, toName: String? = null) = JourneyPage(
     (itineraries + direct).filter { it.legs.isNotEmpty() }.map { it.toDomain(fromName, toName) }.distinctBy { it.id },
-    previousPageCursor, nextPageCursor,
 )
 
 /** The arrival of this trip at the first later stop that [matches]. Null when the request did not ask for the stops. */

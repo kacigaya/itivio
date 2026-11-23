@@ -138,8 +138,6 @@ internal data class PlanResponse(
     val itineraries: List<Itinerary>,
     /** Journeys without transit, such as a walk the whole way. */
     val direct: List<Itinerary> = emptyList(),
-    val previousPageCursor: String? = null,
-    val nextPageCursor: String? = null,
 )
 
 @Serializable

@@ -95,19 +95,17 @@ class TransitousRoutingRepositoryTest {
             params = seen.last().url.parameters
             assertEquals("52.5221252,13.4133369", params["place"])
             assertEquals("1", params["numResults"])
-            val page = repo.planJourneys(JourneyRequest(from, to, Instant.parse("2026-11-09T01:20:00Z"), true), "cursor+/=")
+            val page = repo.planJourneys(JourneyRequest(from, to, Instant.parse("2026-11-09T01:20:00Z"), true))
             assertEquals(3, page.journeys.size)
             params = seen.last().url.parameters
             assertEquals("stop:origin", params["fromPlace"])
             assertEquals("52.5076,13.3904", params["toPlace"])
             assertEquals("2026-11-09T01:20:00Z", params["time"])
             assertEquals("true", params["arriveBy"])
-            assertEquals("cursor+/=", params["pageCursor"])
             assertEquals("true", params["detailedLegs"])
             assertEquals("false", params["detailedTransfers"])
             repo.planJourneys(JourneyRequest(to, from))
             assertNull(seen.last().url.parameters["time"])
-            assertNull(seen.last().url.parameters["pageCursor"])
             for (name in listOf("maxTransfers", "pedestrianProfile", "useRoutedTransfers", "pedestrianSpeed")) {
                 assertNull(name, seen.last().url.parameters[name])
             }
@@ -248,8 +246,8 @@ class TransitousRoutingRepositoryTest {
             repo.nearbyDepartures(GeoPoint(point.latitude + 0.00001, point.longitude))
             assertEquals(3, requests)
 
-            // Another page, stop, or option is another request.
-            repo.planJourneys(request, "cursor")
+            // Another plan, stop, or option is another request.
+            repo.planJourneys(request.copy(arriveBy = true))
             repo.stopDepartures("stop:b")
             repo.stopDepartures("stop:a", withAlerts = true)
             assertEquals(6, requests)

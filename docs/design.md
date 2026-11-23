@@ -78,7 +78,7 @@ The preview uses the easing of the system back animations, `(0.1, 0.1, 0, 1)`. T
 |---|---|---|
 | Home | Map, bottom sheet with the search bar and the "locate me" button at its top, the saved place buttons, then two pages: nearby departures and disruptions | Map with sheet content in a 400dp side pane. The pane has only the nearby departures |
 | Search | Full-screen search view: origin and destination fields, swap button, saved places or suggestions list | Same, in the side pane |
-| Results | Sheet with a travel time button, an options button, sort buttons, and route cards. The row of buttons scrolls to the two edges of the sheet. "Earlier departures" is above the cards and "Later departures" is below them. Map shows the selected route | Side pane with route cards |
+| Results | Sheet with a travel time button, an options button, sort buttons, and route cards, one card for each route. The row of buttons scrolls to the two edges of the sheet. The travel time button is the only control of the time: the results have no "earlier" or "later" buttons. Map shows the selected route | Side pane with route cards |
 | Itinerary | Sheet with leg timeline. Map fits the route | Side pane timeline |
 | Stop | Sheet with the stop name, "Directions to here", the favorite toggle, and the departures. Map centers on the stop | Side pane |
 | Walking | Instruction card at the top. Sheet with the remaining time, distance, and arrival, then all instructions. Map follows the user | Instruction card above the side pane |
@@ -121,17 +121,13 @@ The dialog has no switch for flights. No journey uses a flight.
 
 The dialog edits a copy. "Done" applies all changes with one new search. "Reset" puts the copy back to the defaults. "Cancel" drops the changes.
 
-## Earlier and later departures
-
-"Earlier departures" and "Later departures" are text buttons with an arrow icon at the two ends of the route cards. They are text buttons so the route cards stay the main content. Each one shows only when the provider gives a cursor for that direction. Both are disabled while a page loads. The button of the page that loads shows a loading indicator in place of its arrow, and a screen reader gets "Loading" as its state. The map keeps its route when a new page arrives.
-
 ## Itinerary
 
 The itinerary is a trip tracker. The summary is a `primaryContainer` card with the duration as the largest text, the departure and arrival times, and the legs of the journey as a chain of badges. A status tag on the card shows "Leave in 4 min" before the departure and "Arrive in 12 min" during the journey. The tag is `tertiary` with the live icon when the journey has live times. Two more tags give the transfers and the walking distance.
 
 Each transit leg is a `surfaceContainerHigh` card with the line color as a rail. A walk is a row with an icon tile, the distance in bold, and a "Directions" button. The step in progress has a `primary` outline. The service alerts of a leg are in one `errorContainer` banner: it shows the first alert and the number of the others, and a tap shows all of them. A tag gives the travel time of the leg. A second tag gives the number of stops; a tap shows or hides the stops.
 
-Each transit leg shows the next 4 departures of its line at the boarding stop as a list of connected rows on `surfaceContainerHighest`, with a 2dp gap. The list has only trips that stop at the alighting stop. Each row shows the destination, not the trip code. Below it are the platform, the arrival time at the alighting stop, and the time on board: "Platform 2 · → 20:13 · 29 min". The arrival time comes with the departures, so it needs no other request. The clock time of the departure is the heavy number at the end of the row. A live departure in the next hour also shows its countdown with the live icon. A late train shows its planned time struck through above the new time, and its delay in words with a warning icon. The row of the selected train has the `secondary` color, a round shape, and a "Your train" label. On this row, the delay is a pill in `errorContainer`, because `error` text has too little contrast on `secondary`. The line times refresh once a minute while the itinerary is visible. The scan starts when the platform is reachable and pages past other lines. A departure row has the radio role for a screen reader, but shows no radio button. Selecting a train checks its trip and updates the tracked leg. A changed leg has a Reset button. The leg header shows the line badge and the direction, with no trip code and no operator name. A warning explains a missed onward connection or cleared walking directions after a platform change. See `train-selection.md` for the limits.
+Each transit leg shows the next 4 departures of its line at the boarding stop as a list of connected rows on `surfaceContainerHighest`, with a 2dp gap. The list has only trips that stop at the alighting stop. Each row shows the destination, not the trip code. Below it are the platform, the arrival time at the alighting stop, and the time on board: "Platform 2 · → 20:13 · 29 min". The arrival time comes with the departures, so it needs no other request. The clock time of the departure is the heavy number at the end of the row. A live departure in the next hour also shows its countdown with the live icon. A late train shows its planned time struck through above the new time, and its delay in words with a warning icon. The row of the selected train has the `secondary` color, a round shape, and a "Your train" label. On this row, the delay is a pill in `errorContainer`, because `error` text has too little contrast on `secondary`. The line times refresh once a minute while the itinerary is visible. The scan starts when the platform is reachable and pages past other lines. A departure row has the radio role for a screen reader, but shows no radio button. Selecting a train checks its trip and updates the tracked leg. Each later leg then takes the first train it can still catch; see `train-selection.md`. A changed leg has a Reset button. The leg header shows the line badge and the direction, with no trip code and no operator name. A warning explains a missed onward connection or cleared walking directions after a platform change. See `train-selection.md` for the limits.
 
 When the data gives one, a "Where to board" row sits below the line and the direction. It is a `surfaceContainerHighest` card with the part of the train in heavy text ("At the front"), the reason ("Transfer" and the badge of the next line, or "Near the exit"), and a drawing of a train of three parts. The rear is on the left and the front, with its nose, is on the right, in the direction of travel. The part to board uses `primary`; the other parts use `outline`. The text names the part, so color is not the only cue. For an exit, the reason names the exit number ("Near exit 3"). A screen reader gets one sentence.
 
@@ -184,20 +180,22 @@ The departure board is one card with the rows of the nearby departures: one row 
 ## Route card
 
 ```
-(•) Leave in 4 min                    27 min
-12:04 – 12:31
+∙∙∙ 4 › [U2] › [M41]                  26 min
 ∙∙∙∙  ━━━━━━━━  ∙∙∙  ━━━━━━━━
-walk 4 › [U2] › [M41]
-12:08 Alexanderplatz
-1 transfer · 450 m walk
+(•) 4 min  then 9 · 14 min  from Alexanderplatz
+Arrive at 12:31 · 1 transfer · 450 m walk
 ⚠ Diversion at Potsdamer Platz        [+1]
 ```
 
-The status tag of the trip tracker comes first: "Leave in 4 min" before the departure, the same tag as on the itinerary, `tertiary` with the live icon when the journey has live times. It follows the clock of the app, which ticks every 15 s. The departure and arrival times are heavy. A bar below them places each leg in proportion to its time: a line in its color (`secondary` without one), a walk as dots in the muted text color, a wait as a gap. The bar is for the eye only; the leg chain gives the same facts to a screen reader. The leg chain shows a badge for each line. A walk is an icon and its minutes, with no container. A first or last walk shows from 2 min. A walk between two lines shows from 5 min. The itinerary shows all walks. The itinerary summary uses the same chain.
+A card is a route, not one departure. Journeys that use the same lines, boarded at the same stations, share one card. A journey with no line, such as a walk, groups by its modes. The journeys of a route are in order of departure, and the first one stands for the route: its legs, duration, facts, and alerts show on the card, it decides the place of the card in the sort, and a tap opens it. The card of the journey on the map uses `secondaryContainer`. It has no outline.
+
+The leg chain comes first, with the duration at the end. The leg chain shows a badge for each line. A walk is an icon and its minutes, with no container. A first or last walk shows from 2 min. A walk between two lines shows from 5 min. The itinerary shows all walks. The itinerary summary uses the same chain.
+
+A bar below places each leg in proportion to its time: a line in its color (`secondary` without one), a walk as dots in the muted text color, a wait as a gap. The bar is for the eye only; the leg chain gives the same facts to a screen reader.
+
+The next row gives the next departures of the first line, from the journeys of the route, up to three: a countdown for the first one, the same as the nearby departures (a `tertiaryContainer` pill with the live icon for a live time), then "then 9 · 14 min", then the boarding stop. A departure an hour or more away, or gone, shows its clock time. A screen reader also gets the clock time of the first departure. The departures come only from the journeys of one plan request, so a route can show only one. The facts line starts with the arrival time of the first journey ("Arrive at 12:31"), then the transfers and the walking distance. The card shows no departure clock time of the trip; the departures row and the itinerary have it.
 
 The alert line shows the first alert of the journey on one line, and the number of the others on an `errorContainer` pill. It shows only when the journey has an alert.
-
-The card of the route on the map uses `secondaryContainer`. It has no outline.
 
 ## States
 
@@ -205,7 +203,7 @@ Each list has a loading, empty, offline, and error state. Offline and error stat
 
 The loading state of a list is a skeleton (`Skeleton`): placeholders with the layout of the content to come, so the list does not jump when the content arrives.
 
-- The results show three route cards. The nearby departures show two stop cards. The stop shows one departure board. The disruptions show a group title and two cards. The search shows five place rows. Each itinerary leg with a boarding stop shows three train rows under "Next departures".
+- The results show three route cards: the leg chain and the duration, the bar, the departures, and the facts. The nearby departures show two stop cards. The stop shows one departure board. The disruptions show a group title and two cards. The search shows five place rows. Each itinerary leg with a boarding stop shows three train rows under "Next departures".
 - A placeholder card has the container color and the shape of the real card. Its blocks use `onSurface` at 8% to 16% opacity, on all card colors.
 - A text block has the line height of its text style, so the skeleton grows with the text size.
 - The blocks of one list pulse in step, 900 ms for each direction. They do not pulse when system animations are off.
@@ -214,7 +212,7 @@ The loading state of a list is a skeleton (`Skeleton`): placeholders with the la
 
 The itinerary loads the boarding hints and the first line times of all legs at the same time. They appear together: the skeletons fade out, and the boarding rows, exit rows, and train lists fade in as their space opens, with the springs of the theme. Live times do not reset the shown departures.
 
-The Expressive loading indicator is for an action in progress on content that is on screen: a train change, and a page of earlier or later journeys. It is also the loading state when the layout to come is not known, as when the session plans again after process death.
+The Expressive loading indicator is for an action in progress on content that is on screen: a train change. It is also the loading state when the layout to come is not known, as when the session plans again after process death.
 
 ## Accessibility
 

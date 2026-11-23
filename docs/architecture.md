@@ -75,7 +75,7 @@ Favorites, Home and Work, and recent searches are in one Room table, `saved_plac
 
 The options are in a Preferences DataStore file, `settings`. A value that the app does not know reads as its default. A damaged file is replaced with an empty one. The planner reads the options one time, before the first search. The options chip stays disabled until this read ends. A storage failure does not stop planning: the search uses the defaults, or the options of the current session.
 
-"Earlier departures" and "Later departures" use the page cursors of the plan response. The request of a page is the same as the first request, with `pageCursor` added. Each direction continues from the cursor of its last page. Only one page loads at a time.
+The planner sends one plan request for each search and does not page. The travel time button sets the time of the request.
 
 The options have two editors: the dialog on the results and the settings screen. The planner observes the store after the first read, so a change in the settings applies to the next search. A change in the settings starts no search.
 
@@ -157,7 +157,7 @@ Off the route, `WalkRerouteViewModel` plans a walk from the position to the end 
 - `/map/stops` runs only on the home screen, at zoom 15 or closer, 0.5 seconds after the camera stops. The request asks for the view rounded out to a 0.01° grid. A view inside the area already loaded sends no request. A view wider than 0.05° sends no request.
 - The walking view sends no request. "Plan a new route" sends one `/plan` request.
 - Geocode results are cached in memory.
-- Journey pages, departure boards (one stop or nearby), line times, and trips are cached in memory for 30 seconds: less than the shortest refresh (one minute), so each refresh asks again. A screen that opens again shows the last answer with no request. The disruptions read the same boards. A journey page is for one request, page cursor, and language. A nearby board is for the position rounded as sent (4 decimals). A line-times entry is for one stop, line, direction, alighting stop, language, and exact start time. A failure is not cached, so "Try again" always asks.
+- Journey pages, departure boards (one stop or nearby), line times, and trips are cached in memory for 30 seconds: less than the shortest refresh (one minute), so each refresh asks again. A screen that opens again shows the last answer with no request. The disruptions read the same boards. A journey page is for one request and language. A nearby board is for the position rounded as sent (4 decimals). A line-times entry is for one stop, line, direction, alighting stop, language, and exact start time. A failure is not cached, so "Try again" always asks.
 
 ## Privacy
 

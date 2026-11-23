@@ -8,11 +8,13 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
-import app.itivio.ui.common.JourneyStatusTag
 import java.time.Duration
 import java.time.Instant
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -44,16 +46,21 @@ import app.itivio.ui.common.LegChain
 import app.itivio.ui.common.SkeletonBlock
 import app.itivio.ui.common.SkeletonText
 import app.itivio.ui.common.TimeText
+import app.itivio.ui.common.DepartureCountdown
+import app.itivio.ui.common.clockMinutesUntil
+import app.itivio.ui.common.laterDeparturesText
 import app.itivio.ui.common.amountText
 import app.itivio.ui.common.formatDistance
 import app.itivio.ui.common.formatDuration
 import app.itivio.ui.common.formatTime
 
+/**
+ * One route: the journeys with the same lines from the same stations, by departure. The card
+ * shows the first journey and the next departures of its first line.
+ */
 @Composable
-fun RouteCard(journey: Journey, selected: Boolean, now: Instant, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val firstTransit = journey.legs.firstOrNull { it is Leg.Transit } as Leg.Transit?
-    val startZone = journey.legs.first().from.zone
-    val endZone = journey.legs.last().to.zone
+fun RouteCard(route: List<Journey>, selected: Boolean, now: Instant, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val journey = route.first()
     val scheme = MaterialTheme.colorScheme
     val secondary = if (selected) scheme.onSecondaryContainer else scheme.onSurfaceVariant
     Card(
@@ -68,19 +75,8 @@ fun RouteCard(journey: Journey, selected: Boolean, now: Instant, onClick: () -> 
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    JourneyStatusTag(journey, now)
-                    Text(
-                        stringResource(
-                            R.string.time_range,
-                            formatTime(journey.departure.best, startZone),
-                            formatTime(journey.arrival.best, endZone),
-                        ),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LegChain(journey, Modifier.weight(1f))
                 Text(
                     amountText(formatDuration(journey.duration), unitScale = 0.7f),
                     style = MaterialTheme.typography.titleLarge,
@@ -88,25 +84,11 @@ fun RouteCard(journey: Journey, selected: Boolean, now: Instant, onClick: () -> 
                 )
             }
             LegBar(journey, walkColor = secondary)
-            LegChain(journey)
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (firstTransit != null) {
-                    TimeText(firstTransit.start, firstTransit.from.zone)
-                    Text(
-                        firstTransit.from.name,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = secondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
-                    )
-                } else {
-                    Text(stringResource(R.string.results_walk_only), style = MaterialTheme.typography.bodyMedium)
-                }
-            }
+            NextDepartures(route, now, secondary)
             Text(
                 listOfNotNull(
                     if (journey.isCancelled) stringResource(R.string.cancelled) else null,
+                    stringResource(R.string.walk_arrive, formatTime(journey.arrival.best, journey.legs.last().to.zone)),
                     if (journey.transfers == 0) stringResource(R.string.no_transfers)
                     else pluralStringResource(R.plurals.transfers, journey.transfers, journey.transfers),
                     if (journey.walkingMeters > 0) stringResource(R.string.walk_distance, formatDistance(journey.walkingMeters)) else null,
@@ -116,6 +98,47 @@ fun RouteCard(journey: Journey, selected: Boolean, now: Instant, onClick: () -> 
             )
             AlertLine(journey.alerts)
         }
+    }
+}
+
+private const val SHOWN_DEPARTURES = 3
+
+/**
+ * The next departures of the first line of the route, from the journeys of the route: a countdown
+ * for the first one, then "then 9 · 14 min", then the boarding stop. A departure an hour or more
+ * away, or gone, shows its clock time.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun NextDepartures(route: List<Journey>, now: Instant, secondary: Color) {
+    val legs = route.mapNotNull { journey -> journey.legs.firstOrNull { it is Leg.Transit } as Leg.Transit? }.take(SHOWN_DEPARTURES)
+    val next = legs.firstOrNull()
+    if (next == null) {
+        Text(stringResource(R.string.results_walk_only), style = MaterialTheme.typography.bodyMedium)
+        return
+    }
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        val minutes = clockMinutesUntil(now, next.start.best)
+        if (minutes in 0 until 60) {
+            DepartureCountdown(next.start, next.from.zone, minutes, style = MaterialTheme.typography.titleMedium)
+        } else {
+            TimeText(next.start, next.from.zone, emphasized = true)
+        }
+        laterDeparturesText(legs.drop(1).map { it.start.best }, next.from.zone, now)?.let {
+            Text(it, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = secondary)
+        }
+        Text(
+            stringResource(R.string.results_from_stop, next.from.name),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Light,
+            color = secondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -129,17 +152,15 @@ fun RouteCardSkeleton(modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                SkeletonText(type.titleMedium, Modifier.fillMaxWidth(0.4f))
-                SkeletonText(type.titleLarge, Modifier.width(72.dp))
-            }
-            SkeletonBlock(Modifier.fillMaxWidth().height(LegBarHeight))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 SkeletonBlock(Modifier.size(width = 40.dp, height = 28.dp))
                 SkeletonBlock(Modifier.size(width = 64.dp, height = 28.dp))
                 SkeletonBlock(Modifier.size(width = 56.dp, height = 28.dp))
+                Spacer(Modifier.weight(1f))
+                SkeletonText(type.titleLarge, Modifier.width(72.dp))
             }
-            SkeletonText(type.bodyMedium, Modifier.fillMaxWidth(0.6f))
+            SkeletonBlock(Modifier.fillMaxWidth().height(LegBarHeight))
+            SkeletonText(type.titleMedium, Modifier.fillMaxWidth(0.6f))
             SkeletonText(type.bodySmall, Modifier.fillMaxWidth(0.45f))
         }
     }

@@ -16,8 +16,8 @@ interface RoutingRepository {
     /** Nearest named place for a coordinate, used for "My location" labels. */
     suspend fun reverseGeocode(point: GeoPoint): Location?
 
-    /** Plans journeys. Pass a cursor from a previous [JourneyPage] to page in time. */
-    suspend fun planJourneys(request: JourneyRequest, cursor: String? = null): JourneyPage
+    /** Plans journeys. */
+    suspend fun planJourneys(request: JourneyRequest): JourneyPage
 
     /** Upcoming departures around [point], sorted by time. [withAlerts] adds the service alerts of each departure. */
     suspend fun nearbyDepartures(

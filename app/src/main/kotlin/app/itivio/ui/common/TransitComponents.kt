@@ -352,6 +352,41 @@ fun CountdownText(
     }
 }
 
+/** Minutes until a departure at [time], as [CountdownText]. A screen reader also gets the clock time. */
+@Composable
+fun DepartureCountdown(
+    time: StopTime,
+    zone: ZoneId?,
+    minutes: Long,
+    modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.titleLarge,
+) {
+    val live = time.isRealtime
+    val countdown = if (minutes <= 0) stringResource(R.string.nearby_now) else stringResource(R.string.duration_min, minutes.toInt())
+    val clock = formatTime(time.best, zone)
+    val status = stringResource(if (live) R.string.live else R.string.scheduled)
+    val description = if (minutes <= 0) {
+        stringResource(R.string.nearby_departing_now_description, clock, status)
+    } else {
+        stringResource(R.string.nearby_countdown_description, countdown, clock, status)
+    }
+    CountdownText(minutes, live, modifier.clearAndSetSemantics { contentDescription = description }, style)
+}
+
+/**
+ * The departures after the next one: "then 4 · 8 min". Departures an hour or more away, or gone,
+ * have no countdown, so the text gives the clock time of the first of them.
+ */
+@Composable
+fun laterDeparturesText(later: List<Instant>, zone: ZoneId?, now: Instant): String? {
+    val minutes = later.map { clockMinutesUntil(now, it) }.filter { it in 0 until 60 }
+    return when {
+        minutes.isNotEmpty() -> stringResource(R.string.nearby_then_minutes, minutes.joinToString(" · "))
+        later.isNotEmpty() -> stringResource(R.string.nearby_then, formatTime(later.first(), zone))
+        else -> null
+    }
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LoadingState(modifier: Modifier = Modifier) {

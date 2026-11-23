@@ -25,9 +25,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.hasStateDescription
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.SemanticsMatcher
@@ -63,7 +60,6 @@ import app.itivio.ui.itinerary.ItineraryScreen
 import app.itivio.ui.nearby.NearbyViewModel
 import app.itivio.ui.nearby.StopDepartures
 import app.itivio.ui.planner.Endpoint
-import app.itivio.ui.planner.Paging
 import app.itivio.ui.planner.PlannerState
 import app.itivio.ui.results.JourneyOptionsDialog
 import app.itivio.ui.results.ResultsScreen
@@ -258,7 +254,7 @@ open class ScreenshotTest {
                 results = LoadState.Ready(sampleJourneys),
             ),
             onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
-            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
+            onSelect = {}, onOpen = {}, onRetry = {},
         )
     }
 
@@ -287,11 +283,9 @@ open class ScreenshotTest {
                 destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
                 options = JourneyOptions(maxTransfers = 1),
                 results = LoadState.Ready(sampleJourneys),
-                canLoadEarlier = true,
-                canLoadLater = true,
             ),
             onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
-            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
+            onSelect = {}, onOpen = {}, onRetry = {},
         )
     }
 
@@ -306,7 +300,7 @@ open class ScreenshotTest {
                 results = LoadState.Failed(app.itivio.ui.common.Failure.OFFLINE),
             ),
             onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
-            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
+            onSelect = {}, onOpen = {}, onRetry = {},
         )
     }
 
@@ -321,29 +315,7 @@ open class ScreenshotTest {
                 results = LoadState.Loading,
             ),
             onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
-            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
-        )
-    }
-
-    /** The button of the page that loads shows the indicator and says so. The two buttons are disabled. */
-    @Test
-    fun resultsPageLoading() = capture(
-        "results_page_loading",
-        prepare = { compose.onNode(hasStateDescription("Loading") and hasText("Earlier departures")).assertIsNotEnabled() },
-    ) {
-        ResultsScreen(
-            wide = false,
-            now = t0.minusSeconds(240),
-            state = PlannerState(
-                optionsLoaded = true,
-                destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
-                results = LoadState.Ready(sampleJourneys),
-                canLoadEarlier = true,
-                canLoadLater = true,
-                loadingPage = Paging.EARLIER,
-            ),
-            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
-            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
+            onSelect = {}, onOpen = {}, onRetry = {},
         )
     }
 
@@ -524,7 +496,7 @@ open class ScreenshotTest {
                 results = LoadState.Ready(sampleJourneys),
             ),
             onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
-            onSelect = {}, onOpen = {}, onEarlier = {}, onLater = {}, onRetry = {},
+            onSelect = {}, onOpen = {}, onRetry = {},
         )
     }
 
@@ -608,6 +580,17 @@ open class ScreenshotTest {
                     ),
                 ),
                 departure = at(3), arrival = at(22), transfers = 0,
+            ),
+            Journey(
+                id = "3",
+                legs = listOf(
+                    Leg.Street(TransitMode.WALK, stop("Start"), stop("Alexanderplatz"), at(13), at(18), emptyList(), 420.0),
+                    Leg.Transit(
+                        TransitMode.SUBURBAN, stop("S Alexanderplatz", "1"), stop("S Potsdamer Platz"), at(20), at(32),
+                        emptyList(), Line("S1"), "Wannsee", "t4", emptyList(),
+                    ),
+                ),
+                departure = at(13), arrival = at(32), transfers = 0,
             ),
         )
     }

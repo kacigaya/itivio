@@ -8,6 +8,7 @@ import app.itivio.domain.Journey
 import app.itivio.domain.JourneyOptions
 import app.itivio.domain.JourneyOptionsRepository
 import app.itivio.domain.JourneyRequest
+import app.itivio.domain.Leg
 import app.itivio.domain.Location
 import app.itivio.domain.LocationKind
 import app.itivio.domain.RoutingRepository
@@ -18,7 +19,6 @@ import app.itivio.ui.common.UserLocation
 import app.itivio.ui.common.attempt
 import app.itivio.ui.common.toFailure
 import java.time.Instant
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,8 +42,15 @@ sealed interface Endpoint {
 
 enum class RouteSort { BEST, FASTEST, FEWEST_TRANSFERS, LEAST_WALKING }
 
-/** A page of journeys before or after the ones on screen. */
-enum class Paging { EARLIER, LATER }
+/**
+ * Journeys with the same key take the same route: the same lines, boarded at the same stations.
+ * A journey with no line, such as a walk, has the key of its modes.
+ */
+internal fun Journey.routeKey(): String =
+    legs.filterIsInstance<Leg.Transit>()
+        .map { "${it.line.id ?: it.line.name}@${it.from.stationId ?: it.from.stopId ?: it.from.name}" }
+        .ifEmpty { legs.map { it.mode.name } }
+        .joinToString("|")
 
 data class PlannerState(
     val origin: Endpoint = Endpoint.MyLocation,
@@ -55,24 +62,27 @@ data class PlannerState(
     val optionsLoaded: Boolean = false,
     val results: LoadState<List<Journey>> = LoadState.Idle,
     val sort: RouteSort = RouteSort.BEST,
-    /** The page that loads now. Only one page loads at a time. */
-    val loadingPage: Paging? = null,
-    val canLoadEarlier: Boolean = false,
-    val canLoadLater: Boolean = false,
     val selectedId: String? = null,
 ) {
     val journeys: List<Journey> get() = (results as? LoadState.Ready)?.value.orEmpty()
 
-    val sortedJourneys: List<Journey>
-        get() = when (sort) {
-            RouteSort.BEST -> journeys
-            RouteSort.FASTEST -> journeys.sortedBy { it.duration }
-            RouteSort.FEWEST_TRANSFERS -> journeys.sortedWith(compareBy({ it.transfers }, { it.duration }))
-            RouteSort.LEAST_WALKING -> journeys.sortedWith(compareBy({ it.walkingMeters }, { it.duration }))
+    /**
+     * The journeys grouped by [routeKey], in the chosen order. Each route lists its journeys by
+     * departure; the first one stands for the route on its card and in the sort.
+     */
+    val routes: List<List<Journey>>
+        get() {
+            val groups = journeys.groupBy { it.routeKey() }.values.map { route -> route.sortedBy { it.departure.best } }
+            return when (sort) {
+                RouteSort.BEST -> groups
+                RouteSort.FASTEST -> groups.sortedBy { it.first().duration }
+                RouteSort.FEWEST_TRANSFERS -> groups.sortedWith(compareBy({ it.first().transfers }, { it.first().duration }))
+                RouteSort.LEAST_WALKING -> groups.sortedWith(compareBy({ it.first().walkingMeters }, { it.first().duration }))
+            }
         }
 
-    /** The journey the map draws: the explicit selection, else the first card. */
-    val highlighted: Journey? get() = journeys.firstOrNull { it.id == selectedId } ?: sortedJourneys.firstOrNull()
+    /** The journey the map draws: the explicit selection, else the first journey of the first card. */
+    val highlighted: Journey? get() = journeys.firstOrNull { it.id == selectedId } ?: routes.firstOrNull()?.first()
 
     fun journey(id: String): Journey? = journeys.firstOrNull { it.id == id }
 }
@@ -94,10 +104,6 @@ class PlannerViewModel(
     val state: StateFlow<PlannerState> = _state.asStateFlow()
 
     private var planJob: Job? = null
-    private var pageJob: Job? = null
-    private var earlierCursor: String? = null
-    private var laterCursor: String? = null
-    private var lastRequest: JourneyRequest? = null
     private var restoreJob: Job? = null
 
     // Stored options are optional: a storage failure, such as a full disk, must not stop routing.
@@ -223,10 +229,6 @@ class PlannerViewModel(
         restoreJob?.cancel()
         restoreJob = null
         planJob?.cancel()
-        pageJob?.cancel()
-        earlierCursor = null
-        laterCursor = null
-        lastRequest = null
     }
 
     private fun planIfReady() {
@@ -237,68 +239,23 @@ class PlannerViewModel(
         val from = resolve(current.origin)
         val to = resolve(destination)
         if (from == null || to == null) {
-            _state.update {
-                it.copy(results = LoadState.Failed(Failure.NO_LOCATION), canLoadEarlier = false, canLoadLater = false, loadingPage = null)
-            }
+            _state.update { it.copy(results = LoadState.Failed(Failure.NO_LOCATION)) }
             return
         }
-        _state.update { it.copy(selectedId = null, canLoadEarlier = false, canLoadLater = false, loadingPage = null) }
+        _state.update { it.copy(selectedId = null) }
         // Runs at once up to the first wait: a cached plan shows its results with no skeleton frame.
         planJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             // The first plan can start before the read of the stored options ends.
             storedOptions.join()
             val request = JourneyRequest(from, to, current.time, current.arriveBy, _state.value.options)
-            lastRequest = request
             val result = runCatching { repository.planJourneys(request) }
             result.onSuccess { page ->
-                earlierCursor = page.earlierCursor
-                laterCursor = page.laterCursor
-                _state.update {
-                    it.copy(
-                        results = LoadState.Ready(page.journeys),
-                        canLoadEarlier = page.earlierCursor != null,
-                        canLoadLater = page.laterCursor != null,
-                    )
-                }
+                _state.update { it.copy(results = LoadState.Ready(page.journeys)) }
             }.onFailure { error ->
                 _state.update { it.copy(results = LoadState.Failed(error.toFailure())) }
             }
         }
         if (planJob?.isActive == true) _state.update { it.copy(results = LoadState.Loading) }
-    }
-
-    fun loadEarlier() = loadPage(Paging.EARLIER)
-
-    fun loadLater() = loadPage(Paging.LATER)
-
-    private fun loadPage(paging: Paging) {
-        val request = lastRequest ?: return
-        val cursor = (if (paging == Paging.EARLIER) earlierCursor else laterCursor) ?: return
-        if (_state.value.loadingPage != null) return
-        _state.update { it.copy(loadingPage = paging) }
-        pageJob = viewModelScope.launch {
-            val result = runCatching { repository.planJourneys(request, cursor) }
-            result.onSuccess { page ->
-                // Each page has cursors for both directions. Only the one that continues this direction is new.
-                if (paging == Paging.EARLIER) earlierCursor = page.earlierCursor else laterCursor = page.laterCursor
-                _state.update { state ->
-                    val known = state.journeys.map { it.id }.toSet()
-                    val added = page.journeys.filterNot { it.id in known }
-                    state.copy(
-                        results = LoadState.Ready(if (paging == Paging.EARLIER) added + state.journeys else state.journeys + added),
-                        // A new journey can sort first; the map keeps the journey it showed.
-                        selectedId = state.selectedId ?: state.highlighted?.id,
-                        loadingPage = null,
-                        canLoadEarlier = earlierCursor != null,
-                        canLoadLater = laterCursor != null,
-                    )
-                }
-            }.onFailure { error ->
-                if (error is CancellationException) throw error
-                // Keep the shown journeys; the button stays so the user can try again.
-                _state.update { it.copy(loadingPage = null) }
-            }
-        }
     }
 
     private fun resolve(endpoint: Endpoint): Location? = when (endpoint) {

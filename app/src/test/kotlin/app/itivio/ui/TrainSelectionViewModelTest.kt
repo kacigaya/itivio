@@ -50,6 +50,63 @@ class TrainSelectionViewModelTest {
         assertTrue(viewModel.selection.value.changedLegs.isEmpty())
     }
 
+    @Test fun `a changed train moves later legs to the first connection and reset restores them`() = runTest(main.dispatcher) {
+        val bus = Line("B", id = "bus-b")
+        val transfer = Leg.Street(TransitMode.WALK, stop("b"), stop("c"), at(33), at(38), emptyList(), 300.0)
+        val second = Leg.Transit(TransitMode.BUS, stop("c", departure = 40), stop("d", arrival = 55), at(40), at(55),
+            emptyList(), bus, "End", "second", emptyList())
+        val twoLegs = Journey("j2", listOf(ride, transfer, second), at(20), at(55), 1)
+        repository.tripResult = { id ->
+            when (id) {
+                "alternative" -> trip(4, 17)
+                "early-bus" -> Trip(listOf(stop("c", departure = 25), stop("d", arrival = 40)))
+                "second" -> Trip(listOf(stop("c", departure = 40), stop("d", arrival = 55)))
+                else -> trip(20, 33)
+            }
+        }
+        repository.lineResult = {
+            listOf(
+                Departure(stop("c"), bus, TransitMode.BUS, "End", at(23), true, "gone"),
+                Departure(stop("c"), bus, TransitMode.BUS, "End", at(25), false, "early-bus"),
+            )
+        }
+        viewModel.journey.launchIn(backgroundScope)
+        viewModel.show(twoLegs)
+        runCurrent()
+
+        viewModel.selectDeparture(0, departure)
+        runCurrent()
+        assertEquals(listOf("c" to base.plusSeconds(22 * 60)), repository.lineCalls)
+        assertEquals("early-bus", (viewModel.journey.value!!.legs[2] as Leg.Transit).tripId)
+        assertEquals(at(40), viewModel.journey.value!!.arrival)
+        assertEquals(setOf(0, 2), viewModel.selection.value.changedLegs)
+        assertNull(viewModel.journey.value!!.missedConnectionIndex)
+        assertNull(viewModel.selection.value.loadingLeg)
+
+        viewModel.resetTrain(0)
+        runCurrent()
+        assertEquals(listOf("original", "second"), viewModel.journey.value!!.legs.filterIsInstance<Leg.Transit>().map { it.tripId })
+        assertTrue(viewModel.selection.value.changedLegs.isEmpty())
+
+        // A late planned train misses the planned connection, so reset takes the next one.
+        repository.lineResult = { listOf(Departure(stop("c"), bus, TransitMode.BUS, "End", at(50), false, "late-bus")) }
+        val tripResult = repository.tripResult
+        repository.tripResult = { id ->
+            when (id) {
+                "original" -> trip(20, 37)
+                "late-bus" -> Trip(listOf(stop("c", departure = 50), stop("d", arrival = 65)))
+                else -> tripResult(id)
+            }
+        }
+        viewModel.selectDeparture(0, departure)
+        runCurrent()
+        viewModel.resetTrain(0)
+        runCurrent()
+        assertEquals(listOf("original", "late-bus"), viewModel.journey.value!!.legs.filterIsInstance<Leg.Transit>().map { it.tripId })
+        assertEquals(setOf(2), viewModel.selection.value.changedLegs)
+        assertNull(viewModel.journey.value!!.missedConnectionIndex)
+    }
+
     @Test fun `reset restores walking directions when original platforms are confirmed`() = runTest(main.dispatcher) {
         val geometry = listOf(GeoPoint(48.0, 2.0), GeoPoint(48.001, 2.001))
         val from = ride.from.copy(stationId = "station-a")
