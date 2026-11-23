@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.clickable
 import app.itivio.R
+import app.itivio.ui.search.CoveredBySearch
 import app.itivio.domain.JourneyOptions
 import app.itivio.ui.common.FailureState
 import app.itivio.ui.common.LoadState
@@ -92,27 +93,29 @@ fun ResultsScreen(
     val originText = rememberLocationTextState()
     val destinationText = rememberLocationTextState()
 
-    MapPanel(
-        wide = wide,
-        peekHeight = ResultsPeekHeight,
-        header = {
-            EndpointsCard(
-                origin = state.origin.label(),
-                destination = state.destination?.label().orEmpty(),
-                onBack = onBack,
-                onEditOrigin = { scope.launch { originSearch.animateToExpanded() } },
-                onEditDestination = { scope.launch { destinationSearch.animateToExpanded() } },
-                onSwap = onSwap,
+    CoveredBySearch(originSearch, destinationSearch) {
+        MapPanel(
+            wide = wide,
+            peekHeight = ResultsPeekHeight,
+            header = {
+                EndpointsCard(
+                    origin = state.origin.label(),
+                    destination = state.destination?.label().orEmpty(),
+                    onBack = onBack,
+                    onEditOrigin = { scope.launch { originSearch.animateToExpanded() } },
+                    onEditDestination = { scope.launch { destinationSearch.animateToExpanded() } },
+                    onSwap = onSwap,
+                )
+            },
+        ) {
+            ResultsList(
+                state,
+                now,
+                onPickTime = { pickingTime = true },
+                onPickOptions = { pickingOptions = true },
+                onSort, onSelect, onOpen, onRetry,
             )
-        },
-    ) {
-        ResultsList(
-            state,
-            now,
-            onPickTime = { pickingTime = true },
-            onPickOptions = { pickingOptions = true },
-            onSort, onSelect, onOpen, onRetry,
-        )
+        }
     }
 
     if (pickingTime) {
