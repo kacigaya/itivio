@@ -195,7 +195,8 @@ v1.0.0 adds release signing and F-Droid. Feature work stops here. Only fixes go 
 - [x] Sign the APKs with a release key. Without all signing values, release APKs stay unsigned.
 - [x] Tell users that the key change needs one reinstall.
 - [x] Add a release workflow that builds, signs, and publishes the APKs with checksums.
-- [ ] Add F-Droid metadata and send the app to F-Droid.
+- [x] Add F-Droid metadata in `fastlane/metadata/android/`: title, descriptions in English and French, and phone screenshots.
+- [ ] Send the app to F-Droid with a merge request to `fdroiddata`. This needs the maintainer's GitLab account.
 - [x] Add `CHANGELOG.md`, `CONTRIBUTING.md`, and `SECURITY.md`.
 - [x] Add a privacy policy file.
 - [x] Add screenshots to the README.

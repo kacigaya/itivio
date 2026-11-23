@@ -1,0 +1,16 @@
+itivio calcule vos trajets en bus, tram, métro, train et bateau. Vos données restent sur votre appareil : pas de compte, pas de statistiques, pas de publicité.
+
+<ul>
+<li>Recherche de lieux, d’adresses et d’arrêts.</li>
+<li>Itinéraires regroupés par ligne, avec les prochains départs de chaque itinéraire et l’heure d’arrivée.</li>
+<li>Partir maintenant, partir à une heure ou arriver avant une heure. Choisissez les modes de transport, le nombre de correspondances, les trajets accessibles en fauteuil roulant et la vitesse de marche.</li>
+<li>Horaires en direct quand le réseau les publie. Choisissez un autre train sur une étape, et les étapes suivantes passent à la première correspondance possible.</li>
+<li>Départs à proximité et tableau des départs pour chaque arrêt.</li>
+<li>Perturbations pour vos arrêts enregistrés et les arrêts proches.</li>
+<li>Guidage à pied avec le prochain virage, le temps restant et l’heure d’arrivée.</li>
+<li>À Paris, où monter dans le métro et quelle sortie prendre.</li>
+<li>Favoris, raccourcis Domicile et Travail, et recherches récentes, enregistrés sur votre appareil.</li>
+<li>Anglais et français. Thèmes clair et sombre avec les couleurs Material You.</li>
+</ul>
+
+Les itinéraires et les données en direct viennent de Transitous, un service MOTIS communautaire. Données cartographiques © contributeurs OpenStreetMap, tuiles OpenFreeMap. La couverture dépend des régions, et certaines n’ont pas de données en direct.
