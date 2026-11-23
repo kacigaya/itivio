@@ -22,7 +22,10 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 
 ## Release packaging
 
-- Prereleases since v0.9.0 use debug-signed APKs for `arm64-v8a`, `armeabi-v7a`, `x86_64`, and universal, plus `SHA256SUMS.txt`. Build with `:app:assembleDebug`; APKs are in `app/build/outputs/apk/debug/`. Release assets are named `itivio-X.Y.Z-<abi>-debug.apk`.
+- Releases from v0.14.0 on are release-signed. Pushing a tag `vX.Y.Z` runs `.github/workflows/release.yml`: it checks that `versionName` is `X.Y.Z` and that `CHANGELOG.md` has a `## X.Y.Z` section, runs tests and lint, builds `:app:assembleRelease`, checks that each APK has the release certificate (SHA-256 `e7154a733defb1dcb68a80fdc83556ff88b4ea2f836d36a3306adfa0c68a2981`), and publishes `itivio-X.Y.Z-<abi>.apk` for `universal`, `arm64-v8a`, `armeabi-v7a`, and `x86_64`, plus `SHA256SUMS.txt`. A `v0.*` tag makes a pre-release. The release notes are the changelog section. The workflow then starts `pages.yml` on the default branch, because a release made with the workflow token starts no other workflow.
+- The release key is a PKCS12 keystore with the alias `itivio` and the subject `CN=itivio`, valid until 2054. The repository secrets `ITIVIO_KEYSTORE_BASE64`, `ITIVIO_KEYSTORE_PASSWORD`, `ITIVIO_KEY_ALIAS`, and `ITIVIO_KEY_PASSWORD` hold it. Its local copy and password file are outside the repository, in `~/.config/itivio/` on the development host.
+- The release build uses R8 (`isMinifyEnabled` and `isShrinkResources`). Check a release APK on a device after a dependency or serialization change.
+- Prereleases v0.9.0 to v0.13.1 used debug-signed APKs named `itivio-X.Y.Z-<abi>-debug.apk`.
 
 ## Rules
 
