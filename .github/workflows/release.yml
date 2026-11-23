@@ -17,7 +17,6 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write
-      actions: write
     env:
       TAG: ${{ github.ref_name }}
       CERT_SHA256: e7154a733defb1dcb68a80fdc83556ff88b4ea2f836d36a3306adfa0c68a2981
@@ -86,6 +85,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+  website:
+    needs: release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
       - name: Deploy the website again
         run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref "$DEFAULT_BRANCH"
         env:
