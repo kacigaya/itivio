@@ -192,9 +192,9 @@ v1.0.0 adds release signing and F-Droid. Feature work stops here. Only fixes go 
 
 ### Release and distribution
 
-- [ ] Sign the APKs with a release key. Without all signing values, release APKs stay unsigned.
-- [ ] Tell users that the key change needs one reinstall.
-- [ ] Add a release workflow that builds, signs, and publishes the APKs with checksums.
+- [x] Sign the APKs with a release key. Without all signing values, release APKs stay unsigned.
+- [x] Tell users that the key change needs one reinstall.
+- [x] Add a release workflow that builds, signs, and publishes the APKs with checksums.
 - [ ] Add F-Droid metadata and send the app to F-Droid.
 - [x] Add `CHANGELOG.md`, `CONTRIBUTING.md`, and `SECURITY.md`.
 - [x] Add a privacy policy file.
