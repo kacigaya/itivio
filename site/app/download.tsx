@@ -64,9 +64,10 @@ export function DownloadCard({ initial }: { initial: Downloads }) {
       <p className="meta">
         <Size bytes={d.universal.size} /> · Android 8.0 or later · Works on all devices
       </p>
-      {d.prerelease && (
+      {d.signed && (
         <p className="note">
-          Prereleases use a debug signing key. A later version can need a reinstall, which deletes your saved places.
+          Versions up to 0.13.1 used a debug signing key. To update from them, uninstall the app first, which deletes your
+          saved places.
         </p>
       )}
       <details>

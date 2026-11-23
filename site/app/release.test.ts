@@ -27,6 +27,7 @@ test("picks the newest published release and splits the APKs", () => {
   assert.equal(d.universal.url, "https://example.org/itivio-0.12.0-universal-debug.apk");
   assert.deepEqual(d.perAbi.map((a) => a.abi), ["arm64-v8a", "x86_64"]);
   assert.equal(d.checksumsUrl, "https://example.org/SHA256SUMS.txt");
+  assert.equal(d.signed, false);
 });
 
 test("accepts signed APK names without a build type suffix", () => {
@@ -34,6 +35,7 @@ test("accepts signed APK names without a build type suffix", () => {
   assert.equal(d.universal.abi, "universal");
   assert.deepEqual(d.perAbi.map((a) => a.abi), ["armeabi-v7a"]);
   assert.equal(d.checksumsUrl, null);
+  assert.equal(d.signed, true);
 });
 
 test("fails the build when no universal APK exists", () => {
