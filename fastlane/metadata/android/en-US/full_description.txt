@@ -1,0 +1,16 @@
+itivio plans journeys by bus, tram, metro, train, and ferry. It keeps your data on your device: no account, no analytics, and no ads.
+
+<ul>
+<li>Search places, addresses, and stops.</li>
+<li>Routes grouped by line, with the next departures of each route and the arrival time.</li>
+<li>Leave now, leave at a time, or arrive by a time. Choose the transport modes, the number of transfers, wheelchair-accessible routes, and the walking speed.</li>
+<li>Live times where the transit agency publishes them. Pick another train on a leg, and the next legs move to the first connection you can catch.</li>
+<li>Departures near you and a departure board for each stop.</li>
+<li>Service alerts for your saved stops and the stops near you.</li>
+<li>Walking directions with the next turn, the remaining time, and the arrival time.</li>
+<li>In Paris, where to board the metro and which exit to take.</li>
+<li>Favorites, Home and Work shortcuts, and recent searches, stored on your device.</li>
+<li>English and French. Light and dark themes with Material You colors.</li>
+</ul>
+
+Routing and live data come from Transitous, a community MOTIS service. Map data © OpenStreetMap contributors, tiles from OpenFreeMap. Coverage differs by region, and some regions have no live data.
