@@ -199,7 +199,7 @@ The alert line shows the first alert of the journey on one line, and the number 
 
 ## States
 
-Each list has a loading, empty, offline, and error state. Offline and error states give a retry button.
+Each list has a loading, empty, offline, and error state. Offline and error states give a retry button. The empty results ("No routes found") give no retry, because the same search finds nothing again. They give "Change the time", which opens the travel time sheet, and, when an option is away from its default, "Reset journey options".
 
 The loading state of a list is a skeleton (`Skeleton`): placeholders with the layout of the content to come, so the list does not jump when the content arrives.
 

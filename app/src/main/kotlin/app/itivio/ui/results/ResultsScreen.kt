@@ -60,6 +60,7 @@ import app.itivio.ui.search.rememberLocationSearchBarState
 import app.itivio.ui.search.rememberLocationTextState
 import java.time.Instant
 import kotlinx.coroutines.launch
+import androidx.compose.material3.FilledTonalButton
 
 val ResultsPeekHeight = 360.dp
 
@@ -114,6 +115,7 @@ fun ResultsScreen(
                 onPickTime = { pickingTime = true },
                 onPickOptions = { pickingOptions = true },
                 onSort, onSelect, onOpen, onRetry,
+                onResetOptions = { onOptions(JourneyOptions()) },
             )
         }
     }
@@ -210,6 +212,7 @@ private fun ResultsList(
     onSelect: (String) -> Unit,
     onOpen: (String) -> Unit,
     onRetry: () -> Unit,
+    onResetOptions: () -> Unit,
 ) {
     val highlighted = state.highlighted?.id
     LazyColumn(
@@ -224,13 +227,27 @@ private fun ResultsList(
             is LoadState.Failed -> item(key = "error") { FailureState(results.failure, onRetry) }
             is LoadState.Ready -> if (results.value.isEmpty()) {
                 item(key = "empty") {
-                    MessageState(
-                        icon = R.drawable.ic_info,
-                        title = stringResource(R.string.results_empty_title),
-                        body = stringResource(R.string.results_empty_body),
-                        actionLabel = stringResource(R.string.retry),
-                        onAction = onRetry,
-                    )
+                    // The same request would find nothing again, so the actions change it.
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        MessageState(
+                            icon = R.drawable.ic_info,
+                            title = stringResource(R.string.results_empty_title),
+                            body = stringResource(R.string.results_empty_body),
+                            modifier = Modifier.padding(bottom = 0.dp),
+                        )
+                        FilledTonalButton(onClick = onPickTime) {
+                            Icon(painterResource(R.drawable.ic_schedule), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                            Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                            Text(stringResource(R.string.results_change_time))
+                        }
+                        if (!state.options.isDefault) {
+                            FilledTonalButton(onClick = onResetOptions, modifier = Modifier.padding(top = 8.dp)) {
+                                Icon(painterResource(R.drawable.ic_tune), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                                Text(stringResource(R.string.results_reset_options))
+                            }
+                        }
+                    }
                 }
             } else {
                 items(state.routes, key = { it.first().routeKey() }) { route ->

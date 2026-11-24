@@ -190,6 +190,8 @@
     <!-- Results -->
     <string name="results_empty_title">No routes found</string>
     <string name="results_empty_body">Try another time, a nearby stop, or other journey options. Transit data may not cover this area.</string>
+    <string name="results_change_time">Change the time</string>
+    <string name="results_reset_options">Reset journey options</string>
     <string name="results_from_stop">from %1$s</string>
     <string name="results_walk_only">Walk the whole way</string>
     <plurals name="transfers">

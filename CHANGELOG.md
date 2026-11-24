@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- When no route is found, offer what can help: "Change the time", and "Reset journey options" when you changed them. "Try again" is gone there, because the same search found nothing.
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.

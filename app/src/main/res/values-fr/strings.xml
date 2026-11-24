@@ -178,6 +178,8 @@
     <!-- Results -->
     <string name="results_empty_title">Aucun itinéraire trouvé</string>
     <string name="results_empty_body">Essayez une autre heure, un arrêt proche ou d’autres options de trajet. Les données de transport ne couvrent peut-être pas cette zone.</string>
+    <string name="results_change_time">Changer l’heure</string>
+    <string name="results_reset_options">Réinitialiser les options</string>
     <string name="results_from_stop">au départ de %1$s</string>
     <string name="results_walk_only">Tout le trajet à pied</string>
     <plurals name="transfers">
