@@ -11,11 +11,11 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -48,6 +48,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -689,11 +690,16 @@ private fun StopRow(
     Row(Modifier.height(IntrinsicSize.Min).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(RailWidth).fillMaxHeight(), contentAlignment = Alignment.Center) { rail() }
         Column(Modifier.weight(1f).padding(vertical = 6.dp)) {
-            Text(
-                // "My location" has no name.
-                stop.name.ifBlank { stringResource(R.string.search_my_location) },
-                style = if (emphasized) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
-                fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium,
+            NameAndTime(
+                name = {
+                    Text(
+                        // "My location" has no name.
+                        stop.name.ifBlank { stringResource(R.string.search_my_location) },
+                        style = if (emphasized) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+                        fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium,
+                    )
+                },
+                time = time,
             )
             caption?.let {
                 Text(
@@ -704,7 +710,36 @@ private fun StopRow(
                 )
             }
         }
-        time()
+    }
+}
+
+/**
+ * The stop name with its time at the end of the same line. When both do not fit, the time moves
+ * below the name, so a long name keeps the full width and does not break early.
+ */
+@Composable
+private fun NameAndTime(name: @Composable () -> Unit, time: @Composable () -> Unit) {
+    Layout(contents = listOf(name, time)) { (nameMeasurables, timeMeasurables), constraints ->
+        val gap = 12.dp.roundToPx()
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val timePlaceable = timeMeasurables.first().measure(loose)
+        val nameMeasurable = nameMeasurables.first()
+        val besideWidth = constraints.maxWidth - gap - timePlaceable.width
+        val oneLine = nameMeasurable.maxIntrinsicWidth(constraints.maxHeight) <= besideWidth
+        val namePlaceable = nameMeasurable.measure(loose.copy(maxWidth = if (oneLine) besideWidth else constraints.maxWidth))
+        val width = constraints.maxWidth
+        if (oneLine) {
+            val height = maxOf(namePlaceable.height, timePlaceable.height)
+            layout(width, height) {
+                namePlaceable.place(0, (height - namePlaceable.height) / 2)
+                timePlaceable.place(width - timePlaceable.width, (height - timePlaceable.height) / 2)
+            }
+        } else {
+            layout(width, namePlaceable.height + timePlaceable.height) {
+                namePlaceable.place(0, 0)
+                timePlaceable.place(0, namePlaceable.height)
+            }
+        }
     }
 }
 
