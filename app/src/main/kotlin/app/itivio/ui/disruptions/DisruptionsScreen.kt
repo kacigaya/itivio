@@ -69,6 +69,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
 
 /**
  * The service disruptions on the saved stops and on the stops near the device. [now] picks the
@@ -92,9 +94,10 @@ fun DisruptionsScreen(state: LoadState<DisruptionGroups>, now: Instant, onRetry:
 
 /**
  * Adds the disruptions to a list: the two groups, or the loading, empty, or error state. The
- * page and the home sheet show the same list.
+ * page and the home sheet show the same list; the home sheet has less room, so it shows [compact]
+ * rows that open into the full card.
  */
-fun LazyListScope.disruptions(state: LoadState<DisruptionGroups>, now: Instant, onRetry: () -> Unit) {
+fun LazyListScope.disruptions(state: LoadState<DisruptionGroups>, now: Instant, onRetry: () -> Unit, compact: Boolean = false) {
     when (state) {
         LoadState.Idle, LoadState.Loading -> item(key = "loading") {
             Skeleton {
@@ -115,13 +118,13 @@ fun LazyListScope.disruptions(state: LoadState<DisruptionGroups>, now: Instant, 
                 )
             }
         } else {
-            group("saved", R.string.disruptions_saved, state.value.saved, now)
-            group("nearby", R.string.disruptions_nearby, state.value.nearby, now)
+            group("saved", R.string.disruptions_saved, state.value.saved, now, compact)
+            group("nearby", R.string.disruptions_nearby, state.value.nearby, now, compact)
         }
     }
 }
 
-private fun LazyListScope.group(key: String, title: Int, disruptions: List<Disruption>, now: Instant) {
+private fun LazyListScope.group(key: String, title: Int, disruptions: List<Disruption>, now: Instant, compact: Boolean) {
     if (disruptions.isEmpty()) return
     item(key = "$key-title") {
         Text(
@@ -132,7 +135,70 @@ private fun LazyListScope.group(key: String, title: Int, disruptions: List<Disru
         )
     }
     itemsIndexed(stackedDisruptions(disruptions), key = { index, _ -> "$key-$index" }) { _, stack ->
-        DisruptionCard(stack, now, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+        val modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        if (compact) CompactDisruption(stack, now, modifier) else DisruptionCard(stack, now, modifier)
+    }
+}
+
+/**
+ * A disruption stack in one short row: the effect, the lines, the first header on one line, and
+ * the stops with the time period. A tap opens the full card in place, with a button to close it.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CompactDisruption(stack: List<Disruption>, now: Instant, modifier: Modifier = Modifier) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    if (open) {
+        Column(modifier) {
+            DisruptionCard(stack, now)
+            TextButton(onClick = { open = false }, modifier = Modifier.align(Alignment.End)) {
+                Text(stringResource(R.string.disruption_collapse))
+            }
+        }
+        return
+    }
+    val first = stack.first()
+    val scheme = MaterialTheme.colorScheme
+    val severe = first.alert.level == AlertSeverity.SEVERE
+    Surface(
+        onClick = { open = true },
+        color = scheme.surfaceContainerHigh,
+        shape = MaterialTheme.shapes.largeIncreased,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    itemVerticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val effect = stringResource(first.alert.effect.label())
+                    if (severe) Tag(R.drawable.ic_warning, effect, color = scheme.error, contentColor = scheme.onError)
+                    else Tag(if (first.alert.level >= AlertSeverity.WARNING) R.drawable.ic_warning else R.drawable.ic_info, effect)
+                    first.lines.forEach { LineBadge(it.line, it.mode) }
+                    if (stack.size > 1) {
+                        Text(
+                            pluralStringResource(R.plurals.disruption_count, stack.size, stack.size),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+                Text(first.alert.header, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                val place = listOfNotNull(first.stops.joinToString(", ").ifEmpty { null }, periodText(first.alert.impactPeriods, now))
+                if (place.isNotEmpty()) {
+                    Text(place.joinToString(" · "), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Light,
+                        color = scheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            Icon(painterResource(R.drawable.ic_expand_more), contentDescription = null, tint = scheme.onSurfaceVariant)
+        }
     }
 }
 

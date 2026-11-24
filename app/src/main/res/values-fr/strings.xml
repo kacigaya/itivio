@@ -79,6 +79,7 @@
     <string name="disruptions_empty_body">Il n’y a aucune alerte pour vos arrêts enregistrés ni pour les arrêts près de vous. Certaines régions ne publient aucune alerte.</string>
     <string name="disruption_show_more">Afficher le texte complet</string>
     <string name="disruption_show_less">Afficher moins de texte</string>
+    <string name="disruption_collapse">Réduire</string>
     <string name="disruption_more_information">Plus d’informations</string>
     <plurals name="disruption_count">
         <item quantity="one">%d alerte</item>
