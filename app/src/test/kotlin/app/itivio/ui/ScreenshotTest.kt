@@ -441,7 +441,7 @@ open class ScreenshotTest {
     @Test
     fun trainChoicesFailed() = capture("train_choices_failed") {
         app.itivio.ui.itinerary.TrainDepartures(
-            departures = ruhlebenTrains.take(3),
+            departures = ruhlebenTrains.take(3).map { it.withArrival() },
             selectedTripId = "d1", now = t0,
             loading = false, canSelect = true, changed = false, failed = true,
             onSelect = {}, onReset = {},
@@ -521,6 +521,10 @@ open class ScreenshotTest {
             StopTime(t0.plusSeconds(min * 60), liveDelay?.let { t0.plusSeconds((min + it) * 60) })
         fun stop(name: String, track: String? = null) = Stop(name, GeoPoint(52.5, 13.4), track = track, zone = berlin)
 
+        /** The destination arrival of a train choice: 21 minutes after its time, live when the departure is. */
+        fun Departure.withArrival() =
+            copy(alightTime = StopTime(time.scheduled.plusSeconds(1_260), time.estimated?.plusSeconds(1_260)))
+
         val sampleDepartures: List<StopDepartures> = NearbyViewModel.group(
             listOf(
                 Departure(stop("S+U Alexanderplatz", "2"), Line("U2", color = 0xFFDA421E.toInt(), textColor = 0xFFFFFFFF.toInt()),
@@ -553,7 +557,7 @@ open class ScreenshotTest {
         val sampleTrains: List<Departure> =
             (ruhlebenTrains.take(1).map { it.copy(time = StopTime(it.time.scheduled, it.time.scheduled.plusSeconds(600))) } +
                 ruhlebenTrains.drop(1))
-                .map { it.copy(alightTime = StopTime(it.time.scheduled.plusSeconds(1_260), it.time.estimated?.plusSeconds(1_260))) }
+                .map { it.withArrival() }
 
         val sampleExit = app.itivio.domain.StationExit("50147981", "3", "r. M. Chasles", GeoPoint(52.509, 13.376))
 
