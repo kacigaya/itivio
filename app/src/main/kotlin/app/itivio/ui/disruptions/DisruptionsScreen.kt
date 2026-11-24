@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -62,7 +61,11 @@ import app.itivio.domain.stackedDisruptions
 import androidx.core.net.toUri
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ButtonDefaults
@@ -128,7 +131,7 @@ private fun LazyListScope.group(key: String, title: Int, disruptions: List<Disru
             modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 4.dp).semantics { heading() },
         )
     }
-    items(stackedDisruptions(disruptions), key = { "$key-${it.first().alert.hashCode()}" }) { stack ->
+    itemsIndexed(stackedDisruptions(disruptions), key = { index, _ -> "$key-$index" }) { _, stack ->
         DisruptionCard(stack, now, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
     }
 }
@@ -180,9 +183,11 @@ private fun DisruptionCard(stack: List<Disruption>, now: Instant, modifier: Modi
     val severe = first.alert.level == AlertSeverity.SEVERE
     val single = stack.size == 1
     // shortcut: one bit for each alert of the stack, so a stack of more than 31 alerts opens as a whole past the 31st.
-    var openMask by rememberSaveable { mutableIntStateOf(0) }
-    fun isOpen(index: Int) = openMask and (1 shl index.coerceAtMost(30)) != 0
-    fun toggle(index: Int) { openMask = openMask xor (1 shl index.coerceAtMost(30)) }
+    val opened = rememberSaveable(saver = listSaver(save = { it.toList() }, restore = { it.toMutableStateList() })) { mutableStateListOf<Int>() }
+    var headerClipped by remember { mutableStateOf(false) }
+    val expandable = single && plainDescription(first.alert.description).let { it.isNotEmpty() && it != first.alert.header }
+    fun isOpen(index: Int) = index in opened
+    fun toggle(index: Int) { if (!opened.remove(index)) opened.add(index) }
     Surface(
         color = scheme.surfaceContainerHigh,
         contentColor = scheme.onSurface,
@@ -198,7 +203,7 @@ private fun DisruptionCard(stack: List<Disruption>, now: Instant, modifier: Modi
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
-                        .then(if (single) Modifier.clickable(onClickLabel = openLabel(isOpen(0))) { toggle(0) } else Modifier)
+                        .then(if (single) Modifier.clickable(enabled = expandable || headerClipped || isOpen(0), onClickLabel = openLabel(isOpen(0))) { toggle(0) } else Modifier)
                         .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = if (severe) 16.dp else 0.dp),
                 ) {
                     FlowRow(
@@ -221,7 +226,7 @@ private fun DisruptionCard(stack: List<Disruption>, now: Instant, modifier: Modi
                             )
                         }
                     }
-                    if (single) Header(first.alert.header, isOpen(0))
+                    if (single) Header(first.alert.header, isOpen(0)) { headerClipped = it }
                 }
             }
             stack.forEachIndexed { index, disruption ->
@@ -240,15 +245,18 @@ private fun DisruptionCard(stack: List<Disruption>, now: Instant, modifier: Modi
 private fun openLabel(open: Boolean): String = stringResource(if (open) R.string.disruption_show_less else R.string.disruption_show_more)
 
 @Composable
-private fun Header(header: String, open: Boolean) {
+private fun Header(header: String, open: Boolean, onClipped: (Boolean) -> Unit = {}) {
     Text(
         header,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
         maxLines = if (open) Int.MAX_VALUE else CLOSED_HEADER_LINES,
         overflow = TextOverflow.Ellipsis,
+        onTextLayout = { onClipped(it.hasVisualOverflow) },
     )
 }
+
+private fun plainDescription(html: String): String = AnnotatedString.fromHtml(html).text.trim().replace(BlankLines, "\n")
 
 /** One alert of a stack: its header when the stack has more than one, then its details. A tap opens it. */
 @Composable
@@ -257,9 +265,7 @@ private fun AlertBody(disruption: Disruption, now: Instant, open: Boolean, showH
     val scheme = MaterialTheme.colorScheme
     // The provider can send HTML. The text is shown, and no link in it is followed. Paragraphs
     // become single line breaks, so the closed card does not spend its lines on blank ones.
-    val description = remember(alert.description) {
-        AnnotatedString.fromHtml(alert.description).text.trim().replace(BlankLines, "\n")
-    }
+    val description = remember(alert.description) { plainDescription(alert.description) }
     val canOpen = description.isNotEmpty() || showHeader
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
