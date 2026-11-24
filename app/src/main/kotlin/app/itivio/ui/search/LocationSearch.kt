@@ -106,6 +106,9 @@ import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.common.shortLabel
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
+import app.itivio.ui.nearby.StopDepartures
+import app.itivio.ui.nearby.toLocation
+import app.itivio.ui.common.formatDistance
 
 /**
  * The input field shared by the collapsed bar and the expanded search view. Both must use the
@@ -148,12 +151,16 @@ fun LocationInputField(
     )
 }
 
+/** How many nearby stops the empty search lists. */
+private const val NEARBY_STOPS = 3
+
 /**
  * Full-screen place search. Shows "My location" as the first choice when [offerMyLocation] is
- * set. With an empty query it shows Home, Work, favorites, and recent searches; else autocomplete
+ * set. With an empty query it shows Home, Work, nearby stops, favorites, and recent searches; else autocomplete
  * results. [onPick] receives the choice; the caller collapses the bar. A pick from the results or
  * the recent searches goes first in the recent searches. A non-null [onDepartures] adds a
- * "Show departures" action to the menu of each stop.
+ * "Show departures" action to the menu of each stop. [nearby] adds the nearest stops of the
+ * departures home already shows, so they cost no request.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -165,6 +172,7 @@ fun LocationSearchView(
     onPick: (Endpoint) -> Unit,
     onDepartures: ((Location) -> Unit)? = null,
     anchor: LayoutCoordinates? = null,
+    nearby: List<StopDepartures> = emptyList(),
     // Screens with two search views need separate ViewModels in the same store.
     viewModel: SearchViewModel = koinViewModel(key = placeholder),
     places: SavedPlacesViewModel = koinViewModel(),
@@ -269,6 +277,18 @@ fun LocationSearchView(
                                 shape = shape,
                                 outlinedIcon = true,
                             ) { assigning = if (assigning == shortcut) null else shortcut }
+                        }
+                    }
+                }
+                // The stops of the nearby departures that home already shows: no new request.
+                val nearbyStops = if (assigning == null) nearby.take(NEARBY_STOPS).mapNotNull { stop -> stop.toLocation()?.let { it to stop } } else emptyList()
+                if (nearbyStops.isNotEmpty()) {
+                    item(key = "nearby") { SectionHeader(stringResource(R.string.search_nearby_stops)) }
+                    itemsIndexed(nearbyStops, key = { _, (location, _) -> "nearby:${location.id}" }) { index, (location, stop) ->
+                        val lines = stop.departures.map { it.line.name }.distinct().joinToString(", ")
+                        val subtitle = listOfNotNull(lines.ifEmpty { null }, stop.distanceMeters?.let { formatDistance(it) }).joinToString(" · ")
+                        PlaceRow(location, location.iconRes(), AnnotatedString(location.name), subtitle, groupShape(index, nearbyStops.size)) {
+                            pickPlace(location, recent = true)
                         }
                     }
                 }
