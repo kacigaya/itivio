@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- See how long it takes to get home or to work, right on the Home and Work buttons. Turn on "Travel time to Home and Work" in the settings. It is off by default, because it sends your position and both places to Transitous.
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.

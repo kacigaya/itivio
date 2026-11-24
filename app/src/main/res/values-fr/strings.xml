@@ -115,6 +115,8 @@
     <string name="settings_language_body">Ouvre le réglage de langue d’Android pour cette application.</string>
     <string name="settings_journeys">Trajets</string>
     <string name="settings_options_body">Modes de transport, correspondances et marche. Ces options s’appliquent à chaque recherche.</string>
+    <string name="settings_shortcut_times">Temps de trajet vers Domicile et Travail</string>
+    <string name="settings_shortcut_times_body">Sur l’accueil, affiche le temps de trajet sur les boutons Domicile et Travail. À chaque ouverture de l’accueil, l’app envoie votre position et ces 2 lieux à Transitous.</string>
     <string name="settings_data">Données enregistrées</string>
     <string name="settings_clear_recents_body">Supprime votre historique de recherche. Vos favoris restent.</string>
     <string name="settings_delete_all">Supprimer toutes les données</string>

@@ -116,6 +116,8 @@
     <string name="settings_language_body">Opens the language setting of Android for this app.</string>
     <string name="settings_journeys">Journeys</string>
     <string name="settings_options_body">Transport modes, transfers, and walking. They apply to each search.</string>
+    <string name="settings_shortcut_times">Travel time to Home and Work</string>
+    <string name="settings_shortcut_times_body">On home, shows the travel time on the Home and Work buttons. Each time home opens, the app sends your position and these 2 places to Transitous.</string>
     <string name="settings_data">Stored data</string>
     <string name="settings_clear_recents_body">Removes your search history. Your favorites stay.</string>
     <string name="settings_delete_all">Delete all app data</string>

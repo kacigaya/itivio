@@ -92,7 +92,7 @@ class FakeRoutingRepository : RoutingRepository {
         fun location(name: String, stopId: String? = null) =
             Location(id = "id-$name", name = name, kind = LocationKind.STOP, point = GeoPoint(52.5, 13.4), stopId = stopId)
 
-        private val base: Instant = Instant.parse("2026-11-09T10:00:00Z")
+        val base: Instant = Instant.parse("2026-11-09T10:00:00Z")
 
         fun journey(id: String, minutes: Long, transfers: Int, walk: Double, line: String = "M41", startMinute: Long = 0): Journey {
             val first = base.plusSeconds(startMinute * 60)

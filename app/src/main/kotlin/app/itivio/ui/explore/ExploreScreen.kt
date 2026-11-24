@@ -86,6 +86,8 @@ import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
+import app.itivio.ui.common.formatDuration
+import java.time.Duration
 
 // Drag handle, search row, shortcut chips, title, and the first departures.
 val ExplorePeekHeight = 344.dp
@@ -111,6 +113,8 @@ fun ExploreScreen(
     onStop: (Location) -> Unit,
     onSettings: () -> Unit,
     places: SavedPlacesViewModel = koinViewModel(),
+    /** The travel time to each set shortcut, when the rider turned it on in the settings. */
+    shortcutTimes: Map<Shortcut, Duration> = emptyMap(),
 ) {
     val searchBarState = rememberLocationSearchBarState()
     val textState = rememberLocationTextState()
@@ -154,6 +158,7 @@ fun ExploreScreen(
             }
             SavedChips(
                 saved = saved,
+                times = shortcutTimes,
                 onOpen = { onDestination(Endpoint.Place(it)) },
                 onAssign = { shortcut ->
                     assigning = shortcut
@@ -279,7 +284,7 @@ private fun HomeTitles(selected: HomePage, alerts: Int, onSelect: (HomePage) -> 
  * search to set it. The row keeps its height while storage loads, so the sheet does not jump.
  */
 @Composable
-private fun SavedChips(saved: SavedPlaces?, onOpen: (Location) -> Unit, onAssign: (Shortcut) -> Unit) {
+private fun SavedChips(saved: SavedPlaces?, times: Map<Shortcut, Duration>, onOpen: (Location) -> Unit, onAssign: (Shortcut) -> Unit) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -293,6 +298,7 @@ private fun SavedChips(saved: SavedPlaces?, onOpen: (Location) -> Unit, onAssign
             SavedChip(
                 icon = shortcut.iconRes(),
                 label = stringResource(if (location != null) shortcut.labelRes() else shortcut.setLabelRes()),
+                detail = times[shortcut]?.takeIf { location != null }?.let { formatDuration(it) },
                 onClick = { if (location != null) onOpen(location) else onAssign(shortcut) },
             )
         }
@@ -304,7 +310,7 @@ private fun SavedChips(saved: SavedPlaces?, onOpen: (Location) -> Unit, onAssign
 
 /** A saved place as a tonal button: bolder than a chip, because it starts a journey with one tap. */
 @Composable
-private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit) {
+private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit, detail: String? = null) {
     FilledTonalButton(onClick = onClick, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
         Icon(painterResource(icon), contentDescription = null, Modifier.size(ButtonDefaults.IconSize))
         Text(
@@ -314,6 +320,9 @@ private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = ButtonDefaults.IconSpacing).widthIn(max = 160.dp),
         )
+        detail?.let {
+            Text(" · $it", fontWeight = FontWeight.Light, maxLines = 1)
+        }
     }
 }
 

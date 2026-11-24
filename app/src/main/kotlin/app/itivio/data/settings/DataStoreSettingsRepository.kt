@@ -10,6 +10,7 @@ import app.itivio.domain.SettingsRepository
 import app.itivio.domain.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import androidx.datastore.preferences.core.booleanPreferencesKey
 
 internal class DataStoreSettingsRepository(private val store: DataStore<Preferences>) : SettingsRepository {
     /** A value that this app version does not know falls back to the system theme. */
@@ -20,9 +21,16 @@ internal class DataStoreSettingsRepository(private val store: DataStore<Preferen
     override suspend fun setTheme(mode: ThemeMode) {
         store.edit { it[THEME] = mode.name }
     }
+
+    override val shortcutTimes: Flow<Boolean> = store.data.map { it[SHORTCUT_TIMES] ?: false }
+
+    override suspend fun setShortcutTimes(on: Boolean) {
+        store.edit { it[SHORTCUT_TIMES] = on }
+    }
 }
 
 private val THEME = stringPreferencesKey("theme")
+private val SHORTCUT_TIMES = booleanPreferencesKey("shortcut_times")
 
 /**
  * The Room table of the saved places and the `settings` DataStore file. The file also holds the

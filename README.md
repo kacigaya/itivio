@@ -80,6 +80,7 @@ Read the [privacy policy](PRIVACY.md) for details about location, network servic
 - Favorites, Home and Work, and recent searches are stored on your device. The disruptions list sends saved stop IDs as described below.
 - Journey options stay on your device. They go to Transitous only as part of a journey request. This includes the wheelchair option.
 - The disruptions list sends the IDs of your saved stops (Home, Work, and favorites) to Transitous, to get their alerts. On a phone, it sends them while the home screen is open, because the home screen shows the number of alerts. On a tablet, it sends them only while the Disruptions page is open. A saved place that is not a stop is not sent.
+- "Travel time to Home and Work" in the settings is off by default. When you turn it on, each time the home screen opens, the app sends your position and your Home and Work places to Transitous, as two journey requests, to show the travel time on their buttons. It sends them again after you move about 150 m.
 - The settings stay on your device. "Delete all app data" in the settings removes the saved places, the journey options, and the settings.
 - The app turns off Android backup and device transfer for its data.
 
@@ -87,7 +88,7 @@ The app sends requests to these services:
 
 | Service | Use | Data sent |
 |---|---|---|
-| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the IDs of your saved stops for the disruptions list, the map area you look at when you zoom in to street level |
+| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the IDs of your saved stops for the disruptions list, your position with your Home and Work places when "Travel time to Home and Work" is on, the map area you look at when you zoom in to street level |
 | [IGN Géoplateforme](https://cartes.gouv.fr/) | French address search | Search text, without your location |
 | [OpenFreeMap](https://openfreemap.org/) | Map tiles | The map area you look at |
 
