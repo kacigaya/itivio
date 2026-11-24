@@ -298,6 +298,7 @@ internal fun FilterButton(
 ) {
     FilledTonalToggleButton(
         checked = checked,
+        modifier = Modifier.semantics { if (supporting != null) contentDescription = "$label, $supporting" },
         onCheckedChange = { onClick() },
         enabled = enabled,
         contentPadding = if (leadingIcon != null) ButtonDefaults.ButtonWithIconContentPadding else ButtonDefaults.ContentPadding,

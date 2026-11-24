@@ -157,6 +157,7 @@
     <string name="travel_day_time">%1$s, %2$s</string>
     <string name="travel_today">Aujourd’hui</string>
     <string name="travel_tomorrow">Demain</string>
+    <string name="travel_yesterday">Hier</string>
 
     <!-- Journey options -->
     <string name="options_chip">Options</string>

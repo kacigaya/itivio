@@ -77,6 +77,7 @@ private fun travelDayLabel(time: Instant): String? {
 
 @Composable
 private fun dayLabel(offset: Int): String = when (offset) {
+    -1 -> stringResource(R.string.travel_yesterday)
     0 -> stringResource(R.string.travel_today)
     1 -> stringResource(R.string.travel_tomorrow)
     else -> {
