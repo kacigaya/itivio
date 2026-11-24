@@ -44,6 +44,7 @@
 - Settings for the theme and the journey options, and an action that deletes all app data.
 - English and French.
 - Light and dark themes with Material You colors.
+- A departures widget for the home screen: the next 3 departures of one stop, with a refresh button. Open a stop and tap "Add to home screen".
 - Layout for phones, tablets, and foldables.
 
 ## Install

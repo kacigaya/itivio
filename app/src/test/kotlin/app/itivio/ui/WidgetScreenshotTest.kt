@@ -11,6 +11,7 @@ import androidx.glance.appwidget.ExperimentalGlanceRemoteViewsApi
 import androidx.glance.appwidget.GlanceRemoteViews
 import androidx.test.core.app.ApplicationProvider
 import app.itivio.ui.widget.DeparturesWidgetContent
+import app.itivio.ui.widget.WidgetRow
 import androidx.glance.material3.ColorProviders
 import app.itivio.ui.theme.DarkColors
 import app.itivio.ui.theme.LightColors
@@ -60,9 +61,19 @@ class WidgetScreenshotTest {
     private fun capture(name: String, stopName: String?) {
         val format = DateTimeFormatter.ofPattern("h:mm a", Locale.US).withZone(ZoneId.of("Europe/Berlin"))
         val size = DpSize(330.dp, 180.dp)
+        val rows = widgetDepartures(departures, now).map { departure ->
+            WidgetRow(
+                line = departure.line.name,
+                lineColor = departure.line.color,
+                textColor = departure.line.textColor,
+                headsign = departure.headsign.orEmpty(),
+                at = departure.time.best.toEpochMilli(),
+                live = departure.time.isRealtime,
+            )
+        }
         val result = runBlocking {
             GlanceRemoteViews().compose(context, size) {
-                DeparturesWidgetContent(stopName, widgetDepartures(departures, now), format.format(now), { format.format(it) }, ColorProviders(LightColors, DarkColors))
+                DeparturesWidgetContent(stopName, rows, format.format(now), { format.format(it) }, ColorProviders(LightColors, DarkColors))
             }
         }
         val host = FrameLayout(context)
@@ -86,5 +97,22 @@ class WidgetScreenshotTest {
 
     @Test fun `the widget shows the next three departures from now`() {
         assertEquals(listOf("1", "2", "3"), widgetDepartures(departures, now).map { it.tripId })
+    }
+
+    @Test fun `the widget leaves out a cancelled departure and one that left`() {
+        val stop = Stop("S+U Alexanderplatz", GeoPoint(52.52, 13.41), stopId = "a")
+        fun departure(tripId: String, minutes: Long, cancelled: Boolean = false) =
+            Departure(stop, u2, TransitMode.SUBWAY, "Ruhleben", at(minutes), cancelled, tripId)
+
+        val shown = widgetDepartures(
+            listOf(departure("gone", -1), departure("cancelled", 2, cancelled = true), departure("soon", 5), departure("later", 1)),
+            now,
+        )
+
+        assertEquals(listOf("later", "soon"), shown.map { it.tripId })
+    }
+
+    @Test fun `an empty stop shows no departures`() {
+        assertEquals(emptyList<Departure>(), widgetDepartures(emptyList(), now))
     }
 }

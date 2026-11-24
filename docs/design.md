@@ -147,7 +147,9 @@ The empty state says that some regions publish no alerts. On a compact window, t
 
 ## Home screen widget
 
-The departures widget shows one stop: its name, a refresh button, the next 3 departures with the line badge, the destination, and the clock time, then "Updated 8:54". It shows clock times, not countdowns, because Android updates it only about every 30 minutes. A live time uses `tertiary`. It uses dynamic color on Android 12 and later, else the app scheme. A tap opens the app. "Add to home screen" on a stop pins it with the launcher's own dialog. A widget added from the launcher's list has no stop yet and says how to pick one.
+The departures widget shows one stop: its name, a refresh button, the next 3 departures with the line badge, the destination, and the clock time, then "Updated 8:54". It shows clock times, not countdowns, because Android updates it only about every 30 minutes. A live time uses `tertiary`. It uses dynamic color on Android 12 and later, else the app scheme. A tap opens the app. "Add to home screen" on a stop pins it with the launcher's own dialog. A widget added from the launcher's list has no stop yet and says how to pick one. The launcher's preview is `res/drawable/widget_preview.png`, the recorded screenshot of the widget. A failed or slow update (10-second timeout) keeps the last departures and the time of the update that produced them, so the rider never sees an empty widget.
+
+Limits: Glance text uses fixed `sp`, so the widget ignores the font scale of Android, which launchers scale on their own. It has no configure screen either: a widget takes its stop when it is added, and the rider adds another one to watch a second stop.
 
 ## Settings and about
 

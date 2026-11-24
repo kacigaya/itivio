@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -37,7 +38,6 @@ import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
-import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.state.PreferencesGlanceStateDefinition
@@ -50,15 +50,21 @@ import app.itivio.domain.Departure
 import app.itivio.domain.RoutingRepository
 import app.itivio.domain.StopWidgets
 import app.itivio.domain.widgetDepartures
+import app.itivio.ui.common.attempt
+import app.itivio.ui.common.readableLineText
+import app.itivio.ui.theme.DarkColors
+import app.itivio.ui.theme.LightColors
 import java.time.Instant
 import java.util.Date
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import app.itivio.ui.theme.DarkColors
-import app.itivio.ui.theme.LightColors
 import androidx.glance.color.ColorProviders
 import androidx.glance.material3.ColorProviders
 import android.os.Build
@@ -66,10 +72,30 @@ import android.os.Build
 private val STOP_ID = stringPreferencesKey("stop_id")
 private val STOP_NAME = stringPreferencesKey("stop_name")
 
+/** The last answer that arrived, so a failed update keeps the departures on screen. */
+private val LAST_ROWS = stringPreferencesKey("last_rows")
+private val LAST_UPDATED = longPreferencesKey("last_updated")
+
+/**
+ * One departure as the widget shows it, and as the widget keeps it between updates. It is the
+ * rendered row, not a [Departure], so the Glance state needs no domain types and no mapper.
+ */
+@Serializable
+data class WidgetRow(
+    val line: String,
+    val lineColor: Int? = null,
+    val textColor: Int? = null,
+    val headsign: String = "",
+    /** The departure, in epoch milliseconds. */
+    val at: Long,
+    /** A live time, which the widget shows in the tertiary color. */
+    val live: Boolean = false,
+)
+
 /**
  * The next departures of one stop. It asks Transitous when Android updates it, about every 30
  * minutes (`updatePeriodMillis`), and when the rider taps refresh. So it shows clock times, not
- * countdowns, and the time of the update.
+ * countdowns, and the time of the update. A failed request keeps the last answer, with its time.
  */
 class DeparturesWidget : GlanceAppWidget(), KoinComponent {
     private val repository: RoutingRepository by inject()
@@ -77,14 +103,28 @@ class DeparturesWidget : GlanceAppWidget(), KoinComponent {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val state = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
         val stopId = state[STOP_ID]
-        val now = Instant.now()
-        val departures = stopId?.let { runCatching { repository.stopDepartures(it, DEPARTURES_SCAN) }.getOrNull() }
+        // A slow answer must not hold the update, which Android ends after a few seconds.
+        val fetched = stopId?.let { stop ->
+            withTimeoutOrNull(FETCH_TIMEOUT_MILLIS) { attempt { repository.stopDepartures(stop, DEPARTURES_SCAN) }.getOrNull() }
+        }?.let { departures ->
+            val at = Instant.now()
+            at to widgetDepartures(departures, at).map(Departure::toWidgetRow)
+        }
+        if (fetched != null) {
+            updateAppWidgetState(context, id) { preferences ->
+                preferences[LAST_ROWS] = json.encodeToString(fetched.second)
+                preferences[LAST_UPDATED] = fetched.first.toEpochMilli()
+            }
+        }
+        // A failed request keeps the last answer, with the time it arrived.
+        val rows = fetched?.second ?: state[LAST_ROWS]?.let(::rowsOf)
+        val updated = fetched?.first ?: state[LAST_UPDATED]?.let(Instant::ofEpochMilli)
         val time = DateFormat.getTimeFormat(context)
         provideContent {
             DeparturesWidgetContent(
                 name = state[STOP_NAME],
-                departures = departures?.let { widgetDepartures(it, now) },
-                updated = time.format(Date.from(now)),
+                rows = rows,
+                updated = updated?.let { time.format(Date.from(it)) },
                 time = { time.format(Date.from(it)) },
             )
         }
@@ -92,18 +132,28 @@ class DeparturesWidget : GlanceAppWidget(), KoinComponent {
 
     private companion object {
         const val DEPARTURES_SCAN = 12
+        const val FETCH_TIMEOUT_MILLIS = 10_000L
+        val json = Json { ignoreUnknownKeys = true }
+
+        /** The stored rows, or null when the file holds none: a fresh widget has no answer yet. */
+        fun rowsOf(stored: String): List<WidgetRow>? = runCatching { json.decodeFromString<List<WidgetRow>>(stored) }.getOrNull()
     }
 }
+
+private fun Departure.toWidgetRow(): WidgetRow =
+    WidgetRow(line.name, line.color, line.textColor, headsign.orEmpty(), time.best.toEpochMilli(), time.isRealtime)
 
 /**
  * The widget content: the stop name and the refresh button, then the departures with the line,
  * the destination, and the clock time. Without a stop, it says how to pick one. A tap opens the app.
+ * [rows] is null when no answer arrived yet, and [updated] is null with it, or for an answer of a
+ * widget that has never loaded.
  */
 @Composable
 fun DeparturesWidgetContent(
     name: String?,
-    departures: List<Departure>?,
-    updated: String,
+    rows: List<WidgetRow>?,
+    updated: String?,
     time: (Instant) -> String,
     colors: ColorProviders = widgetColors(),
 ) {
@@ -133,12 +183,12 @@ fun DeparturesWidgetContent(
             val context = androidx.glance.LocalContext.current
             when {
                 name == null -> Message(context.getString(R.string.widget_pick_stop))
-                departures == null -> Message(context.getString(R.string.widget_failed))
-                departures.isEmpty() -> Message(context.getString(R.string.stop_empty_title))
-                else -> departures.forEach { DepartureRow(it, time(it.time.best)) }
+                rows == null -> Message(context.getString(R.string.widget_failed))
+                rows.isEmpty() -> Message(context.getString(R.string.stop_empty_title))
+                else -> rows.forEach { DepartureRow(it, time(Instant.ofEpochMilli(it.at))) }
             }
             Spacer(GlanceModifier.defaultWeight())
-            if (name != null) {
+            if (name != null && updated != null) {
                 Text(
                     context.getString(R.string.widget_updated, updated),
                     style = TextStyle(fontSize = 12.sp, color = colors.onSurfaceVariant),
@@ -154,18 +204,23 @@ private fun Message(text: String) {
 }
 
 @Composable
-private fun DepartureRow(departure: Departure, time: String) {
+private fun DepartureRow(row: WidgetRow, time: String) {
     val colors = GlanceTheme.colors
-    val line = departure.line
-    val background = line.color?.let { ColorProvider(Color(it)) } ?: colors.secondaryContainer
-    val text = line.color?.let { ColorProvider(readableOn(it, line.textColor)) } ?: colors.onSecondaryContainer
+    val textColor = row.lineColor?.let { ColorProvider(readableLineText(Color(it), row.textColor?.let(::Color))) }
     Row(GlanceModifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(GlanceModifier.background(background).cornerRadius(12.dp).padding(horizontal = 8.dp, vertical = 2.dp)) {
-            Text(line.name, style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 13.sp, color = text), maxLines = 1)
+        Box(
+            GlanceModifier.background(row.lineColor?.let { ColorProvider(Color(it)) } ?: colors.secondaryContainer)
+                .cornerRadius(12.dp).padding(horizontal = 8.dp, vertical = 2.dp),
+        ) {
+            Text(
+                row.line,
+                style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 13.sp, color = textColor ?: colors.onSecondaryContainer),
+                maxLines = 1,
+            )
         }
         Spacer(GlanceModifier.width(8.dp))
         Text(
-            departure.headsign.orEmpty(),
+            row.headsign,
             style = TextStyle(fontSize = 14.sp, color = colors.onSurface),
             maxLines = 1,
             modifier = GlanceModifier.defaultWeight(),
@@ -175,18 +230,10 @@ private fun DepartureRow(departure: Departure, time: String) {
             style = TextStyle(
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
-                color = if (departure.time.isRealtime) colors.tertiary else colors.onSurface,
+                color = if (row.live) colors.tertiary else colors.onSurface,
             ),
         )
     }
-}
-
-/** The text color of the line when it reads on the line color, else black or white: the one with more contrast. */
-private fun readableOn(background: Int, text: Int?): Color {
-    fun luminance(color: Int): Double = Color(color).let { 0.2126 * it.red + 0.7152 * it.green + 0.0722 * it.blue }
-    fun contrast(a: Int, b: Int): Double = (maxOf(luminance(a), luminance(b)) + 0.05) / (minOf(luminance(a), luminance(b)) + 0.05)
-    if (text != null && contrast(background, text) >= 4.5) return Color(text)
-    return if (contrast(background, 0xFF000000.toInt()) >= contrast(background, 0xFFFFFFFF.toInt())) Color.Black else Color.White
 }
 
 @Composable
@@ -225,6 +272,9 @@ class WidgetPinnedReceiver : BroadcastReceiver() {
                 updateAppWidgetState(context, glanceId) { state: androidx.datastore.preferences.core.MutablePreferences ->
                     state[STOP_ID] = stopId
                     state[STOP_NAME] = name
+                    // A widget is not bound to a stop until now, or is re-pinned with another one.
+                    state.remove(LAST_ROWS)
+                    state.remove(LAST_UPDATED)
                 }
                 DeparturesWidget().update(context, glanceId)
             } finally {
@@ -236,12 +286,17 @@ class WidgetPinnedReceiver : BroadcastReceiver() {
 
 /** Pins a [DeparturesWidget] with the launcher's own dialog. The stop arrives with the callback. */
 internal class GlanceStopWidgets(private val context: Context) : StopWidgets {
+    /** No stop ID is unique enough for a request code, so each pin takes the next one. */
+    private val lastRequestCode = AtomicInteger()
+
     override val canPin: Boolean get() = AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported
 
     override fun pin(stopId: String, name: String) {
+        // A request code per pin: with one code for all, a second pin would overwrite the extras of
+        // the first, which is still waiting for the launcher.
         val callback = PendingIntent.getBroadcast(
             context,
-            stopId.hashCode(),
+            lastRequestCode.incrementAndGet(),
             Intent(context, WidgetPinnedReceiver::class.java).putExtra(STOP_ID.name, stopId).putExtra(STOP_NAME.name, name),
             // Mutable: the launcher adds the ID of the new widget.
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
@@ -251,4 +306,3 @@ internal class GlanceStopWidgets(private val context: Context) : StopWidgets {
         }
     }
 }
-
