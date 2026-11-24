@@ -13,6 +13,7 @@ import app.itivio.domain.Departure
 import app.itivio.domain.GeoPoint
 import app.itivio.domain.Line
 import app.itivio.domain.PlacesRepository
+import app.itivio.domain.RoutingException
 import app.itivio.domain.RoutingRepository
 import app.itivio.domain.SavedPlaces
 import app.itivio.domain.SettingsRepository
@@ -56,7 +57,7 @@ class DisruptionAlertWorkerTest {
     private val detour = Alert("Bus detour", "", effect = AlertEffect.DETOUR)
     private val routing = FakeRoutingRepository()
 
-    private fun start(alerts: Boolean): FakeSettings {
+    private fun start(alerts: Boolean, permission: Boolean = true): FakeSettings {
         val settings = FakeSettings(alerts)
         val stop = Stop("Nation", GeoPoint(48.85, 2.39), stopId = "nation")
         routing.stopResult = {
@@ -69,9 +70,13 @@ class DisruptionAlertWorkerTest {
                 single<SettingsRepository> { settings }
             })
         }
-        shadowOf(context).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        if (permission) shadowOf(context).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
         return settings
     }
+
+    /** The alerts that the stop answers with, as severe ones: a closed line each. */
+    private fun severeAlerts(count: Int, prefix: String = "Line") =
+        (1..count).map { Alert("$prefix $it closed", "Replacement buses", effect = AlertEffect.NO_SERVICE) }
 
     @After
     fun stop() = stopKoin()
@@ -96,5 +101,71 @@ class DisruptionAlertWorkerTest {
         run()
         assertEquals(0, routing.stopCalls.size)
         assertEquals(0, notifications.allNotifications.size)
+    }
+
+    @Test
+    fun `at most three alerts notify, and the rest wait for the next check`() {
+        start(alerts = true)
+        val alerts = severeAlerts(5)
+        val stop = Stop("Nation", GeoPoint(48.85, 2.39), stopId = "nation")
+        routing.stopResult = {
+            listOf(Departure(stop, Line("6"), TransitMode.SUBWAY, "Étoile", StopTime(Instant.EPOCH), false, "t", alerts = alerts))
+        }
+
+        run()
+        assertEquals(3, notifications.allNotifications.size)
+
+        // The two over the cap come in the next check, and the first three do not repeat.
+        context.getSystemService(NotificationManager::class.java).cancelAll()
+        run()
+        assertEquals(listOf("Line 4 closed", "Line 5 closed"), notifications.allNotifications.map { it.extras.getString("android.title") })
+    }
+
+    @Test
+    fun `without the notification permission nothing counts as seen`() {
+        val settings = start(alerts = true, permission = false)
+
+        run()
+        assertEquals(0, notifications.allNotifications.size)
+        assertEquals(emptySet<String>(), settings.notifiedAlerts.value)
+
+        // Once the rider allows notifications, the same alert still notifies.
+        shadowOf(context).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        run()
+        assertEquals(listOf("Line 6 closed"), notifications.allNotifications.map { it.extras.getString("android.title") })
+    }
+
+    @Test
+    fun `a check where every stop fails does not retry`() {
+        start(alerts = true)
+        routing.stopResult = { throw RoutingException.Server(503) }
+
+        assertEquals(ListenableWorker.Result.success(), run())
+        assertEquals(0, notifications.allNotifications.size)
+    }
+
+    @Test
+    fun `an alert that ended notifies again when it comes back`() {
+        start(alerts = true)
+        val stop = Stop("Nation", GeoPoint(48.85, 2.39), stopId = "nation")
+        fun answer(vararg alerts: Alert) {
+            routing.stopResult = {
+                listOf(Departure(stop, Line("6"), TransitMode.SUBWAY, "Étoile", StopTime(Instant.EPOCH), false, "t", alerts = alerts.toList()))
+            }
+        }
+
+        run()
+        assertEquals(1, notifications.allNotifications.size)
+
+        // The alert ends: the check forgets it.
+        context.getSystemService(NotificationManager::class.java).cancelAll()
+        answer(detour)
+        run()
+        assertEquals(0, notifications.allNotifications.size)
+
+        // It comes back, so it is new again.
+        answer(closed)
+        run()
+        assertEquals(listOf("Line 6 closed"), notifications.allNotifications.map { it.extras.getString("android.title") })
     }
 }

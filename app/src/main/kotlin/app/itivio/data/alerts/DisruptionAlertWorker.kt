@@ -45,7 +45,8 @@ internal class WorkManagerDisruptionWatch(private val context: Context) : Disrup
         val request = PeriodicWorkRequestBuilder<DisruptionAlertWorker>(INTERVAL_MINUTES, TimeUnit.MINUTES)
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .build()
-        work.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
+        // Not KEEP: a change of the interval or the constraints must reach the installed app.
+        work.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, request)
     }
 
     companion object {
@@ -56,8 +57,9 @@ internal class WorkManagerDisruptionWatch(private val context: Context) : Disrup
 
 /**
  * Asks for the alerts of the saved stops, the same requests as the Disruptions page, and notifies
- * the new ones. It sends only the stop IDs. It remembers the alerts it saw, so an alert notifies
- * once, and an alert that ends is forgotten.
+ * the new ones. It sends only the stop IDs. It remembers the alerts it showed, so an alert notifies
+ * once, and an alert that ends is forgotten. An alert over the [MAX_NOTIFICATIONS] cap of one check
+ * waits for the next check.
  */
 class DisruptionAlertWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params), KoinComponent {
     private val repository: RoutingRepository by inject()
@@ -72,20 +74,30 @@ class DisruptionAlertWorker(context: Context, params: WorkerParameters) : Corout
             stops.map { stopId -> async { runCatching { repository.stopDepartures(stopId, STOP_SCAN, withAlerts = true) }.getOrNull() } }
                 .awaitAll()
         }
-        if (departures.all { it == null }) return Result.retry()
+        // A wrong answer costs one period, not a burst of retries against a community server.
+        if (departures.all { it == null }) return Result.success()
         val disruptions = disruptionsOf(departures.filterNotNull().flatten())
-        val fresh = alertsToNotify(disruptions, settings.severeAlertsOnly.first(), settings.notifiedAlerts.first())
-        fresh.take(MAX_NOTIFICATIONS).forEach(::notify)
-        settings.setNotifiedAlerts(disruptions.map { it.alert.notificationKey() }.toSet())
+        val notified = settings.notifiedAlerts.first()
+        val fresh = alertsToNotify(disruptions, settings.severeAlertsOnly.first(), notified)
+        val posted = fresh.take(MAX_NOTIFICATIONS).mapNotNull { disruption ->
+            disruption.alert.notificationKey().takeIf { notify(disruption) }
+        }
+        // Only what the rider saw counts as seen, so the alerts over the cap and the alerts of a
+        // denied notification permission come back in the next check. The keys of the alerts that
+        // ended go, so an alert that comes back notifies again.
+        val current = disruptions.mapTo(mutableSetOf()) { it.alert.notificationKey() }
+        settings.setNotifiedAlerts(notified.intersect(current) + posted)
         return Result.success()
     }
 
-    private fun notify(disruption: Disruption) {
+    /** Shows the alert. False when Android shows nothing, because the rider turned notifications off. */
+    private fun notify(disruption: Disruption): Boolean {
         val context = applicationContext
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) return
+        ) return false
         val manager = NotificationManagerCompat.from(context)
+        if (!manager.areNotificationsEnabled()) return false
         manager.createNotificationChannel(
             NotificationChannelCompat.Builder(CHANNEL, NotificationManagerCompat.IMPORTANCE_DEFAULT)
                 .setName(context.getString(R.string.alerts_channel))
@@ -104,6 +116,7 @@ class DisruptionAlertWorker(context: Context, params: WorkerParameters) : Corout
             .setAutoCancel(true)
             .build()
         manager.notify(disruption.alert.notificationKey(), NOTIFICATION_ID, notification)
+        return true
     }
 
     private companion object {
