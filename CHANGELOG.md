@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Show how far away the next turn is in the walking view: "Then in 20 m". The "Recenter" button is now round like the compass button, so the two map buttons form one group.
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.

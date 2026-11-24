@@ -246,8 +246,8 @@
     <string name="walk_open_short">Directions</string>
     <string name="walk_close">Close walking directions</string>
     <string name="walk_recenter">Recenter</string>
-    <string name="walk_then">Then</string>
-    <string name="walk_then_instruction">Then: %1$s</string>
+    <string name="walk_then_in">Then in %1$s</string>
+    <string name="walk_then_in_instruction">Then in %1$s: %2$s</string>
     <string name="walk_north_up">Show north up</string>
     <string name="walk_heading_up">Turn the map with you</string>
     <string name="walk_overview">Show the full route</string>

@@ -166,13 +166,13 @@ The departure board is one card with the rows of the nearby departures: one row 
 "Directions" is a filled button on each walk step of the itinerary. Its accessibility label is "Walking directions". A walk-only route has one walk step.
 
 - The instruction card uses `primaryContainer`. It shows the maneuver icon on a `primary` tile, the distance to the maneuver as the largest text, and the instruction. The start shows the length of the first part.
-- A "Then" tab hangs below the card, at its start, in the same color. It shows the word and the icon of the next maneuver. Its accessibility label gives the full instruction ("Then: Turn left").
+- A "Then" tab hangs below the card, at its start, in the same color. It shows the distance from this maneuver to the next and the icon of the next maneuver ("Then in 20 m"). Its accessibility label gives the full instruction ("Then in 20 m: Turn left").
 - The card is a polite live region, so TalkBack reads a new instruction.
 - Off the route, an `errorContainer` banner says so and gives "Plan a new route". The walk is replaced by a new walk from the position by itself; the banner then goes. Without location access, the banner gives "Allow location".
 - The map is tilted and turns with the walker. The position is an arrow on a `primary` disc that lies flat on the map. The position sits low on the screen, so the walker sees the way ahead. The arrow shows the measured position and does not snap to the route line, so it stays on the correct side of the street. The routes follow street centre lines, so the walk line moves to the side of the walker, up to 15 m, and passes under the arrow. With a good GPS fix, a wrong turn shows after 10 to 15 m; with a poor fix, after up to 50 m.
 - The arrow and the map turn to the heading of the device. Without a heading, they turn to the route ahead.
 - A round compass button at the bottom start of the map, above the sheet, turns the map between "north up" (flat) and "turn with you". Its arrow points north, in `error` red.
-- A gesture on the map stops the camera, and a "Recenter" button shows below the compass button.
+- A gesture on the map stops the camera, and a round "Recenter" icon button shows below the compass button, with the same size and shape. Its accessibility label is "Recenter". The map buttons stay at the start: the map credits are at the end.
 - The summary row in the sheet has the close button at the start, in `surfaceContainerHighest`. Ending a walk is normal, so it is not red: red is for the off-route banner. In the middle are the remaining time and, below it, the distance and the arrival time. At the end, a tonal button shows the full route; the "Recenter" button then shows.
 - A wavy progress bar below the summary shows the part of the walk that is done.
 - The walk has markers at its start and its end.

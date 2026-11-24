@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -115,9 +114,9 @@ fun WalkScreen(
             if (locationGranted) {
                 CompassButton(northUp, bearing, onNorthUp)
                 if (!following) {
-                    FilledTonalButton(onClick = onRecenter) {
-                        Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
-                        Text(stringResource(R.string.walk_recenter), modifier = Modifier.padding(start = 8.dp))
+                    // The same round button as the compass, so the two map buttons read as one group.
+                    FilledTonalIconButton(onClick = onRecenter, shape = CircleShape, modifier = Modifier.size(56.dp)) {
+                        Icon(painterResource(R.drawable.ic_my_location), contentDescription = stringResource(R.string.walk_recenter))
                     }
                 }
             }
@@ -175,7 +174,8 @@ private fun InstructionCard(instruction: WalkInstruction, meters: Double, destin
             }
         }
         if (then != null) {
-            val description = stringResource(R.string.walk_then_instruction, instructionText(then, destination))
+            val distance = formatDistance(instruction.lengthMeters)
+            val description = stringResource(R.string.walk_then_in_instruction, distance, instructionText(then, destination))
             Surface(
                 color = scheme.primaryContainer,
                 contentColor = scheme.onPrimaryContainer,
@@ -188,7 +188,7 @@ private fun InstructionCard(instruction: WalkInstruction, meters: Double, destin
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 10.dp),
                 ) {
-                    Text(stringResource(R.string.walk_then), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.walk_then_in, distance), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
                     Icon(painterResource(then.maneuver.icon()), contentDescription = null, modifier = Modifier.size(24.dp))
                 }
             }
