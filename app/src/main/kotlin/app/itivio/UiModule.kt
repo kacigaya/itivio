@@ -15,9 +15,13 @@ import app.itivio.ui.walk.WalkRerouteViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
+import org.koin.android.ext.koin.androidContext
+import app.itivio.ui.widget.GlanceStopWidgets
+import app.itivio.domain.StopWidgets
 
 val uiModule = module {
     single { UserLocation() }
+    single<StopWidgets> { GlanceStopWidgets(androidContext()) }
     // The SavedStateHandle keeps the planning request across process death.
     viewModel { PlannerViewModel(get(), get(), get(), get()) }
     viewModelOf(::SearchViewModel)

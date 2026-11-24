@@ -116,6 +116,7 @@ import org.maplibre.spatialk.units.extensions.meters
 import org.maplibre.compose.location.rememberDefaultHeadingProvider
 import org.maplibre.compose.location.rememberDefaultLocationProvider
 import org.maplibre.compose.location.rememberLocationState
+import app.itivio.domain.StopWidgets
 
 @Serializable data object ExploreRoute : NavKey
 @Serializable data class StopRoute(val stopId: String, val name: String, val latitude: Double, val longitude: Double) : NavKey
@@ -151,6 +152,7 @@ fun ItivioRoot(
         }
     }
     val wide = isWideLayout()
+    val widgets = koinInject<StopWidgets>()
     val userLocation = koinInject<UserLocation>()
     val top = backStack.last()
 
@@ -385,6 +387,7 @@ fun ItivioRoot(
                                 },
                                 onToggleFavorite = { places.toggleFavorite(stop) },
                                 onRetry = board::retry,
+                                onAddWidget = if (widgets.canPin) ({ widgets.pin(route.stopId, route.name) }) else null,
                             )
                         }
                         entry<ResultsRoute> {

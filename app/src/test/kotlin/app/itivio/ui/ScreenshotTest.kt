@@ -385,6 +385,7 @@ open class ScreenshotTest {
             now = t0,
             favorite = true,
             onBack = {}, onDirections = {}, onToggleFavorite = {}, onRetry = {},
+            onAddWidget = {},
         )
     }
 

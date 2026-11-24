@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Add a departures widget for your home screen. Open a stop and tap "Add to home screen". The widget shows the next 3 departures and updates about every 30 minutes, or when you tap refresh.
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.

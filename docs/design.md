@@ -80,7 +80,7 @@ The preview uses the easing of the system back animations, `(0.1, 0.1, 0, 1)`. T
 | Search | Full-screen search view: origin and destination fields, swap button, saved places or suggestions list | Same, in the side pane |
 | Results | Sheet with a travel time button, an options button, sort buttons, and route cards, one card for each route. The row of buttons scrolls to the two edges of the sheet. The travel time button is the only control of the time: the results have no "earlier" or "later" buttons. Map shows the selected route | Side pane with route cards |
 | Itinerary | Sheet with leg timeline. Map fits the route | Side pane timeline |
-| Stop | Sheet with the stop name, "Directions to here", the favorite toggle, and the departures. Map centers on the stop | Side pane |
+| Stop | Sheet with the stop name, "Directions to here", the favorite toggle, an "Add to home screen" button when the launcher can pin widgets, and the departures. Map centers on the stop | Side pane |
 | Walking | Instruction card at the top. Sheet with the remaining time, distance, and arrival, then all instructions. Map follows the user | Instruction card above the side pane |
 
 ## Navigation
@@ -144,6 +144,10 @@ The list shows the service alerts in two groups: "Your saved stops" (Home, Work,
 Each disruption is a `surfaceContainerHigh` card: a tag with the effect, the badges of the lines, the header, the time period and the cause ("From Sunday, 3:45 AM · Works"), the stops, the description, and a "More information" button when the alert has a web link. A severe disruption has `errorContainer` only on its header band, with the tag in `error`. Its body keeps the card colors, so the long text stays easy to read. Within the next week a date is the weekday ("Sunday, 3:45 AM"). Later dates this year have no year. The weekday reads well in the "From" and "Until" sentences of each language; "today" does not in French. The card shows 3 lines of the description; a tap shows all of it. The time period is the one in progress ("Until …") or the next one ("From … to …").
 
 The empty state says that some regions publish no alerts. On a compact window, the list is the second page of the home sheet, without the page title and the scope text. It loads while home is open, because the home title shows the number of alerts. On a wide window, the list is a full page, and it loads only while the page is on screen. See `architecture.md` for the requests.
+
+## Home screen widget
+
+The departures widget shows one stop: its name, a refresh button, the next 3 departures with the line badge, the destination, and the clock time, then "Updated 8:54". It shows clock times, not countdowns, because Android updates it only about every 30 minutes. A live time uses `tertiary`. It uses dynamic color on Android 12 and later, else the app scheme. A tap opens the app. "Add to home screen" on a stop pins it with the launcher's own dialog. A widget added from the launcher's list has no stop yet and says how to pick one.
 
 ## Settings and about
 

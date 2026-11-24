@@ -41,7 +41,7 @@ The app uses these services to provide search, transport information, and maps:
 
 The disruptions list sends the IDs of up to 10 saved stops to Transitous. On a phone, the list is a page of the home screen, and the home screen shows the number of alerts. The app then sends these IDs while the home screen is open. On a tablet, it sends them only while the Disruptions page is open. These can be Home, Work, or favorites. Saved places that are not stops are not sent for this feature. Selecting a saved place for a journey sends its stop ID or coordinates as part of the journey request.
 
-Live departures, trip times, and disruptions refresh only while the relevant screen is visible and the app is in the foreground. The app sends no background notifications.
+Live departures, trip times, and disruptions refresh only while the relevant screen is visible and the app is in the foreground. The app sends no background notifications. The one exception is a departures widget on the home screen: it sends the ID of its stop to Transitous when Android updates it, about every 30 minutes, and when you tap its refresh button. Remove the widget to stop this.
 
 Each service also receives your IP address and normal connection information. Transitous requests identify the app version and include the publisher's contact in the User-Agent. IGN uses a separate client without contact details. The app adds no account ID or advertising ID to these requests.
 

@@ -51,6 +51,8 @@ fun StopScreen(
     onDirections: () -> Unit,
     onToggleFavorite: () -> Unit,
     onRetry: () -> Unit,
+    /** Adds a home screen widget for the stop. Null when the launcher cannot. */
+    onAddWidget: (() -> Unit)? = null,
 ) {
     MapPanel(
         wide = wide,
@@ -81,6 +83,11 @@ fun StopScreen(
                         Text(stringResource(R.string.stop_directions), modifier = Modifier.padding(start = 8.dp))
                     }
                     FavoriteToggle(favorite, onToggleFavorite)
+                    onAddWidget?.let { add ->
+                        FilledTonalIconButton(onClick = add, modifier = Modifier.size(48.dp)) {
+                            Icon(painterResource(R.drawable.ic_widgets), contentDescription = stringResource(R.string.widget_add))
+                        }
+                    }
                 }
             }
             item(key = "departures-title") {

@@ -148,7 +148,8 @@ Off the route, `WalkRerouteViewModel` plans a walk from the position to the end 
 - Every request sends `User-Agent: itivio/<version> (+<contact>)`. Set the contact with the `itivio.contact` Gradle property.
 - Settings → About shows the Transitous and IGN/BAN credits and links to `https://transitous.org/sources/`. Other screens have no provider footer. The info button on the map opens the OpenStreetMap, OpenMapTiles, and OpenFreeMap credits. The credits start closed, the same as the default MapLibre Android control.
 - Autocomplete waits for typing to pause, needs 2 or more characters, and cancels stale requests.
-- `/plan` runs only on explicit user action. No background polling. The journey options dialog sends one request when the user confirms, not one for each change.
+- `/plan` runs only on explicit user action. No background polling.
+- The departures widget (`ui/widget`, Glance) asks `/v6/stoptimes` for its stop when Android updates it (`updatePeriodMillis`, 30 min) and on its refresh button. Its stop ID and name live in the Glance state of the widget. The journey options dialog sends one request when the user confirms, not one for each change.
 - `/stoptimes` refreshes once a minute, only while the nearby list is on screen and the app is in the foreground. A move of less than 150 m does not send a new request.
 - The itinerary scans up to eight `/stoptimes` pages for each transit leg, once a minute, only while the itinerary is on screen and the app is in the foreground. It stops when it has four matching departures.
 - The itinerary also sends one `/trip` request for each transit leg that has not ended, once a minute, under the same conditions.
