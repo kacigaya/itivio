@@ -122,17 +122,17 @@ fun StopScreen(
                             )
                         }
                     } else {
-                        val alerts = upcoming.flatMap { it.alerts }.distinct()
+                        val lines = upcoming.distinctBy { it.line.key() }
+                        val selected = selectedLine?.takeIf { key -> lines.any { it.line.key() == key } }
+                        val shown = if (selected == null) upcoming else upcoming.filter { it.line.key() == selected }
+                        val alerts = shown.flatMap { it.alerts }.distinct()
                         if (alerts.isNotEmpty()) {
                             item(key = "alerts") { Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { AlertBanner(alerts) } }
                         }
-                        val lines = upcoming.distinctBy { it.line.key() }
-                        val selected = selectedLine?.takeIf { key -> lines.any { it.line.key() == key } }
                         // A filter helps only at a stop with more than one line.
                         if (lines.size > 1) {
                             item(key = "lines") { LineFilter(lines, selected, onSelect = { selectedLine = it }) }
                         }
-                        val shown = if (selected == null) upcoming else upcoming.filter { it.line.key() == selected }
                         item(key = "departures") { DeparturesCard(shown, now, Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
                     }
                 }
@@ -141,7 +141,7 @@ fun StopScreen(
     }
 }
 
-private fun Line.key(): String = id ?: name
+private fun Line.key(): String = id ?: "$name|$mode"
 
 /**
  * Filter chips for the lines of the board: "All", then one chip for each line with its badge.
@@ -164,7 +164,7 @@ private fun LineFilter(lines: List<Departure>, selected: String?, onSelect: (Str
                 selected = selected == key,
                 onClick = { onSelect(if (selected == key) null else key) },
                 label = { LineBadge(departure.line, departure.mode) },
-                modifier = Modifier.semantics { contentDescription = name },
+                modifier = Modifier.clearAndSetSemantics { contentDescription = name },
             )
         }
     }
