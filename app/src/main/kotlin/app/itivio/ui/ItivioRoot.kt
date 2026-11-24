@@ -116,6 +116,11 @@ import org.maplibre.spatialk.units.extensions.meters
 import org.maplibre.compose.location.rememberDefaultHeadingProvider
 import org.maplibre.compose.location.rememberDefaultLocationProvider
 import org.maplibre.compose.location.rememberLocationState
+import app.itivio.domain.ReminderScheduler
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.os.Build
+import android.Manifest
 
 @Serializable data object ExploreRoute : NavKey
 @Serializable data class StopRoute(val stopId: String, val name: String, val latitude: Double, val longitude: Double) : NavKey
@@ -151,6 +156,10 @@ fun ItivioRoot(
         }
     }
     val wide = isWideLayout()
+    val reminders = koinInject<ReminderScheduler>()
+    val reminder by reminders.active.collectAsStateWithLifecycle()
+    // A reminder without this permission is set, but Android shows no notification.
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     val userLocation = koinInject<UserLocation>()
     val top = backStack.last()
 
@@ -420,6 +429,8 @@ fun ItivioRoot(
                                 }
                                 val tracked = tracker.journey.collectAsStateWithLifecycle().value?.takeIf { it.id == journey.id }
                                 val visible = tracked ?: journey
+                                // A reminder follows the live times while the tracker runs.
+                                LaunchedEffect(visible) { reminders.update(visible) }
                                 LaunchedEffect(visible, state.time, state.arriveBy) {
                                     trackedJourney = visible
                                     lineTimes.show(visible, if (state.arriveBy) journey.departure.best else state.time)
@@ -433,6 +444,17 @@ fun ItivioRoot(
                                 ItineraryScreen(
                                     wide = wide,
                                     journey = visible,
+                                    reminder = reminder?.takeIf { it.journeyId == visible.id },
+                                    onRemind = { lead ->
+                                        if (lead == null) {
+                                            reminders.cancel()
+                                        } else {
+                                            reminders.schedule(visible, lead)
+                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                            }
+                                        }
+                                    },
                                     now = now,
                                     boarding = boarding,
                                     lineTimes = lineTimes.times.collectAsStateWithLifecycle().value,

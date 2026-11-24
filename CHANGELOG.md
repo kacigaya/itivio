@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Get a reminder when it is time to leave. "Remind me" on the itinerary offers when to leave, or 2, 5, or 10 minutes before. While the itinerary is open, the reminder moves with live delays.
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.

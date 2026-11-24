@@ -346,6 +346,22 @@ open class ScreenshotTest {
         )
     }
 
+    // Before the departure, with a reminder 5 minutes before it.
+    @Test
+    fun itineraryReminder() = capture("itinerary_reminder") {
+        val journey = sampleJourneys.first()
+        ItineraryScreen(
+            wide = true,
+            journey = journey,
+            now = t0.minusSeconds(600),
+            lineTimes = mapOf(1 to emptyList(), 3 to emptyList()),
+            onBack = {},
+            onWalk = {},
+            reminder = app.itivio.domain.Reminder(journey.id, 5, journey.departure.best.minusSeconds(300)),
+            onRemind = {},
+        )
+    }
+
     // The boarding hints and the line times have not arrived: each leg shows its departures skeleton.
     @Test
     fun itineraryLoading() = capture("itinerary_loading") {

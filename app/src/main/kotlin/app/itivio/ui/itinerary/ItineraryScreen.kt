@@ -106,6 +106,14 @@ import app.itivio.ui.common.lineColors
 import app.itivio.ui.common.markedStringResource
 import java.time.Duration
 import java.time.Instant
+import androidx.compose.runtime.remember
+import java.time.ZoneId
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import app.itivio.domain.ReminderScheduler
+import app.itivio.domain.Reminder
 
 val ItineraryPeekHeight = 320.dp
 private val RailWidth = 32.dp
@@ -132,6 +140,9 @@ fun ItineraryScreen(
     onSelectDeparture: (Int, Departure) -> Unit = { _, _ -> },
     onResetTrain: (Int) -> Unit = {},
     boarding: Map<Int, BoardingHint>? = emptyMap(),
+    reminder: Reminder? = null,
+    /** Sets the reminder with a lead time in minutes, or removes it with null. Null hides the button. */
+    onRemind: ((Int?) -> Unit)? = null,
 ) {
     val currentLeg = journey.currentLegIndex(now)
     val pending = boarding == null || journey.legs.withIndex().any { (index, leg) ->
@@ -151,7 +162,7 @@ fun ItineraryScreen(
             contentPadding = PaddingValues(start = ListMargin, end = ListMargin, top = if (wide) 8.dp else 0.dp, bottom = ListMargin),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            item(key = "summary") { Summary(journey, now, wide) }
+            item(key = "summary") { Summary(journey, now, wide, reminder, onRemind.takeIf { journey.departure.best > now }) }
             if (journey.missedConnectionIndex != null) {
                 item(key = "missed_connection") {
                     Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.large) {
@@ -210,7 +221,7 @@ private fun Step(current: Boolean, card: Boolean, content: @Composable () -> Uni
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Summary(journey: Journey, now: Instant, wide: Boolean) {
+private fun Summary(journey: Journey, now: Instant, wide: Boolean, reminder: Reminder?, onRemind: ((Int?) -> Unit)?) {
     val scheme = MaterialTheme.colorScheme
     val departure = formatTime(journey.departure.best, journey.legs.first().from.zone)
     val arrival = formatTime(journey.arrival.best, journey.legs.last().to.zone)
@@ -253,6 +264,48 @@ private fun Summary(journey: Journey, now: Instant, wide: Boolean) {
                 }
             }
             LegChain(journey)
+            onRemind?.let { ReminderButton(reminder, journey.legs.first().from.zone, it) }
+        }
+    }
+}
+
+/**
+ * Sets a reminder to leave: a menu of lead times. The button shows the time of the reminder once
+ * it is set. The reminder follows the live times while the itinerary is on screen.
+ */
+@Composable
+private fun ReminderButton(reminder: Reminder?, zone: ZoneId?, onRemind: (Int?) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        FilledTonalButton(onClick = { open = true }, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
+            Icon(painterResource(R.drawable.ic_notifications), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+            Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+            Text(
+                if (reminder != null) stringResource(R.string.reminder_set, formatTime(reminder.at, zone))
+                else stringResource(R.string.reminder_remind_me),
+            )
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            ReminderScheduler.LEAD_MINUTES.forEach { lead ->
+                DropdownMenuItem(
+                    text = {
+                        Text(if (lead == 0) stringResource(R.string.reminder_lead_now) else pluralStringResource(R.plurals.reminder_lead, lead, lead))
+                    },
+                    onClick = {
+                        open = false
+                        onRemind(lead)
+                    },
+                    trailingIcon = if (reminder?.leadMinutes == lead) {
+                        { Icon(painterResource(R.drawable.ic_check), contentDescription = null) }
+                    } else null,
+                )
+            }
+            if (reminder != null) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.reminder_none)) }, onClick = {
+                    open = false
+                    onRemind(null)
+                })
+            }
         }
     }
 }
