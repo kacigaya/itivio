@@ -113,9 +113,19 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_language">Language</string>
-    <string name="settings_language_body">Opens the language setting of Android for this app.</string>
     <string name="settings_journeys">Journeys</string>
     <string name="settings_options_body">Transport modes, transfers, and walking. They apply to each search.</string>
+    <string name="settings_language_system">%1$s · follows the device</string>
+    <string name="settings_language_app">%1$s · set for this app</string>
+    <string name="settings_options_default">All modes, no transfer limit, normal walking speed</string>
+    <plurals name="settings_options_modes_off">
+        <item quantity="one">%d mode off</item>
+        <item quantity="other">%d modes off</item>
+    </plurals>
+    <string name="settings_options_direct">Direct only</string>
+    <string name="settings_options_max_transfers">At most %1$s</string>
+    <string name="settings_options_slow">Slow walking</string>
+    <string name="settings_options_fast">Fast walking</string>
     <string name="settings_data">Stored data</string>
     <string name="settings_clear_recents_body">Removes your search history. Your favorites stay.</string>
     <string name="settings_delete_all">Delete all app data</string>

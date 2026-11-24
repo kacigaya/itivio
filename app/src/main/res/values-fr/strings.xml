@@ -112,9 +112,20 @@
     <string name="settings_theme_light">Clair</string>
     <string name="settings_theme_dark">Sombre</string>
     <string name="settings_language">Langue</string>
-    <string name="settings_language_body">Ouvre le réglage de langue d’Android pour cette application.</string>
     <string name="settings_journeys">Trajets</string>
     <string name="settings_options_body">Modes de transport, correspondances et marche. Ces options s’appliquent à chaque recherche.</string>
+    <string name="settings_language_system">%1$s · suit l’appareil</string>
+    <string name="settings_language_app">%1$s · choisie pour cette app</string>
+    <string name="settings_options_default">Tous les modes, correspondances sans limite, marche normale</string>
+    <plurals name="settings_options_modes_off">
+        <item quantity="one">%d mode désactivé</item>
+        <item quantity="many">%d modes désactivés</item>
+        <item quantity="other">%d modes désactivés</item>
+    </plurals>
+    <string name="settings_options_direct">Trajets directs uniquement</string>
+    <string name="settings_options_max_transfers">%1$s au plus</string>
+    <string name="settings_options_slow">Marche lente</string>
+    <string name="settings_options_fast">Marche rapide</string>
     <string name="settings_data">Données enregistrées</string>
     <string name="settings_clear_recents_body">Supprime votre historique de recherche. Vos favoris restent.</string>
     <string name="settings_delete_all">Supprimer toutes les données</string>
