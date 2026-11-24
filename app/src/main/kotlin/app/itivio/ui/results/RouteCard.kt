@@ -86,6 +86,7 @@ fun RouteCard(route: List<Journey>, selected: Boolean, now: Instant, onClick: ()
             ) {
                 Text(
                     stringResource(R.string.time_range, departure, arrival),
+                    contentDescription = stringResource(R.string.route_time_range_description, departure, arrival),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(end = 12.dp),
