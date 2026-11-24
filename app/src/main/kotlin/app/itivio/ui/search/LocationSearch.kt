@@ -280,15 +280,24 @@ fun LocationSearchView(
                         }
                     }
                 }
-                // The stops of the nearby departures that home already shows: no new request.
-                val nearbyStops = if (assigning == null) nearby.take(NEARBY_STOPS).mapNotNull { stop -> stop.toLocation()?.let { it to stop } } else emptyList()
+                // The nearest stops of the departures that home already shows: no new request. A stop
+                // that is already a favorite or a recent search has its own row, so it is left out here.
+                val listed = (saved.favorites + saved.recents).map { it.id }.toSet()
+                val nearbyStops = if (assigning == null) {
+                    nearby.sortedBy { it.distanceMeters ?: Double.MAX_VALUE }
+                        .mapNotNull { stop -> stop.toLocation()?.let { it to stop } }
+                        .filter { (location, _) -> location.id !in listed }
+                        .take(NEARBY_STOPS)
+                } else {
+                    emptyList()
+                }
                 if (nearbyStops.isNotEmpty()) {
                     item(key = "nearby") { SectionHeader(stringResource(R.string.search_nearby_stops)) }
-                    itemsIndexed(nearbyStops, key = { _, (location, _) -> "nearby:${location.id}" }) { index, (location, stop) ->
+                    itemsIndexed(nearbyStops, key = { index, _ -> "nearby:$index" }) { index, (location, stop) ->
                         val lines = stop.departures.map { it.line.name }.distinct().joinToString(", ")
                         val subtitle = listOfNotNull(lines.ifEmpty { null }, stop.distanceMeters?.let { formatDistance(it) }).joinToString(" · ")
                         PlaceRow(location, location.iconRes(), AnnotatedString(location.name), subtitle, groupShape(index, nearbyStops.size)) {
-                            pickPlace(location, recent = true)
+                            pickPlace(location, recent = false)
                         }
                     }
                 }
