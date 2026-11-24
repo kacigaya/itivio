@@ -59,8 +59,8 @@ import app.itivio.ui.search.LocationSearchView
 import app.itivio.ui.search.rememberLocationSearchBarState
 import app.itivio.ui.search.rememberLocationTextState
 import java.time.Instant
-import kotlinx.coroutines.launch
 import androidx.compose.material3.FilledTonalButton
+import kotlinx.coroutines.launch
 
 val ResultsPeekHeight = 360.dp
 
@@ -233,8 +233,8 @@ private fun ResultsList(
                             icon = R.drawable.ic_info,
                             title = stringResource(R.string.results_empty_title),
                             body = stringResource(R.string.results_empty_body),
-                            modifier = Modifier.padding(bottom = 0.dp),
                         )
+                        FilledTonalButton(onClick = onRetry) { Text(stringResource(R.string.retry)) }
                         FilledTonalButton(onClick = onPickTime) {
                             Icon(painterResource(R.drawable.ic_schedule), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
                             Spacer(Modifier.width(ButtonDefaults.IconSpacing))
