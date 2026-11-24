@@ -174,6 +174,11 @@
     <string name="options_speed_normal">Normale</string>
     <string name="options_speed_fast">Rapide</string>
     <string name="options_reset">Réinitialiser</string>
+    <plurals name="options_reset_count">
+        <item quantity="one">Annuler %d modification</item>
+        <item quantity="many">Annuler %d modifications</item>
+        <item quantity="other">Annuler %d modifications</item>
+    </plurals>
 
     <!-- Results -->
     <string name="results_empty_title">Aucun itinéraire trouvé</string>

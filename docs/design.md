@@ -119,7 +119,7 @@ A row of connected buttons (`ChoiceButtons`) is the single-choice control of the
 
 The dialog has no switch for flights. No journey uses a flight.
 
-The dialog edits a copy. "Done" applies all changes with one new search. "Reset" puts the copy back to the defaults. "Cancel" drops the changes.
+The dialog edits a copy. "Done" applies all changes with one new search. "Reset" puts the copy back to the defaults. Its label gives the number of controls away from their default ("Reset 3 changes"), and each mode turned off counts once. With no change, it reads "Reset" and is disabled. "Cancel" drops the changes.
 
 ## Itinerary
 
