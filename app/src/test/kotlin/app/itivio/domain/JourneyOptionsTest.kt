@@ -32,4 +32,9 @@ class JourneyOptionsTest {
         )
         assertEquals(4, changed.changeCount)
     }
+
+    @Test
+    fun `the walking speed does not count while the wheelchair switch is on`() {
+        assertEquals(1, JourneyOptions(wheelchair = true, walkingSpeed = WalkingSpeed.FAST).changeCount)
+    }
 }

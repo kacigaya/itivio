@@ -323,9 +323,9 @@ data class JourneyOptions(
 ) {
     val isDefault: Boolean get() = this == JourneyOptions()
 
-    /** How many controls differ from the defaults: each mode turned off counts once. */
+    /** How many controls differ from the defaults: each mode turned off counts once. The unused walking speed does not count with the wheelchair switch on. */
     val changeCount: Int get() =
-        excludedModes.size + listOf(maxTransfers != null, wheelchair, walkingSpeed != WalkingSpeed.NORMAL).count { it }
+        excludedModes.size + listOf(maxTransfers != null, wheelchair || walkingSpeed != WalkingSpeed.NORMAL).count { it }
 
     /** Turns [mode] on or off. The last selectable mode stays on, so a journey can always use transit. */
     fun withMode(mode: TransitMode, allowed: Boolean): JourneyOptions {
