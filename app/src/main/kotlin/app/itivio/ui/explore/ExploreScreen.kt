@@ -16,6 +16,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import app.itivio.ui.disruptions.DisruptionGroups
 import app.itivio.ui.disruptions.disruptions
 import androidx.compose.foundation.layout.Arrangement
@@ -308,10 +309,21 @@ private fun SavedChips(saved: SavedPlaces?, times: Map<Shortcut, Duration>, onOp
     }
 }
 
-/** A saved place as a tonal button: bolder than a chip, because it starts a journey with one tap. */
+/**
+ * A saved place as a tonal button: bolder than a chip, because it starts a journey with one tap.
+ * With [detail], the time follows the name in a light weight, and the button has one spoken label.
+ */
 @Composable
 private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit, detail: String? = null) {
-    FilledTonalButton(onClick = onClick, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
+    FilledTonalButton(
+        onClick = onClick,
+        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+        modifier = detail?.let {
+            // A screen reader reads the label, not the separator.
+            val description = stringResource(R.string.saved_chip_description, label, it)
+            Modifier.semantics { contentDescription = description }
+        } ?: Modifier,
+    ) {
         Icon(painterResource(icon), contentDescription = null, Modifier.size(ButtonDefaults.IconSize))
         Text(
             label,
@@ -321,7 +333,7 @@ private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit
             modifier = Modifier.padding(start = ButtonDefaults.IconSpacing).widthIn(max = 160.dp),
         )
         detail?.let {
-            Text(" · $it", fontWeight = FontWeight.Light, maxLines = 1)
+            Text(stringResource(R.string.saved_chip_time, it), fontWeight = FontWeight.Light, maxLines = 1)
         }
     }
 }

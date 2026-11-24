@@ -20,6 +20,8 @@
     <string name="shortcut_set_work">Définir le travail</string>
     <string name="shortcut_search_home">Cherchez votre domicile</string>
     <string name="shortcut_search_work">Cherchez votre lieu de travail</string>
+    <string name="saved_chip_time">" · %1$s"</string>
+    <string name="saved_chip_description">Temps de trajet vers %1$s : %2$s</string>
     <string name="search_set_shortcut_hint">Cherchez un lieu, puis choisissez-le</string>
     <string name="saved_favorites">Favoris</string>
     <string name="saved_recents">Recherches récentes</string>
