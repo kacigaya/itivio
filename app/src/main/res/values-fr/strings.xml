@@ -115,6 +115,12 @@
     <string name="settings_language_body">Ouvre le réglage de langue d’Android pour cette application.</string>
     <string name="settings_journeys">Trajets</string>
     <string name="settings_options_body">Modes de transport, correspondances et marche. Ces options s’appliquent à chaque recherche.</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_disruption_alerts">Alertes de perturbation</string>
+    <string name="settings_disruption_alerts_body">Toutes les 30 minutes, l’app envoie les identifiants de vos arrêts enregistrés à Transitous et vous prévient des nouvelles alertes. Elle n’envoie pas votre position.</string>
+    <string name="settings_severe_only">Alertes graves uniquement</string>
+    <string name="settings_severe_only_body">Par exemple, trafic interrompu. Les retards et les déviations ne préviennent pas.</string>
+    <string name="alerts_channel">Alertes de perturbation</string>
     <string name="settings_data">Données enregistrées</string>
     <string name="settings_clear_recents_body">Supprime votre historique de recherche. Vos favoris restent.</string>
     <string name="settings_delete_all">Supprimer toutes les données</string>

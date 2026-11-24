@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Get notified of new disruptions on your saved stops. Turn on "Disruption alerts" in the settings. It is off by default. When on, the app checks your saved stops every 30 minutes in the background and sends only their IDs. By default, only severe alerts notify.
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.

@@ -116,6 +116,12 @@
     <string name="settings_language_body">Opens the language setting of Android for this app.</string>
     <string name="settings_journeys">Journeys</string>
     <string name="settings_options_body">Transport modes, transfers, and walking. They apply to each search.</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_disruption_alerts">Disruption alerts</string>
+    <string name="settings_disruption_alerts_body">Every 30 minutes, the app sends the IDs of your saved stops to Transitous and notifies you of new alerts on them. It sends no location.</string>
+    <string name="settings_severe_only">Severe alerts only</string>
+    <string name="settings_severe_only_body">For example no service. Delays and detours do not notify.</string>
+    <string name="alerts_channel">Disruption alerts</string>
     <string name="settings_data">Stored data</string>
     <string name="settings_clear_recents_body">Removes your search history. Your favorites stay.</string>
     <string name="settings_delete_all">Delete all app data</string>

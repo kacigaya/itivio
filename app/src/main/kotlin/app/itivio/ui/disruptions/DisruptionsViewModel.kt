@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
+import app.itivio.domain.stopIds
 
 /** The disruptions on the saved stops, then the other disruptions on the stops near the device. */
 data class DisruptionGroups(val saved: List<Disruption> = emptyList(), val nearby: List<Disruption> = emptyList()) {
@@ -98,14 +99,7 @@ class DisruptionsViewModel(
         /** Moves shorter than this keep the same stops, so they do not trigger a new request. */
         const val MOVE_METERS = 150.0
 
-        /** One request goes out for each saved stop, so the number of stops has a limit. */
-        const val MAX_SAVED_STOPS = 10
-
         /** Alerts come with departures; this many departures show the lines of a stop. */
         private const val STOP_SCAN = 20
-
-        /** The IDs of the saved stops: Home, Work, then the favorites. Places that are not stops have no alerts. */
-        internal fun SavedPlaces.stopIds(): List<String> =
-            (listOfNotNull(home, work) + favorites).mapNotNull { it.stopId }.distinct().take(MAX_SAVED_STOPS)
     }
 }

@@ -457,6 +457,15 @@ open class ScreenshotTest {
     }
 
     @Test
+    fun settingsAlerts() = capture("settings_alerts") {
+        SettingsScreen(
+            theme = ThemeMode.SYSTEM, options = JourneyOptions(),
+            onBack = {}, onTheme = {}, onOptions = {}, onClearRecents = {}, onDeleteAll = {}, onAbout = {},
+            disruptionAlerts = true,
+        )
+    }
+
+    @Test
     fun about() = capture("about") { AboutScreen(version = "0.8.0", onBack = {}) }
 
     @Test

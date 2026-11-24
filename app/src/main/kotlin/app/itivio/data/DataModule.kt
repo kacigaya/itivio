@@ -24,6 +24,8 @@ import app.itivio.domain.SettingsRepository
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import app.itivio.data.alerts.WorkManagerDisruptionWatch
+import app.itivio.domain.DisruptionWatch
 
 val dataModule = module {
     single { createHttpClient() }
@@ -43,6 +45,7 @@ val dataModule = module {
     single<JourneyOptionsRepository> { DataStoreJourneyOptionsRepository(get()) }
     single<SettingsRepository> { DataStoreSettingsRepository(get()) }
     single<AppData> { LocalAppData(get<PlacesDatabase>().places(), get()) }
+    single<DisruptionWatch> { WorkManagerDisruptionWatch(androidContext()) }
     single<BoardingRepository> {
         val assets = androidContext().assets
         IdfmBoardingRepository(

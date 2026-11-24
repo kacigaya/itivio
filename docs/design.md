@@ -147,6 +147,8 @@ The empty state says that some regions publish no alerts. On a compact window, t
 
 ## Settings and about
 
+A "Notifications" group has "Disruption alerts", off by default. Its text says what it sends. Turning it on asks for the notification permission (Android 13 and later). A second switch, "Severe alerts only", shows while it is on, and is on by default. A notification gives the header of the alert as its title, and the lines and the stops as its text. A tap opens the app. One check notifies at most 3 alerts.
+
 At larger text sizes, the theme choices use a vertical radio group so each label stays readable. Each choice keeps its icon.
 
 Settings has four groups of rows on cards: appearance (theme as a row of connected buttons with an icon and a label: System, Light, and Dark; language, which opens the Android setting on Android 13 and later), journeys (the journey options dialog of the results), stored data (clear recent searches; delete all app data, in `error` color, with a confirmation dialog), and about.
