@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Fix the itinerary duration at large text. "26 min" broke into "2", "6", and "min" on 3 lines. The departure and arrival times now move below it.
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.
