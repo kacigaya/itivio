@@ -51,6 +51,7 @@ internal val LocalTravelClock = staticCompositionLocalOf<Clock?> { null }
 fun TravelTimeChip(time: Instant?, arriveBy: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     FilterButton(
         label = travelTimeLabel(time, arriveBy),
+        supporting = time?.let { travelDayLabel(it) },
         checked = time != null,
         onClick = onClick,
         leadingIcon = R.drawable.ic_schedule,
@@ -63,11 +64,15 @@ fun TravelTimeChip(time: Instant?, arriveBy: Boolean, onClick: () -> Unit, modif
 private fun travelTimeLabel(time: Instant?, arriveBy: Boolean): String {
     if (time == null) return stringResource(R.string.travel_now)
     val wallClock = LocalTravelClock.current ?: Clock.systemDefaultZone()
-    val zone = wallClock.zone
-    val days = ChronoUnit.DAYS.between(LocalDate.now(wallClock), time.atZone(zone).toLocalDate()).toInt()
-    val clock = formatTime(time, zone)
-    val moment = if (days == 0) clock else stringResource(R.string.travel_day_time, dayLabel(days), clock)
-    return stringResource(if (arriveBy) R.string.travel_arrive_by else R.string.travel_leave_at, moment)
+    return stringResource(if (arriveBy) R.string.travel_arrive_by else R.string.travel_leave_at, formatTime(time, wallClock.zone))
+}
+
+/** The day of [time] for the second line of the chip, or null today. */
+@Composable
+private fun travelDayLabel(time: Instant): String? {
+    val wallClock = LocalTravelClock.current ?: Clock.systemDefaultZone()
+    val days = ChronoUnit.DAYS.between(LocalDate.now(wallClock), time.atZone(wallClock.zone).toLocalDate()).toInt()
+    return if (days == 0) null else dayLabel(days)
 }
 
 @Composable

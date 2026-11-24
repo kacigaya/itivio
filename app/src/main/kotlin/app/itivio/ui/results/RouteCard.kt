@@ -59,7 +59,10 @@ import app.itivio.ui.common.formatTime
  * shows the first journey and the next departures of its first line.
  */
 @Composable
-fun RouteCard(route: List<Journey>, selected: Boolean, now: Instant, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun RouteCard(
+    route: List<Journey>, selected: Boolean, now: Instant, onClick: () -> Unit, modifier: Modifier = Modifier,
+    arriveBy: Instant? = null,
+) {
     val journey = route.first()
     val scheme = MaterialTheme.colorScheme
     val secondary = if (selected) scheme.onSecondaryContainer else scheme.onSurfaceVariant
@@ -92,6 +95,9 @@ fun RouteCard(route: List<Journey>, selected: Boolean, now: Instant, onClick: ()
                     if (journey.transfers == 0) stringResource(R.string.no_transfers)
                     else pluralStringResource(R.plurals.transfers, journey.transfers, journey.transfers),
                     if (journey.walkingMeters > 0) stringResource(R.string.walk_distance, formatDistance(journey.walkingMeters)) else null,
+                    // With "Arrive by", the margin before the target time says how safe the route is.
+                    arriveBy?.let { target -> spareMinutes(journey.arrival.best, target) }
+                        ?.let { stringResource(R.string.results_spare, formatDuration(Duration.ofMinutes(it))) },
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (journey.isCancelled) scheme.error else secondary,
@@ -100,6 +106,13 @@ fun RouteCard(route: List<Journey>, selected: Boolean, now: Instant, onClick: ()
         }
     }
 }
+
+/**
+ * The whole minutes between [arrival] and an "Arrive by" [target], for "3 min to spare". Null when
+ * no minute is left, and from an hour: such a margin says nothing about the risk of the route.
+ */
+internal fun spareMinutes(arrival: Instant, target: Instant): Long? =
+    Duration.between(arrival, target).toMinutes().takeIf { it in 1 until 60 }
 
 private const val SHOWN_DEPARTURES = 3
 

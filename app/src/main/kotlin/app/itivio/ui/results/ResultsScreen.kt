@@ -238,6 +238,7 @@ private fun ResultsList(
                         route = route,
                         selected = route.any { it.id == highlighted },
                         now = now,
+                        arriveBy = state.time.takeIf { state.arriveBy },
                         onClick = {
                             onSelect(route.first().id)
                             onOpen(route.first().id)
@@ -293,6 +294,7 @@ internal fun FilterButton(
     enabled: Boolean = true,
     @DrawableRes leadingIcon: Int? = null,
     @DrawableRes trailingIcon: Int? = null,
+    supporting: String? = null,
 ) {
     FilledTonalToggleButton(
         checked = checked,
@@ -305,7 +307,15 @@ internal fun FilterButton(
             Icon(painterResource(leadingIcon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
             Spacer(Modifier.width(ButtonDefaults.IconSpacing))
         }
-        Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        if (supporting == null) {
+            Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        } else {
+            // A second, small line keeps a long label short, so the next buttons stay in view.
+            Column {
+                Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(supporting, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            }
+        }
         if (trailingIcon != null) {
             Icon(painterResource(trailingIcon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
         }

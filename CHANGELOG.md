@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Keep the results buttons in view after you pick a time on another day: the day moves to a second line. With "Arrive by", each route says how much time it leaves you, such as "3 min to spare".
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.

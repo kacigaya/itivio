@@ -192,6 +192,7 @@
     <string name="results_empty_body">Try another time, a nearby stop, or other journey options. Transit data may not cover this area.</string>
     <string name="results_from_stop">from %1$s</string>
     <string name="results_walk_only">Walk the whole way</string>
+    <string name="results_spare">%1$s to spare</string>
     <plurals name="transfers">
         <item quantity="one">%d transfer</item>
         <item quantity="other">%d transfers</item>
