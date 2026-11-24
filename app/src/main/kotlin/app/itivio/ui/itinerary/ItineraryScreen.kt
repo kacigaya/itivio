@@ -173,6 +173,7 @@ fun ItineraryScreen(
                             platformChanged = index in selection.platformChangedLegs,
                             failed = selection.failedLeg == index,
                             onSelect = { onSelectDeparture(index, it) },
+                            onRetry = { selection.failedDeparture?.let { onSelectDeparture(index, it) } },
                             onReset = { onResetTrain(index) },
                         )
                         is Leg.Street -> StreetLegItem(leg, onWalk = { onWalk(index) }.takeIf { leg.hasWalkingView })
@@ -262,7 +263,7 @@ private fun Summary(journey: Journey, now: Instant, wide: Boolean) {
 private fun TransitLegItem(
     leg: Leg.Transit, departures: List<Departure>, now: Instant, boarding: BoardingHint?, pending: Boolean,
     loading: Boolean, departuresLoading: Boolean, canSelect: Boolean, changed: Boolean, platformChanged: Boolean, failed: Boolean,
-    onSelect: (Departure) -> Unit, onReset: () -> Unit,
+    onSelect: (Departure) -> Unit, onReset: () -> Unit, onRetry: () -> Unit,
 ) {
     val (lineColor, _) = lineColors(leg.line)
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -313,7 +314,7 @@ private fun TransitLegItem(
                     enter = reveal(), exit = conceal(),
                 ) {
                     TrainDepartures(upcoming, leg.tripId, now, loading, canSelect, changed, failed, onSelect, onReset,
-                        departuresLoading = departuresLoading)
+                        departuresLoading = departuresLoading, onRetry = onRetry)
                 }
                 val stops = leg.intermediateStops
                 FlowRow(
@@ -454,6 +455,7 @@ internal fun TrainDepartures(
     loading: Boolean, canSelect: Boolean, changed: Boolean, failed: Boolean,
     onSelect: (Departure) -> Unit, onReset: () -> Unit,
     departuresLoading: Boolean = false,
+    onRetry: () -> Unit = {},
 ) {
     val scheme = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -463,11 +465,28 @@ internal fun TrainDepartures(
             if (loading) LoadingIndicator(Modifier.size(32.dp).clearAndSetSemantics {})
             if (changed) TextButton(onClick = onReset, enabled = canSelect) { Text(stringResource(R.string.itinerary_reset_train)) }
         }
-        if (loading || failed) {
-            val status = if (failed) R.string.itinerary_change_train_failed else R.string.itinerary_changing_train
-            Text(stringResource(status),
-                style = MaterialTheme.typography.bodySmall, color = if (failed) scheme.error else scheme.onSurfaceVariant,
+        if (loading) {
+            Text(stringResource(R.string.itinerary_changing_train),
+                style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 4.dp, bottom = 6.dp).semantics { liveRegion = LiveRegionMode.Polite })
+        } else if (failed) {
+            Surface(
+                color = scheme.errorContainer,
+                contentColor = scheme.onErrorContainer,
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                ) {
+                    Icon(painterResource(R.drawable.ic_warning), contentDescription = null, modifier = Modifier.size(20.dp))
+                    Text(stringResource(R.string.itinerary_change_train_failed), style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite })
+                    TextButton(onClick = onRetry, enabled = canSelect) { Text(stringResource(R.string.retry)) }
+                }
+            }
         }
         // The first and the last row have the round corners of the list. The selected row is round on all sides.
         val outer = MaterialTheme.shapes.large.topStart

@@ -29,6 +29,8 @@ import kotlinx.coroutines.launch
 data class TrainSelectionState(
     val loadingLeg: Int? = null,
     val failedLeg: Int? = null,
+    /** The train that [failedLeg] could not change to, so the rider can try it again. */
+    val failedDeparture: Departure? = null,
     val changedLegs: Set<Int> = emptySet(),
     val platformChangedLegs: Set<Int> = emptySet(),
 )
@@ -107,11 +109,11 @@ class TripTrackerViewModel(
         if (baseline.legs.getOrNull(legIndex) !is Leg.Transit) return
         if (departure.tripId.isNullOrBlank() || departure.cancelled) return
         selectionJob?.cancel()
-        selectionState.value = selectionState.value.copy(loadingLeg = legIndex, failedLeg = null)
+        selectionState.value = selectionState.value.copy(loadingLeg = legIndex, failedLeg = null, failedDeparture = null)
         selectionJob = viewModelScope.launch {
             var journey = apply(baseline, legIndex, departure) { shown?.takeIf { shownFor == planned.value } ?: planned.value }
                 ?: run {
-                    selectionState.value = selectionState.value.copy(loadingLeg = null, failedLeg = legIndex)
+                    selectionState.value = selectionState.value.copy(loadingLeg = null, failedLeg = legIndex, failedDeparture = departure)
                     return@launch
                 }
             var index = journey.nextTransit(legIndex)

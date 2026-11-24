@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Retry a failed train change in one tap. The error is now a banner with a "Try again" button that picks the same train again.
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.
