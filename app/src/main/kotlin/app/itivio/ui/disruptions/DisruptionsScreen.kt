@@ -182,7 +182,6 @@ private fun DisruptionCard(stack: List<Disruption>, now: Instant, modifier: Modi
     val scheme = MaterialTheme.colorScheme
     val severe = first.alert.level == AlertSeverity.SEVERE
     val single = stack.size == 1
-    // shortcut: one bit for each alert of the stack, so a stack of more than 31 alerts opens as a whole past the 31st.
     val opened = rememberSaveable(saver = listSaver(save = { it.toList() }, restore = { it.toMutableStateList() })) { mutableStateListOf<Int>() }
     var headerClipped by remember { mutableStateOf(false) }
     val expandable = single && plainDescription(first.alert.description).let { it.isNotEmpty() && it != first.alert.header }
