@@ -86,6 +86,12 @@ import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Button
+import app.itivio.ui.common.STACK_FONT_SCALE
+import androidx.compose.ui.platform.LocalDensity
 
 // Drag handle, search row, shortcut chips, title, and the first departures.
 val ExplorePeekHeight = 344.dp
@@ -339,22 +345,52 @@ private fun LocateButton(locationGranted: Boolean, onRequestLocation: () -> Unit
     }
 }
 
-/** Without location the sheet explains the app and asks for access; nearby departures need it. */
+/**
+ * Without location, one short card asks for access at the top of the sheet, with its button on
+ * the same line, so the button shows at the peek height. Large text stacks the button below.
+ */
 @Composable
 private fun Intro(onRequestLocation: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val stacked = LocalDensity.current.fontScale >= STACK_FONT_SCALE
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        Text(stringResource(R.string.explore_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-        Text(
-            stringResource(R.string.explore_body),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        FilledTonalButton(onClick = onRequestLocation, modifier = Modifier.padding(top = 8.dp)) {
-            Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
-            Text(stringResource(R.string.allow_location), modifier = Modifier.padding(start = 8.dp))
+        Surface(color = scheme.primaryContainer, contentColor = scheme.onPrimaryContainer, shape = MaterialTheme.shapes.largeIncreased) {
+            val text: @Composable () -> Unit = {
+                Text(
+                    stringResource(R.string.explore_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.semantics { heading() },
+                )
+                Text(stringResource(R.string.explore_body), style = MaterialTheme.typography.bodySmall)
+            }
+            val button: @Composable () -> Unit = {
+                Button(onClick = onRequestLocation) { Text(stringResource(R.string.allow_location)) }
+            }
+            if (stacked) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    text()
+                    button()
+                }
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+                ) {
+                    Column(Modifier.weight(1f)) { text() }
+                    button()
+                }
+            }
         }
+        Text(
+            stringResource(R.string.explore_search_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = scheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 8.dp),
+        )
     }
 }

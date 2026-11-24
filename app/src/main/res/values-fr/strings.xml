@@ -38,8 +38,9 @@
     <string name="locate_me">Afficher ma position</string>
 
     <!-- Explore -->
-    <string name="explore_title">Préparez un trajet</string>
-    <string name="explore_body">Cherchez un arrêt, une adresse ou un lieu pour voir les itinéraires en transports en commun. Autorisez la localisation pour voir les départs près de vous.</string>
+    <string name="explore_title">Voir les départs près de vous</string>
+    <string name="explore_body">Prochains départs des arrêts à moins de 400 m.</string>
+    <string name="explore_search_hint">Ou cherchez un arrêt, une adresse ou un lieu.</string>
 
     <!-- Nearby -->
     <string name="home_departures">Départs</string>
