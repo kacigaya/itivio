@@ -180,20 +180,21 @@ The departure board is one card with the rows of the nearby departures: one row 
 ## Route card
 
 ```
-∙∙∙ 4 › [U2] › [M41]                  26 min
+12:05 – 12:31                         26 min
+∙∙∙ 4 › [U2] › [M41]
 ∙∙∙∙  ━━━━━━━━  ∙∙∙  ━━━━━━━━
 (•) 4 min  then 9 · 14 min  from Alexanderplatz
-Arrive at 12:31 · 1 transfer · 450 m walk
+1 transfer · 450 m walk
 ⚠ Diversion at Potsdamer Platz        [+1]
 ```
 
 A card is a route, not one departure. Journeys that use the same lines, boarded at the same stations, share one card. A journey with no line, such as a walk, groups by its modes. The journeys of a route are in order of departure, and the first one stands for the route: its legs, duration, facts, and alerts show on the card, it decides the place of the card in the sort, and a tap opens it. The card of the journey on the map uses `secondaryContainer`. It has no outline.
 
-The leg chain comes first, with the duration at the end. The leg chain shows a badge for each line. A walk is an icon and its minutes, with no container. A first or last walk shows from 2 min. A walk between two lines shows from 5 min. The itinerary shows all walks. The itinerary summary uses the same chain.
+The departure and arrival clock times come first, heavy, with the duration at the end of the same line: a rider plans by "leave at" and "arrive by". When both do not fit, the duration moves below the times. The leg chain follows on its own line. The leg chain shows a badge for each line. A walk is an icon and its minutes, with no container. A first or last walk shows from 2 min. A walk between two lines shows from 5 min. The itinerary shows all walks. The itinerary summary uses the same chain.
 
 A bar below places each leg in proportion to its time: a line in its color (`secondary` without one), a walk as dots in the muted text color, a wait as a gap. The bar is for the eye only; the leg chain gives the same facts to a screen reader.
 
-The next row gives the next departures of the first line, from the journeys of the route, up to three: a countdown for the first one, the same as the nearby departures (a `tertiaryContainer` pill with the live icon for a live time), then "then 9 · 14 min", then the boarding stop. A departure an hour or more away, or gone, shows its clock time. A screen reader also gets the clock time of the first departure. The departures come only from the journeys of one plan request, so a route can show only one. The facts line starts with the arrival time of the first journey ("Arrive at 12:31"), then the transfers and the walking distance. The card shows no departure clock time of the trip; the departures row and the itinerary have it.
+The next row gives the next departures of the first line, from the journeys of the route, up to three: a countdown for the first one, the same as the nearby departures (a `tertiaryContainer` pill with the live icon for a live time), then "then 9 · 14 min", then the boarding stop. A departure an hour or more away, or gone, shows its clock time. A screen reader also gets the clock time of the first departure. The departures come only from the journeys of one plan request, so a route can show only one. The facts line gives the transfers and the walking distance.
 
 The alert line shows the first alert of the journey on one line, and the number of the others on an `errorContainer` pill. It shows only when the journey has an alert.
 

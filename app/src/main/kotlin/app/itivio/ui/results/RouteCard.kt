@@ -75,20 +75,33 @@ fun RouteCard(route: List<Journey>, selected: Boolean, now: Instant, onClick: ()
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LegChain(journey, Modifier.weight(1f))
+            // The clock times lead: a rider plans by "leave at, arrive by" first. They move above the
+            // duration's line only when both do not fit.
+            val departure = formatTime(journey.departure.best, journey.legs.first().from.zone)
+            val arrival = formatTime(journey.arrival.best, journey.legs.last().to.zone)
+            FlowRow(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                itemVerticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    stringResource(R.string.time_range, departure, arrival),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.padding(end = 12.dp),
+                )
                 Text(
                     amountText(formatDuration(journey.duration), unitScale = 0.7f),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                 )
             }
+            LegChain(journey)
             LegBar(journey, walkColor = secondary)
             NextDepartures(route, now, secondary)
             Text(
                 listOfNotNull(
                     if (journey.isCancelled) stringResource(R.string.cancelled) else null,
-                    stringResource(R.string.walk_arrive, formatTime(journey.arrival.best, journey.legs.last().to.zone)),
                     if (journey.transfers == 0) stringResource(R.string.no_transfers)
                     else pluralStringResource(R.plurals.transfers, journey.transfers, journey.transfers),
                     if (journey.walkingMeters > 0) stringResource(R.string.walk_distance, formatDistance(journey.walkingMeters)) else null,
