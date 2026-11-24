@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Say how far you are from the route when you walk off it. The off-route banner also gives "Plan a new route" its own line, so the text no longer wraps into a narrow column.
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.
