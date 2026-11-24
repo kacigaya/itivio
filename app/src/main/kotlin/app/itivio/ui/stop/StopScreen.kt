@@ -33,6 +33,18 @@ import app.itivio.ui.common.clockMinutesUntil
 import app.itivio.ui.nearby.DeparturesCard
 import app.itivio.ui.nearby.DeparturesCardSkeleton
 import java.time.Instant
+import app.itivio.ui.itinerary.AlertBanner
+import app.itivio.ui.common.LineBadge
+import app.itivio.domain.Line
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.FilterChip
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.layout.Box
 
 val StopPeekHeight = 360.dp
 
@@ -52,6 +64,7 @@ fun StopScreen(
     onToggleFavorite: () -> Unit,
     onRetry: () -> Unit,
 ) {
+    var selectedLine by rememberSaveable { mutableStateOf<String?>(null) }
     MapPanel(
         wide = wide,
         peekHeight = StopPeekHeight,
@@ -109,10 +122,50 @@ fun StopScreen(
                             )
                         }
                     } else {
-                        item(key = "departures") { DeparturesCard(upcoming, now, Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
+                        val alerts = upcoming.flatMap { it.alerts }.distinct()
+                        if (alerts.isNotEmpty()) {
+                            item(key = "alerts") { Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { AlertBanner(alerts) } }
+                        }
+                        val lines = upcoming.distinctBy { it.line.key() }
+                        val selected = selectedLine?.takeIf { key -> lines.any { it.line.key() == key } }
+                        // A filter helps only at a stop with more than one line.
+                        if (lines.size > 1) {
+                            item(key = "lines") { LineFilter(lines, selected, onSelect = { selectedLine = it }) }
+                        }
+                        val shown = if (selected == null) upcoming else upcoming.filter { it.line.key() == selected }
+                        item(key = "departures") { DeparturesCard(shown, now, Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) }
                     }
                 }
             }
+        }
+    }
+}
+
+private fun Line.key(): String = id ?: name
+
+/**
+ * Filter chips for the lines of the board: "All", then one chip for each line with its badge.
+ * [selected] is the key of the shown line, or null for all.
+ */
+@Composable
+private fun LineFilter(lines: List<Departure>, selected: String?, onSelect: (String?) -> Unit) {
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        modifier = Modifier.padding(vertical = 4.dp),
+    ) {
+        item(key = "all") {
+            FilterChip(selected = selected == null, onClick = { onSelect(null) }, label = { Text(stringResource(R.string.stop_all_lines)) })
+        }
+        items(lines, key = { it.line.key() }) { departure ->
+            val key = departure.line.key()
+            val name = stringResource(R.string.stop_line_filter, departure.line.name)
+            FilterChip(
+                selected = selected == key,
+                onClick = { onSelect(if (selected == key) null else key) },
+                label = { LineBadge(departure.line, departure.mode) },
+                modifier = Modifier.semantics { contentDescription = name },
+            )
         }
     }
 }

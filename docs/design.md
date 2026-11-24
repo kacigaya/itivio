@@ -80,7 +80,7 @@ The preview uses the easing of the system back animations, `(0.1, 0.1, 0, 1)`. T
 | Search | Full-screen search view: origin and destination fields, swap button, saved places or suggestions list | Same, in the side pane |
 | Results | Sheet with a travel time button, an options button, sort buttons, and route cards, one card for each route. The row of buttons scrolls to the two edges of the sheet. The travel time button is the only control of the time: the results have no "earlier" or "later" buttons. Map shows the selected route | Side pane with route cards |
 | Itinerary | Sheet with leg timeline. Map fits the route | Side pane timeline |
-| Stop | Sheet with the stop name, "Directions to here", the favorite toggle, and the departures. Map centers on the stop | Side pane |
+| Stop | Sheet with the stop name, "Directions to here", the favorite toggle, the alerts of the stop in one banner, filter chips for its lines ("All" and one chip for each line, when it has more than one), and the departures. Map centers on the stop | Side pane |
 | Walking | Instruction card at the top. Sheet with the remaining time, distance, and arrival, then all instructions. Map follows the user | Instruction card above the side pane |
 
 ## Navigation

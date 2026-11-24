@@ -381,7 +381,11 @@ open class ScreenshotTest {
         StopScreen(
             wide = false,
             name = "S+U Alexanderplatz",
-            departures = LoadState.Ready(sampleDepartures.flatMap { it.departures }),
+            departures = LoadState.Ready(
+                sampleDepartures.flatMap { it.departures }.mapIndexed { index, departure ->
+                    if (index == 2) departure.copy(alerts = listOf(Alert("S5: no service to Strausberg Nord until Sunday", ""))) else departure
+                },
+            ),
             now = t0,
             favorite = true,
             onBack = {}, onDirections = {}, onToggleFavorite = {}, onRetry = {},

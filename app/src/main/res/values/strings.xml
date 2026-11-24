@@ -64,6 +64,8 @@
     <string name="stop_directions">Directions to here</string>
     <string name="stop_favorite">Favorite</string>
     <string name="stop_departures">Departures</string>
+    <string name="stop_all_lines">All lines</string>
+    <string name="stop_line_filter">Line %1$s</string>
     <string name="stop_empty_title">No upcoming departures</string>
     <string name="stop_empty_body">The timetable has no departures from this stop soon, or it does not cover this stop.</string>
 
