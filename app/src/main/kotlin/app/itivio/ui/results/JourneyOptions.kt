@@ -13,6 +13,7 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -78,7 +79,7 @@ fun JourneyOptionsDialog(options: JourneyOptions, onDismiss: () -> Unit, onConfi
                 Text(stringResource(R.string.options_reset))
             }
             TextButton(onClick = { close(onDismiss) }) { Text(stringResource(R.string.cancel)) }
-            TextButton(onClick = { close { onConfirm(draft) } }) { Text(stringResource(R.string.done)) }
+            Button(onClick = { close { onConfirm(draft) } }) { Text(stringResource(R.string.done)) }
         },
         fieldsArrangement = Arrangement.spacedBy(8.dp),
     ) { JourneyOptionsFields(draft, onChange = { draft = it }) }

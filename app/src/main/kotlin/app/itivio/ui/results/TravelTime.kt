@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.TimePickerDefaults
@@ -120,7 +121,7 @@ fun TravelTimeDialog(
             )
             TextButton(onClick = { close { onConfirm(null, false) } }) { Text(stringResource(R.string.travel_now)) }
             TextButton(onClick = { close(onDismiss) }) { Text(stringResource(R.string.cancel)) }
-            TextButton(onClick = {
+            Button(onClick = {
                 val picked = today.plusDays(day.toLong()).atTime(clock.hour, clock.minute).atZone(zone).toInstant()
                 close { onConfirm(picked, arrive) }
             }) { Text(stringResource(R.string.done)) }
