@@ -253,6 +253,8 @@
         <item quantity="other">%d minutes before</item>
     </plurals>
     <string name="reminder_none">No reminder</string>
+    <string name="reminder_allow_exact">Allow exact times</string>
+    <string name="reminder_needs_permission">Android shows no reminder without the notification permission. Turn it on in the settings.</string>
     <string name="itinerary_arrive_in">Arrive in %1$s</string>
     <string name="itinerary_current_step">Current step</string>
 

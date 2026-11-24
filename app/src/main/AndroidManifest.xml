@@ -6,9 +6,11 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <!-- Departure reminders: the notification, and an exact time where Android allows it. -->
+    <!-- Departure reminders: the notification, an exact time where Android allows it, and the
+         boot broadcast that sets a reminder again after a restart. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!--
         allowBackup=false covers API < 31; the extraction rules cover device transfer on 31+.
@@ -39,5 +41,12 @@
         <receiver
             android:name=".data.reminders.ReminderReceiver"
             android:exported="false" />
+        <receiver
+            android:name=".data.reminders.ReminderBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

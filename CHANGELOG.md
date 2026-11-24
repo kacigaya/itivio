@@ -5,7 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
-- Get a reminder when it is time to leave. "Remind me" on the itinerary offers when to leave, or 2, 5, or 10 minutes before. While the itinerary is open, the reminder moves with live delays.
+- Get a reminder when it is time to leave. "Remind me" on the itinerary offers when to leave, or 2, 5, or 10 minutes before. While the itinerary is open, the reminder moves with live delays, and it stays set while the app is closed. The reminder is kept on the device and is set again after a restart.
+- The app now asks for two more permissions, both for the reminder and both one time only. "Notifications" is what makes a reminder visible. "Alarms and reminders" lets Android show it at the exact minute; if you decline, the reminder can come a few minutes late. The app needs no permission to send you anything from a server.
 
 ## 0.14.2
 

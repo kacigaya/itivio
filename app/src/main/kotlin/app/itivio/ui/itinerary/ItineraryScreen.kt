@@ -143,6 +143,12 @@ fun ItineraryScreen(
     reminder: Reminder? = null,
     /** Sets the reminder with a lead time in minutes, or removes it with null. Null hides the button. */
     onRemind: ((Int?) -> Unit)? = null,
+    /** False when Android will deliver the reminder late, because the app may not set exact alarms. */
+    exactAlarmsAllowed: Boolean = true,
+    /** Opens the Android screen where the rider allows exact alarms. */
+    onAllowExactAlarms: (() -> Unit)? = null,
+    /** Why Android shows no reminder, when the notification permission is off. */
+    reminderNotice: String? = null,
 ) {
     val currentLeg = journey.currentLegIndex(now)
     val pending = boarding == null || journey.legs.withIndex().any { (index, leg) ->
@@ -162,7 +168,9 @@ fun ItineraryScreen(
             contentPadding = PaddingValues(start = ListMargin, end = ListMargin, top = if (wide) 8.dp else 0.dp, bottom = ListMargin),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            item(key = "summary") { Summary(journey, now, wide, reminder, onRemind.takeIf { journey.departure.best > now }) }
+            item(key = "summary") {
+                Summary(journey, now, wide, reminder, onRemind.takeIf { journey.departure.best > now }, exactAlarmsAllowed, onAllowExactAlarms, reminderNotice)
+            }
             if (journey.missedConnectionIndex != null) {
                 item(key = "missed_connection") {
                     Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.large) {
@@ -221,7 +229,16 @@ private fun Step(current: Boolean, card: Boolean, content: @Composable () -> Uni
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Summary(journey: Journey, now: Instant, wide: Boolean, reminder: Reminder?, onRemind: ((Int?) -> Unit)?) {
+private fun Summary(
+    journey: Journey,
+    now: Instant,
+    wide: Boolean,
+    reminder: Reminder?,
+    onRemind: ((Int?) -> Unit)?,
+    exactAlarmsAllowed: Boolean,
+    onAllowExactAlarms: (() -> Unit)?,
+    reminderNotice: String?,
+) {
     val scheme = MaterialTheme.colorScheme
     val departure = formatTime(journey.departure.best, journey.legs.first().from.zone)
     val arrival = formatTime(journey.arrival.best, journey.legs.last().to.zone)
@@ -264,17 +281,29 @@ private fun Summary(journey: Journey, now: Instant, wide: Boolean, reminder: Rem
                 }
             }
             LegChain(journey)
-            onRemind?.let { ReminderButton(reminder, journey.legs.first().from.zone, it) }
+            onRemind?.let {
+                ReminderButton(reminder, journey.legs.first().from.zone, exactAlarmsAllowed, onAllowExactAlarms, it)
+                reminderNotice?.let { notice ->
+                    Text(notice, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
         }
     }
 }
 
 /**
  * Sets a reminder to leave: a menu of lead times. The button shows the time of the reminder once
- * it is set. The reminder follows the live times while the itinerary is on screen.
+ * it is set. The reminder follows the live times while the itinerary is on screen. When Android
+ * allows no exact alarms, the menu offers the screen where the rider can allow them.
  */
 @Composable
-private fun ReminderButton(reminder: Reminder?, zone: ZoneId?, onRemind: (Int?) -> Unit) {
+private fun ReminderButton(
+    reminder: Reminder?,
+    zone: ZoneId?,
+    exactAlarmsAllowed: Boolean,
+    onAllowExactAlarms: (() -> Unit)?,
+    onRemind: (Int?) -> Unit,
+) {
     var open by remember { mutableStateOf(false) }
     Box {
         FilledTonalButton(onClick = { open = true }, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
@@ -304,6 +333,13 @@ private fun ReminderButton(reminder: Reminder?, zone: ZoneId?, onRemind: (Int?) 
                 DropdownMenuItem(text = { Text(stringResource(R.string.reminder_none)) }, onClick = {
                     open = false
                     onRemind(null)
+                })
+            }
+            // Android 14 and later deny exact alarms by default, so the reminder can come late.
+            if (!exactAlarmsAllowed && onAllowExactAlarms != null) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.reminder_allow_exact)) }, onClick = {
+                    open = false
+                    onAllowExactAlarms()
                 })
             }
         }

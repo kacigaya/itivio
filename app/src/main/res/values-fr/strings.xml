@@ -246,6 +246,8 @@
         <item quantity="other">%d minutes avant</item>
     </plurals>
     <string name="reminder_none">Pas de rappel</string>
+    <string name="reminder_allow_exact">Autoriser l’heure exacte</string>
+    <string name="reminder_needs_permission">Android n’affiche aucun rappel sans l’autorisation de notification. Activez-la dans les réglages.</string>
     <string name="itinerary_arrive_in">Arrivée dans %1$s</string>
     <string name="itinerary_current_step">Étape en cours</string>
 

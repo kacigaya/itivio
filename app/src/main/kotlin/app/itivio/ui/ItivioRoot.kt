@@ -121,6 +121,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.rememberLauncherForActivityResult
 import android.os.Build
 import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.NotificationManagerCompat
 
 @Serializable data object ExploreRoute : NavKey
 @Serializable data class StopRoute(val stopId: String, val name: String, val latitude: Double, val longitude: Double) : NavKey
@@ -158,8 +163,19 @@ fun ItivioRoot(
     val wide = isWideLayout()
     val reminders = koinInject<ReminderScheduler>()
     val reminder by reminders.active.collectAsStateWithLifecycle()
-    // A reminder without this permission is set, but Android shows no notification.
-    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    val context = LocalContext.current
+    // A reminder without the notification permission would show nothing, so the app asks first and
+    // sets no reminder when the rider says no.
+    var waitingReminder by remember { mutableStateOf<Pair<Journey, Int>?>(null) }
+    var reminderBlocked by remember { mutableStateOf(false) }
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        val waiting = waitingReminder
+        waitingReminder = null
+        reminderBlocked = !granted
+        if (granted && waiting != null) reminders.schedule(waiting.first, waiting.second)
+    }
+    val notificationsAllowed =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || NotificationManagerCompat.from(context).areNotificationsEnabled()
     val userLocation = koinInject<UserLocation>()
     val top = backStack.last()
 
@@ -444,17 +460,32 @@ fun ItivioRoot(
                                 ItineraryScreen(
                                     wide = wide,
                                     journey = visible,
-                                    reminder = reminder?.takeIf { it.journeyId == visible.id },
+                                    reminder = reminder?.takeIf { it.journeyId == visible.id && it.at.isAfter(now) },
                                     onRemind = { lead ->
-                                        if (lead == null) {
-                                            reminders.cancel()
-                                        } else {
-                                            reminders.schedule(visible, lead)
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        when {
+                                            lead == null -> {
+                                                reminderBlocked = false
+                                                reminders.cancel()
+                                            }
+                                            notificationsAllowed -> {
+                                                reminderBlocked = false
+                                                reminders.schedule(visible, lead)
+                                            }
+                                            else -> {
+                                                waitingReminder = visible to lead
                                                 notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                                             }
                                         }
                                     },
+                                    exactAlarmsAllowed = reminders.canScheduleExact(),
+                                    onAllowExactAlarms = {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                            val settings = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                                                .setData(Uri.parse("package:${context.packageName}"))
+                                            context.startActivity(settings)
+                                        }
+                                    },
+                                    reminderNotice = if (reminderBlocked) stringResource(R.string.reminder_needs_permission) else null,
                                     now = now,
                                     boarding = boarding,
                                     lineTimes = lineTimes.times.collectAsStateWithLifecycle().value,

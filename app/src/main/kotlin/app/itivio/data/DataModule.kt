@@ -25,6 +25,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import app.itivio.data.reminders.AlarmReminderScheduler
+import app.itivio.data.reminders.DataStoreReminderStorage
 import app.itivio.domain.ReminderScheduler
 
 val dataModule = module {
@@ -45,7 +46,7 @@ val dataModule = module {
     single<JourneyOptionsRepository> { DataStoreJourneyOptionsRepository(get()) }
     single<SettingsRepository> { DataStoreSettingsRepository(get()) }
     single<AppData> { LocalAppData(get<PlacesDatabase>().places(), get()) }
-    single<ReminderScheduler> { AlarmReminderScheduler(androidContext()) }
+    single<ReminderScheduler> { AlarmReminderScheduler(androidContext(), DataStoreReminderStorage(get())) }
     single<BoardingRepository> {
         val assets = androidContext().assets
         IdfmBoardingRepository(
