@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Say which way the train goes in "Where to board", with a "Front →" label under the nose of the drawing. "Best exit" now uses the same card, so the two hints read together.
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.
