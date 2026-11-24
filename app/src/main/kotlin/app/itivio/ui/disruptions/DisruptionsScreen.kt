@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalUriHandler
@@ -143,8 +144,8 @@ private fun LazyListScope.group(key: String, title: Int, disruptions: List<Disru
 /**
  * A disruption stack in one short row: the effect, the lines, the first header on one line, and
  * the stops with the time period. A tap opens the full card in place, with a button to close it.
+ * The full card keeps its own alert expansion, so closing it starts again with every alert shut.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun CompactDisruption(stack: List<Disruption>, now: Instant, modifier: Modifier = Modifier) {
     var open by rememberSaveable { mutableStateOf(false) }
@@ -159,12 +160,11 @@ private fun CompactDisruption(stack: List<Disruption>, now: Instant, modifier: M
     }
     val first = stack.first()
     val scheme = MaterialTheme.colorScheme
-    val severe = first.alert.level == AlertSeverity.SEVERE
     Surface(
-        onClick = { open = true },
         color = scheme.surfaceContainerHigh,
         shape = MaterialTheme.shapes.largeIncreased,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().clip(MaterialTheme.shapes.largeIncreased)
+            .clickable(onClickLabel = stringResource(R.string.disruption_show_more)) { open = true },
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -172,23 +172,7 @@ private fun CompactDisruption(stack: List<Disruption>, now: Instant, modifier: M
             modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
         ) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    itemVerticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val effect = stringResource(first.alert.effect.label())
-                    if (severe) Tag(R.drawable.ic_warning, effect, color = scheme.error, contentColor = scheme.onError)
-                    else Tag(if (first.alert.level >= AlertSeverity.WARNING) R.drawable.ic_warning else R.drawable.ic_info, effect)
-                    first.lines.forEach { LineBadge(it.line, it.mode) }
-                    if (stack.size > 1) {
-                        Text(
-                            pluralStringResource(R.plurals.disruption_count, stack.size, stack.size),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                }
+                StackHeader(stack, 4.dp)
                 Text(first.alert.header, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
                 val place = listOfNotNull(first.stops.joinToString(", ").ifEmpty { null }, periodText(first.alert.impactPeriods, now))
@@ -198,6 +182,35 @@ private fun CompactDisruption(stack: List<Disruption>, now: Instant, modifier: M
                 }
             }
             Icon(painterResource(R.drawable.ic_expand_more), contentDescription = null, tint = scheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** The effect, the lines, and the alert count of a stack, shown once for the whole stack. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun StackHeader(stack: List<Disruption>, spacing: Dp) {
+    val first = stack.first()
+    val scheme = MaterialTheme.colorScheme
+    val severe = first.alert.level == AlertSeverity.SEVERE
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        val effect = stringResource(first.alert.effect.label())
+        when {
+            severe -> Tag(R.drawable.ic_warning, effect, color = scheme.error, contentColor = scheme.onError)
+            first.alert.level >= AlertSeverity.WARNING -> Tag(R.drawable.ic_warning, effect)
+            else -> Tag(R.drawable.ic_info, effect)
+        }
+        first.lines.forEach { LineBadge(it.line, it.mode) }
+        if (stack.size > 1) {
+            Text(
+                pluralStringResource(R.plurals.disruption_count, stack.size, stack.size),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+            )
         }
     }
 }
@@ -271,26 +284,7 @@ private fun DisruptionCard(stack: List<Disruption>, now: Instant, modifier: Modi
                         .then(if (single) Modifier.clickable(enabled = expandable || headerClipped || isOpen(0), onClickLabel = openLabel(isOpen(0))) { toggle(0) } else Modifier)
                         .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = if (severe) 16.dp else 0.dp),
                 ) {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        itemVerticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        val effect = stringResource(first.alert.effect.label())
-                        when {
-                            severe -> Tag(R.drawable.ic_warning, effect, color = scheme.error, contentColor = scheme.onError)
-                            first.alert.level >= AlertSeverity.WARNING -> Tag(R.drawable.ic_warning, effect)
-                            else -> Tag(R.drawable.ic_info, effect)
-                        }
-                        first.lines.forEach { LineBadge(it.line, it.mode) }
-                        if (!single) {
-                            Text(
-                                pluralStringResource(R.plurals.disruption_count, stack.size, stack.size),
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                    }
+                    StackHeader(stack, 6.dp)
                     if (single) Header(first.alert.header, isOpen(0)) { headerClipped = it }
                 }
             }
