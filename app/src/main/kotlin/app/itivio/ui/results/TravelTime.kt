@@ -2,6 +2,11 @@ package app.itivio.ui.results
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
@@ -42,6 +47,14 @@ import java.time.temporal.ChronoUnit
 
 /** Trips can be planned this many days ahead; longer ranges rarely have reliable timetables. */
 private const val DAYS_AHEAD = 7
+private const val MINUTES_PER_DAY = 24 * 60
+private val TIME_STEPS = listOf(15, 30, 60)
+
+/** The day and the minute of the day [minutes] after [minuteOfDay] on [day], or null past the last day of the picker. */
+internal fun shiftTime(day: Int, minuteOfDay: Int, minutes: Int): Pair<Int, Int>? {
+    val total = day * MINUTES_PER_DAY + minuteOfDay + minutes
+    return (total / MINUTES_PER_DAY to total % MINUTES_PER_DAY).takeIf { it.first < DAYS_AHEAD }
+}
 
 /** The device clock in the app; screenshot tests supply a fixed date and time. */
 internal val LocalTravelClock = staticCompositionLocalOf<Clock?> { null }
@@ -152,6 +165,36 @@ private fun TravelTimeFields(
     }
     val shapes = TimePickerDefaults.shapes()
     if (displayMode == TimePickerDisplayMode.Scroll) TimeScroll(clock, shapes) else TimeInput(clock, shapes)
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+    ) {
+        TIME_STEPS.forEach { step ->
+            val next = shiftTime(day, clock.hour * 60 + clock.minute, step)
+            val description = if (step % 60 == 0) {
+                pluralStringResource(R.plurals.travel_add_hours, step / 60, step / 60)
+            } else {
+                pluralStringResource(R.plurals.travel_add_minutes, step, step)
+            }
+            SuggestionChip(
+                onClick = {
+                    next?.let { (nextDay, minute) ->
+                        onDay(nextDay)
+                        clock.hour = minute / 60
+                        clock.minute = minute % 60
+                    }
+                },
+                enabled = next != null,
+                label = {
+                    Text(
+                        if (step % 60 == 0) stringResource(R.string.travel_plus_hours, step / 60)
+                        else stringResource(R.string.travel_plus_minutes, step),
+                    )
+                },
+                modifier = Modifier.semantics { contentDescription = description },
+            )
+        }
+    }
 }
 
 private val TimePickerDisplayModeSaver = Saver<TimePickerDisplayMode, Boolean>(
