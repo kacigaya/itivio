@@ -5,6 +5,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Make the disruptions list shorter and clearer. Alerts with the same lines and effect, such as works in two periods, share one card. Long titles show 2 lines until you tap. "More information" now names the website it opens.
+
 ## 0.14.2
 
 Beta prerelease for Android 8.0 and later. It updates 0.14.1 in place.
