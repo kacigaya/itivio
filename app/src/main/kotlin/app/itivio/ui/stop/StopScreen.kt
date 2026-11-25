@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -122,9 +123,9 @@ fun StopScreen(
                             )
                         }
                     } else {
-                        val lines = upcoming.distinctBy { it.line.key() }
-                        val selected = selectedLine?.takeIf { key -> lines.any { it.line.key() == key } }
-                        val shown = if (selected == null) upcoming else upcoming.filter { it.line.key() == selected }
+                        val lines = upcoming.distinctBy { it.lineKey() }
+                        val selected = selectedLine?.takeIf { key -> lines.any { it.lineKey() == key } }
+                        val shown = if (selected == null) upcoming else upcoming.filter { it.lineKey() == selected }
                         val alerts = shown.flatMap { it.alerts }.distinct()
                         if (alerts.isNotEmpty()) {
                             item(key = "alerts") { Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) { AlertBanner(alerts) } }
@@ -141,7 +142,7 @@ fun StopScreen(
     }
 }
 
-private fun Line.key(): String = id ?: "$name|$mode"
+private fun Departure.lineKey(): String = line.id ?: "${line.name}|$mode"
 
 /**
  * Filter chips for the lines of the board: "All", then one chip for each line with its badge.
@@ -157,8 +158,8 @@ private fun LineFilter(lines: List<Departure>, selected: String?, onSelect: (Str
         item(key = "all") {
             FilterChip(selected = selected == null, onClick = { onSelect(null) }, label = { Text(stringResource(R.string.stop_all_lines)) })
         }
-        items(lines, key = { it.line.key() }) { departure ->
-            val key = departure.line.key()
+        items(lines, key = { it.lineKey() }) { departure ->
+            val key = departure.lineKey()
             val name = stringResource(R.string.stop_line_filter, departure.line.name)
             FilterChip(
                 selected = selected == key,
