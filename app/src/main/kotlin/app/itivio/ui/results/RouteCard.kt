@@ -79,6 +79,7 @@ fun RouteCard(route: List<Journey>, selected: Boolean, now: Instant, onClick: ()
             // duration's line only when both do not fit.
             val departure = formatTime(journey.departure.best, journey.legs.first().from.zone)
             val arrival = formatTime(journey.arrival.best, journey.legs.last().to.zone)
+            val timeRangeDescription = stringResource(R.string.route_time_range_description, departure, arrival)
             FlowRow(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 itemVerticalAlignment = Alignment.CenterVertically,
@@ -86,10 +87,11 @@ fun RouteCard(route: List<Journey>, selected: Boolean, now: Instant, onClick: ()
             ) {
                 Text(
                     stringResource(R.string.time_range, departure, arrival),
-                    contentDescription = stringResource(R.string.route_time_range_description, departure, arrival),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.padding(end = 12.dp),
+                    modifier = Modifier
+                        .padding(end = 12.dp)
+                        .clearAndSetSemantics { contentDescription = timeRangeDescription },
                 )
                 Text(
                     amountText(formatDuration(journey.duration), unitScale = 0.7f),
