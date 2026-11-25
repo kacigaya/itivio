@@ -40,6 +40,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.clickable
@@ -296,13 +298,13 @@ internal fun FilterButton(
     @DrawableRes trailingIcon: Int? = null,
     supporting: String? = null,
 ) {
+    val description = if (supporting != null) stringResource(R.string.filter_button_description, label, supporting) else null
     FilledTonalToggleButton(
         checked = checked,
-        modifier = Modifier.semantics { if (supporting != null) contentDescription = "$label, $supporting" },
+        modifier = modifier.semantics { description?.let { contentDescription = it } },
         onCheckedChange = { onClick() },
         enabled = enabled,
         contentPadding = if (leadingIcon != null) ButtonDefaults.ButtonWithIconContentPadding else ButtonDefaults.ContentPadding,
-        modifier = modifier,
     ) {
         if (leadingIcon != null) {
             Icon(painterResource(leadingIcon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
