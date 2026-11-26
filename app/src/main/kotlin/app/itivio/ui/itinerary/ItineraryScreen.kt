@@ -242,12 +242,17 @@ private fun Summary(journey: Journey, now: Instant, wide: Boolean) {
                     Tag(R.drawable.ic_directions_walk, distance, Modifier.clearAndSetSemantics { contentDescription = description })
                 }
             }
-            Row(verticalAlignment = Alignment.Bottom) {
+            // The times move below the duration when both do not fit, so "26 min" never breaks.
+            FlowRow(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                itemVerticalAlignment = Alignment.Bottom,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text(
                     amountText(formatDuration(journey.duration), unitScale = 0.5f),
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.weight(1f).semantics { heading() },
+                    modifier = Modifier.padding(end = 12.dp).semantics { heading() },
                 )
                 val range = stringResource(R.string.time_range, departure, arrival)
                 Row(
