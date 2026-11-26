@@ -29,7 +29,7 @@ OUT = Path("assets/readme")
 
 THEMES = {
     "light": {
-        "banner": "#0C6B59",
+        "banner": "#1B6B5A",
         "primary": "#0C6B59", "on_primary": "#FFFFFF",
         "primary_container": "#A1F2DB", "on_primary_container": "#005142",
         "secondary_container": "#CDE9DE", "on_secondary_container": "#334C44",
@@ -37,7 +37,7 @@ THEMES = {
         "on_surface": "#171D1B", "on_surface_variant": "#3F4945", "outline_variant": "#BFC9C4",
     },
     "dark": {
-        "banner": "#005142",
+        "banner": "#1B6B5A",
         "primary": "#85D6BF", "on_primary": "#00382D",
         "primary_container": "#005142", "on_primary_container": "#A1F2DB",
         "secondary_container": "#334C44", "on_secondary_container": "#CDE9DE",
