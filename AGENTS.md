@@ -63,6 +63,12 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 - `site/app/fonts/google-sans-flex.woff2` is Google Sans Flex instanced to `ROND=100`, `wdth=100`, `opsz=18`, `slnt=0`, weights 300 to 800, and subset to Latin (fontTools `varLib.instancer` and `pyftsubset`). `site/public/demo.mp4` is the `demo.mp4` asset of release v0.10.1, scaled to 1280x720 with ffmpeg (H.264 CRF 24, AAC 96 kbit/s, `+faststart`). `demo-poster.webp` is its frame at 13.5 s. Make them again when the demo changes. The homepage hero loops only the light demo part of `demo.mp4` (3.5 s to 19 s): `demo.tsx` skips the dark brand cards at the start and end of the video, which read as an empty box on the dark site theme.
 - `npm run build` and `npm run dev` copy `assets/logo.svg` into `site/public/`.
 
+## README images
+
+- `tools/readme-art.py` writes every SVG in `assets/readme/light/` and `assets/readme/dark/` (banner, buttons, badges, section headings, feature cards) and deletes the old ones there. Run it from the repository root with `uv run tools/readme-art.py`; uv installs its one dependency, `uharfbuzz`, from the script header.
+- GitHub shows README SVGs as images, which cannot load fonts. The script writes text as Google Sans Flex outlines (`ROND=100`) from `res/font/google_sans_flex.ttf`, uses the `Theme.kt` colors, and takes icons from the app's vector drawables. It stops when a text does not fit.
+- The banner and the feature cards have a phone variant (`-m.svg`), picked with `max-width: 640px` in `<picture>`. Screenshots in `assets/readme/shots/` are copies of the screenshot test references.
+
 ## Docker Android accessibility checks
 
 - Container: `velin-android`, image `redroid/redroid:15.0.0_64only-latest`, Android 15 (SDK 35), arm64. Use `sudo -n docker` on this host. Do not restart the container for an app check.
