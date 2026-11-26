@@ -21,4 +21,20 @@ class JourneyOptionsTest {
 
         assertEquals(onlyTram, onlyTram.withMode(TransitMode.TRAM, allowed = false))
     }
+
+    @Test
+    fun `each control away from its default counts as one change`() {
+        assertEquals(0, JourneyOptions().changeCount)
+        val changed = JourneyOptions(
+            excludedModes = setOf(TransitMode.COACH, TransitMode.FERRY),
+            maxTransfers = 1,
+            walkingSpeed = WalkingSpeed.FAST,
+        )
+        assertEquals(4, changed.changeCount)
+    }
+
+    @Test
+    fun `the walking speed does not count while the wheelchair switch is on`() {
+        assertEquals(1, JourneyOptions(wheelchair = true, walkingSpeed = WalkingSpeed.FAST).changeCount)
+    }
 }

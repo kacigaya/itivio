@@ -10,12 +10,16 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import app.itivio.ui.results.LocalTravelClock
 import app.itivio.ui.results.TravelTimeDialog
+import app.itivio.ui.results.shiftTime
 import app.itivio.ui.theme.ItivioTheme
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -67,5 +71,35 @@ class TravelTimeDialogTest {
         compose.onNodeWithContentDescription("Switch to scroll mode").assertIsDisplayed()
         compose.onNodeWithText("Done").performClick()
         compose.runOnIdle { assertEquals(time to false, confirmed) }
+    }
+
+    @Test
+    fun `time steps add to the picked time and cross midnight`() {
+        // A fixed clock: LocalDate.now() and the dialog's own date would drift across midnight.
+        val clock = Clock.fixed(t0, berlin)
+        val time = LocalDate.now(clock).atTime(23, 40).atZone(berlin).toInstant()
+        var confirmed: Instant? = null
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                CompositionLocalProvider(LocalTravelClock provides clock) {
+                    TravelTimeDialog(time, false, onDismiss = {}, onConfirm = { picked, _ -> confirmed = picked })
+                }
+            }
+        }
+        compose.onNodeWithContentDescription("Add 30 minutes").performScrollTo().performClick()
+        compose.onNodeWithText("Done").performClick()
+        compose.runOnIdle { assertEquals(time.plusSeconds(30 * 60), confirmed) }
+    }
+
+    @Test
+    fun `shifted time stays inside the picker days`() {
+        assertEquals(0 to 9 * 60 + 15, shiftTime(0, 9 * 60, 15))
+        assertEquals(1 to 10, shiftTime(0, 23 * 60 + 50, 20))
+        assertNull(shiftTime(6, 23 * 60 + 30, 60))
+    }
+
+    private companion object {
+        val berlin: ZoneId = ZoneId.of("Europe/Berlin")
+        val t0: Instant = Instant.parse("2026-11-09T07:58:00Z")
     }
 }
