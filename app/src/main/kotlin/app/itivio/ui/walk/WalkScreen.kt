@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -65,6 +64,9 @@ val WalkPeekHeight = 156.dp
 /** The provider default for walks, used when a leg has no distance or no duration. */
 private const val DEFAULT_METERS_PER_SECOND = 1.2
 
+/** The round map buttons (compass, recenter): one size, with `CircleShape`, so they read as one group. */
+private val MapButtonSize = 56.dp
+
 /**
  * Turn-by-turn directions for one walk. [progress] is the device position on the walk, or null without a fix. The app root replaces
  * the walk when the walker leaves it. [onReplan] plans the whole journey again, from its button only.
@@ -105,7 +107,10 @@ fun WalkScreen(
         header = {
             route.instructions.getOrNull(index)?.let { instruction ->
                 val distance = if (instruction.maneuver == Maneuver.DEPART) instruction.lengthMeters else instruction.startMeters - along
-                InstructionCard(instruction, distance, destination, route.instructions.getOrNull(index + 1))
+                val thenMeters =
+                    if (instruction.maneuver == Maneuver.DEPART) instruction.lengthMeters
+                    else (instruction.startMeters + instruction.lengthMeters - along).coerceAtLeast(0.0)
+                InstructionCard(instruction, distance, destination, route.instructions.getOrNull(index + 1), thenMeters)
             }
             when {
                 !locationGranted -> Banner(
@@ -123,9 +128,16 @@ fun WalkScreen(
             if (locationGranted) {
                 CompassButton(northUp, bearing, onNorthUp)
                 if (!following) {
-                    FilledTonalButton(onClick = onRecenter) {
-                        Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
-                        Text(stringResource(R.string.walk_recenter), modifier = Modifier.padding(start = 8.dp))
+                    // The same round button as the compass, so the two map buttons read as one group.
+                    FilledTonalIconButton(
+                        onClick = onRecenter,
+                        shape = CircleShape,
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        ),
+                        modifier = Modifier.size(MapButtonSize),
+                    ) {
+                        Icon(painterResource(R.drawable.ic_my_location), contentDescription = stringResource(R.string.walk_recenter))
                     }
                 }
             }
@@ -149,7 +161,7 @@ fun WalkScreen(
  * card on a tab, as an icon: the sheet lists it in words.
  */
 @Composable
-private fun InstructionCard(instruction: WalkInstruction, meters: Double, destination: String, then: WalkInstruction?) {
+private fun InstructionCard(instruction: WalkInstruction, meters: Double, destination: String, then: WalkInstruction?, thenMeters: Double) {
     val scheme = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth()) {
         Surface(
@@ -183,7 +195,8 @@ private fun InstructionCard(instruction: WalkInstruction, meters: Double, destin
             }
         }
         if (then != null) {
-            val description = stringResource(R.string.walk_then_instruction, instructionText(then, destination))
+            val distance = formatDistance(thenMeters)
+            val description = stringResource(R.string.walk_then_in_instruction, distance, instructionText(then, destination))
             Surface(
                 color = scheme.primaryContainer,
                 contentColor = scheme.onPrimaryContainer,
@@ -196,7 +209,7 @@ private fun InstructionCard(instruction: WalkInstruction, meters: Double, destin
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 10.dp),
                 ) {
-                    Text(stringResource(R.string.walk_then), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.walk_then_in, distance), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
                     Icon(painterResource(then.maneuver.icon()), contentDescription = null, modifier = Modifier.size(24.dp))
                 }
             }
@@ -217,7 +230,7 @@ private fun CompassButton(northUp: Boolean, bearing: () -> Float, onClick: () ->
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.error,
         ),
-        modifier = Modifier.size(56.dp),
+        modifier = Modifier.size(MapButtonSize),
     ) {
         Icon(
             painterResource(R.drawable.ic_navigation),
