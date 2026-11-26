@@ -11,6 +11,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 - Keep long stop names readable in the itinerary. When the name and the time do not fit on one line, the time moves below the name. At large text, names no longer break into pieces.
 - Fix the itinerary duration at large text. "26 min" broke into "2", "6", and "min" on 3 lines. The departure and arrival times now move below it.
 - Retry a failed train change in one tap. The error is now a banner with a "Try again" button that picks the same train again.
+- Say which way the train goes in "Where to board", with a "Front →" label under the nose of the drawing. "Best exit" now uses the same card, so the two hints read together.
 
 ## 0.14.2
 

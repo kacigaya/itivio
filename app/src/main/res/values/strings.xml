@@ -364,6 +364,7 @@
     <string name="boarding_description">Where to board: %1$s, %2$s</string>
     <string name="boarding_exit_number">Near exit %1$s</string>
     <string name="boarding_best_exit">Best exit</string>
+    <string name="boarding_direction">Front</string>
     <string name="boarding_exit_name" translatable="false">%1$s – %2$s</string>
     <string name="boarding_best_exit_description">Best exit: %1$s</string>
     <string name="about_boarding">Boarding positions</string>
