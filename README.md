@@ -116,6 +116,7 @@ Read the [privacy policy](PRIVACY.md) for details about location, network servic
 - Your location does not need Google Play services. Android backup and device transfer are turned off for the app data.
 - Favorites, Home and Work, recent searches, journey options, and settings stay on your device. The disruptions list sends the IDs of your saved stops to Transitous, while the home screen is open on a phone, because it shows the number of alerts.
 - "Travel time to Home and Work" in the settings is off by default. When it is on, the home screen sends your position and your Home and Work places to Transitous at full precision, to show the travel time on their buttons. It sends them again after you move about 150 m, at most once every 20 seconds.
+- A departure reminder stays on your device. It uses an Android alarm and a notification, and sends nothing. It works while the app is closed and after a restart. The app asks for the notification permission when you set the first reminder, and sets none if you decline.
 
 The app sends requests to these services only:
 

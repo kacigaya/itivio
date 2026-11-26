@@ -9,6 +9,7 @@ The app stores these items on your device:
 - Favorites, Home and Work, and the 10 most recent places you selected.
 - Journey options, including transport modes, transfer limit, wheelchair access, and walking speed.
 - App settings, including the theme.
+- The departure reminder you set: the journey, the time of the reminder, the minutes before departure, and the text of its notification. It stays until you remove it, until it goes off and the app starts again, or until you delete all app data.
 
 Saved places include their names, coordinates, and provider IDs. They remain until you remove them. A new recent place can replace the oldest one.
 
@@ -42,7 +43,9 @@ The app uses these services to provide search, transport information, and maps:
 
 The disruptions list sends the IDs of up to 10 saved stops to Transitous. On a phone, the list is a page of the home screen, and the home screen shows the number of alerts. The app then sends these IDs while the home screen is open. On a tablet, it sends them only while the Disruptions page is open. These can be Home, Work, or favorites. Saved places that are not stops are not sent for this feature. Selecting a saved place for a journey sends its stop ID or coordinates as part of the journey request.
 
-Live departures, trip times, and disruptions refresh only while the relevant screen is visible and the app is in the foreground. The app sends no background notifications.
+Live departures, trip times, and disruptions refresh only while the relevant screen is visible and the app is in the foreground.
+
+A departure reminder is the one thing that reaches you while the app is closed, and it stays on your device. The app schedules it with an Android alarm, and an Android notification shows it. It sends no request and reveals nothing to a service. The app asks for the notification permission when you set the first reminder. Android 14 and later also ask whether the app may set exact alarms; without that permission, the reminder can come a few minutes late. After a device restart, the app sets the stored reminder again.
 
 Each service also receives your IP address and normal connection information. Transitous requests identify the app version and include the publisher's contact in the User-Agent. IGN uses a separate client without contact details. The app adds no account ID or advertising ID to these requests.
 

@@ -283,6 +283,24 @@
     <string name="itinerary_next_departures">Next departures</string>
     <string name="itinerary_leave_in">Leave in %1$s</string>
     <string name="itinerary_leave_now">Leave now</string>
+    <string name="reminder_channel">Departure reminders</string>
+    <string name="reminder_title_now">Time to leave</string>
+    <plurals name="reminder_title">
+        <item quantity="one">Leave in %d minute</item>
+        <item quantity="other">Leave in %d minutes</item>
+    </plurals>
+    <string name="reminder_text">%1$s towards %2$s from %3$s at %4$s.</string>
+    <string name="reminder_text_walk">Leave at %1$s.</string>
+    <string name="reminder_remind_me">Remind me</string>
+    <string name="reminder_set">Reminder at %1$s</string>
+    <string name="reminder_lead_now">When it is time to leave</string>
+    <plurals name="reminder_lead">
+        <item quantity="one">%d minute before</item>
+        <item quantity="other">%d minutes before</item>
+    </plurals>
+    <string name="reminder_none">No reminder</string>
+    <string name="reminder_allow_exact">Allow exact times</string>
+    <string name="reminder_needs_permission">Android shows no reminder without the notification permission. Turn it on in the settings.</string>
     <string name="itinerary_arrive_in">Arrive in %1$s</string>
     <string name="itinerary_current_step">Current step</string>
 

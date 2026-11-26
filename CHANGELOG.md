@@ -26,6 +26,8 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 - When no route is found, offer what can help: "Change the time", and "Reset journey options" when you changed them. "Try again" is gone there, because the same search found nothing.
 - Filter a busy stop by line: the departure board has a chip for each line. The board also shows the service alerts of the stop.
 - See how long it takes to get home or to work, right on the Home and Work buttons. Turn on "Travel time to Home and Work" in the settings. It is off by default, because it sends your position and both places to Transitous.
+- Get a reminder when it is time to leave. "Remind me" on the itinerary offers when to leave, or 2, 5, or 10 minutes before. While the itinerary is open, the reminder moves with live delays, and it stays set while the app is closed. The reminder is kept on the device and is set again after a restart.
+- The app now asks for two more permissions, both for the reminder and both one time only. "Notifications" is what makes a reminder visible. "Alarms and reminders" lets Android show it at the exact minute; if you decline, the reminder can come a few minutes late. The app needs no permission to send you anything from a server.
 
 ## 0.14.2
 

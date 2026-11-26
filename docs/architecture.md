@@ -89,6 +89,16 @@ The language uses the per-app language setting of Android (`locales_config.xml`)
 
 "Delete all app data" (`domain.AppData`) deletes all rows of `saved_place` and clears the `settings` file. The search cache, the live data cache, and the planning session are in memory only and end with the process.
 
+## Departure reminders
+
+`domain.ReminderScheduler` holds one reminder at a time, on the device. The itinerary offers "When it is time to leave" and 2, 5, or 10 minutes before the departure (`ReminderScheduler.LEAD_MINUTES`). While the itinerary is on screen, the live times of the trip move the reminder (`update`). A new time does not set a reminder again after it went off, and a reminder whose time has passed is neither shown nor set.
+
+`AlarmReminderScheduler` sets an `AlarmManager` alarm with `setExactAndAllowWhileIdle` when `canScheduleExactAlarms()` allows it, and with `setAndAllowWhileIdle` otherwise, including when Android refuses the exact call with a `SecurityException`, so a reminder is never lost. An inexact alarm can come a few minutes late in doze. Android 14 and later deny exact alarms by default, and the reminder menu then offers `Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM`.
+
+The reminder is stored in the `settings` DataStore file: the journey ID, the alarm time, the lead time, and the notification text as it was written when the reminder was set. The keys need no migration; a file without them holds no reminder. `ReminderReceiver` shows the notification and reads no data of the app. A reboot clears every alarm, so `ReminderBootReceiver`, on the `BOOT_COMPLETED` broadcast (`RECEIVE_BOOT_COMPLETED`), sets the stored reminder again; a reminder that passed while the device was off is dropped. The app asks for `POST_NOTIFICATIONS` before it sets a reminder and sets none when the rider refuses, because a reminder that shows nothing is not a reminder.
+
+Limits: one reminder at a time. "Delete all app data" clears the `settings` file, which removes it.
+
 ## Disruptions
 
 MOTIS has no endpoint that lists the disruptions of a network or a line. Alerts come with stop times: with `withAlerts=true`, each stop time carries the alerts for its trip at that stop. The disruptions list sends:
@@ -172,6 +182,7 @@ Off the route, `WalkRerouteViewModel` plans a walk from the position to the end 
 - The compass runs only while the walking view is open.
 - The walking view asks for the best fix twice a second and a compass reading five times a second. Other screens use the library standard: one fix a second and one compass reading a second.
 - Favorites and recent searches stay on the device. Backup and device transfer are off.
+- A departure reminder stays on the device: an `AlarmManager` alarm and a notification, with no request. The stored reminder holds the journey ID, its time, and the notification text.
 - Journey options stay on the device. Transitous gets them only as parameters of a journey request.
 - Location comes from the Android framework provider. Google Play services is not required.
 

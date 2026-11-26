@@ -277,6 +277,26 @@
     <string name="itinerary_next_departures">Prochains départs</string>
     <string name="itinerary_leave_in">Départ dans %1$s</string>
     <string name="itinerary_leave_now">Partez maintenant</string>
+    <string name="reminder_channel">Rappels de départ</string>
+    <string name="reminder_title_now">C’est l’heure de partir</string>
+    <plurals name="reminder_title">
+        <item quantity="one">Partez dans %d minute</item>
+        <item quantity="many">Partez dans %d minutes</item>
+        <item quantity="other">Partez dans %d minutes</item>
+    </plurals>
+    <string name="reminder_text">%1$s vers %2$s depuis %3$s à %4$s.</string>
+    <string name="reminder_text_walk">Partez à %1$s.</string>
+    <string name="reminder_remind_me">Me rappeler</string>
+    <string name="reminder_set">Rappel à %1$s</string>
+    <string name="reminder_lead_now">À l’heure de partir</string>
+    <plurals name="reminder_lead">
+        <item quantity="one">%d minute avant</item>
+        <item quantity="many">%d minutes avant</item>
+        <item quantity="other">%d minutes avant</item>
+    </plurals>
+    <string name="reminder_none">Pas de rappel</string>
+    <string name="reminder_allow_exact">Autoriser l’heure exacte</string>
+    <string name="reminder_needs_permission">Android n’affiche aucun rappel sans l’autorisation de notification. Activez-la dans les réglages.</string>
     <string name="itinerary_arrive_in">Arrivée dans %1$s</string>
     <string name="itinerary_current_step">Étape en cours</string>
 
