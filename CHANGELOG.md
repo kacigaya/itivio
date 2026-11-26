@@ -25,6 +25,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 - Keep the results buttons in view after you pick a time on another day: the day moves to a second line. With "Arrive by", each route says how much time it leaves you, such as "3 min to spare".
 - When no route is found, offer what can help: "Change the time", and "Reset journey options" when you changed them. "Try again" is gone there, because the same search found nothing.
 - Filter a busy stop by line: the departure board has a chip for each line. The board also shows the service alerts of the stop.
+- See how long it takes to get home or to work, right on the Home and Work buttons. Turn on "Travel time to Home and Work" in the settings. It is off by default, because it sends your position and both places to Transitous.
 
 ## 0.14.2
 

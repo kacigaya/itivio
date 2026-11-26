@@ -231,6 +231,7 @@ open class ScreenshotTest {
                 wide = false, locationGranted = true, nearby = LoadState.Ready(sampleDepartures), now = t0,
                 disruptions = LoadState.Ready(sampleDisruptions()),
                 onRequestLocation = {}, onRecenter = {}, onRetryNearby = {}, onDestination = {}, onStop = {}, onSettings = {},
+                shortcutTimes = mapOf(app.itivio.domain.Shortcut.HOME to java.time.Duration.ofMinutes(32)),
             )
         }
     }

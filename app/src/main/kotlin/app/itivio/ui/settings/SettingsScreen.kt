@@ -45,6 +45,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.annotation.RequiresApi
 import android.app.LocaleManager
+import androidx.compose.material3.Switch
+import androidx.compose.foundation.selection.toggleable
 
 /**
  * The settings: theme, language, journey options, stored data, and the way to the about screen.
@@ -60,6 +62,8 @@ fun SettingsScreen(
     onClearRecents: () -> Unit,
     onDeleteAll: () -> Unit,
     onAbout: () -> Unit,
+    shortcutTimes: Boolean = false,
+    onShortcutTimes: (Boolean) -> Unit = {},
 ) {
     var editingOptions by rememberSaveable { mutableStateOf(false) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
@@ -93,6 +97,13 @@ fun SettingsScreen(
                 body = options?.let { optionsSummary(it) } ?: stringResource(R.string.settings_options_body),
                 enabled = options != null,
                 onClick = { editingOptions = true },
+            )
+            SwitchRow(
+                icon = R.drawable.ic_schedule,
+                title = stringResource(R.string.settings_shortcut_times),
+                body = stringResource(R.string.settings_shortcut_times_body),
+                checked = shortcutTimes,
+                onCheckedChange = onShortcutTimes,
             )
         }
         section("data", R.string.settings_data) {
@@ -208,6 +219,19 @@ internal fun SettingsRow(
         leadingContent = { Icon(painterResource(icon), contentDescription = null) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent, headlineColor = color, leadingIconColor = color),
         modifier = if (onClick != null) Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick) else Modifier,
+    )
+}
+
+/** A setting that turns on or off. The whole row toggles the switch. */
+@Composable
+private fun SwitchRow(@DrawableRes icon: Int, title: String, body: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    ListItem(
+        headlineContent = { Text(title, fontWeight = FontWeight.SemiBold) },
+        supportingContent = { Text(body, fontWeight = FontWeight.Light) },
+        leadingContent = { Icon(painterResource(icon), contentDescription = null) },
+        trailingContent = { Switch(checked = checked, onCheckedChange = null) },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
     )
 }
 

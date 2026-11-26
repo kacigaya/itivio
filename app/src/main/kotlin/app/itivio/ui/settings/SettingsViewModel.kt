@@ -32,7 +32,12 @@ class SettingsViewModel(
     val options: StateFlow<JourneyOptions?> = journeyOptions.options.catch { emit(JourneyOptions()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    val shortcutTimes: StateFlow<Boolean> = settings.shortcutTimes.catch { emit(false) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     fun setTheme(mode: ThemeMode) = write { settings.setTheme(mode) }
+
+    fun setShortcutTimes(on: Boolean) = write { settings.setShortcutTimes(on) }
 
     fun setOptions(options: JourneyOptions) = write { journeyOptions.save(options) }
 

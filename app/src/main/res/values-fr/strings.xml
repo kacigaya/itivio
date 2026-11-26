@@ -20,6 +20,8 @@
     <string name="shortcut_set_work">Définir le travail</string>
     <string name="shortcut_search_home">Cherchez votre domicile</string>
     <string name="shortcut_search_work">Cherchez votre lieu de travail</string>
+    <string name="saved_chip_time">" · %1$s"</string>
+    <string name="saved_chip_description">Temps de trajet vers %1$s : %2$s</string>
     <string name="search_set_shortcut_hint">Cherchez un lieu, puis choisissez-le</string>
     <string name="search_nearby_stops">Arrêts à proximité</string>
     <string name="saved_favorites">Favoris</string>
@@ -136,6 +138,8 @@
     <string name="settings_options_max_transfers">%1$s au plus</string>
     <string name="settings_options_slow">Marche lente</string>
     <string name="settings_options_fast">Marche rapide</string>
+    <string name="settings_shortcut_times">Temps de trajet vers Domicile et Travail</string>
+    <string name="settings_shortcut_times_body">Sur l’accueil, affiche le temps de trajet sur les boutons Domicile et Travail. À chaque ouverture de l’accueil, l’app envoie votre position et ces 2 lieux à Transitous.</string>
     <string name="settings_data">Données enregistrées</string>
     <string name="settings_clear_recents_body">Supprime votre historique de recherche. Vos favoris restent.</string>
     <string name="settings_delete_all">Supprimer toutes les données</string>

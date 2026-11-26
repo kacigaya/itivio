@@ -148,7 +148,8 @@ Off the route, `WalkRerouteViewModel` plans a walk from the position to the end 
 - Every request sends `User-Agent: itivio/<version> (+<contact>)`. Set the contact with the `itivio.contact` Gradle property.
 - Settings → About shows the Transitous and IGN/BAN credits and links to `https://transitous.org/sources/`. Other screens have no provider footer. The info button on the map opens the OpenStreetMap, OpenMapTiles, and OpenFreeMap credits. The credits start closed, the same as the default MapLibre Android control.
 - Autocomplete waits for typing to pause, needs 2 or more characters, and cancels stale requests.
-- `/plan` runs only on explicit user action. No background polling. The journey options dialog sends one request when the user confirms, not one for each change.
+- `/plan` runs only on explicit user action, except for "Travel time to Home and Work". No background polling. The journey options dialog sends one request when the user confirms, not one for each change.
+- With "Travel time to Home and Work" turned on (off by default), `ShortcutTimesViewModel` sends two `/plan` requests while home is open: from the device position to Home, and to Work. They go out when home opens, and after a move of 150 m, at most once every 20 seconds (`ShortcutTimesViewModel.MIN_INTERVAL`). A new place or a new option plans at once. The requests run only while home is on screen and the app is in the foreground.
 - `/stoptimes` refreshes once a minute, only while the nearby list is on screen and the app is in the foreground. A move of less than 150 m does not send a new request.
 - The itinerary scans up to eight `/stoptimes` pages for each transit leg, once a minute, only while the itinerary is on screen and the app is in the foreground. It stops when it has four matching departures.
 - The itinerary also sends one `/trip` request for each transit leg that has not ended, once a minute, under the same conditions.
@@ -165,8 +166,8 @@ Off the route, `WalkRerouteViewModel` plans a walk from the position to the end 
 - French address queries also go to IGN. No coordinates are sent to IGN.
 - The search bias point is rounded to about 1 km before it is sent.
 - The nearby departures center is rounded to about 10 m before it is sent. The disruptions list uses the same rounding.
-- The disruptions list sends the IDs of the saved stops. This is the only place where saved places go to a service without a journey request.
-- The origin of a journey is sent at full precision only when the user plans from their location.
+- The disruptions list sends the IDs of the saved stops. Otherwise, saved places go to Transitous only as the start or the end of a journey request. That includes the two requests of "Travel time to Home and Work", which send the position at full precision and do not wait for a tap.
+- The origin of a journey is sent at full precision only when the user plans from their location, including the opt-in travel times above.
 - The walking view uses the device position on the device. It sends it to Transitous in two cases: "Plan a new route", as the origin of a new journey, and an automatic new walk when the walker is off the route, at most once every 20 seconds.
 - The compass runs only while the walking view is open.
 - The walking view asks for the best fix twice a second and a compass reading five times a second. Other screens use the library standard: one fix a second and one compass reading a second.

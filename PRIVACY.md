@@ -26,6 +26,7 @@ With permission, the app uses your location to show your position, nearby depart
 - Nearby departures and disruptions send a position rounded to about 10 m to Transitous.
 - Journey planning sends the start and end points. Planning from your location sends that position at full precision.
 - Walking directions use your position and heading on the device. Selecting "Plan a new route" sends your position to Transitous as the start of a new journey.
+- With "Travel time to Home and Work" turned on in the settings, the app plans two journeys while the home screen is open: from your position at full precision to Home, and to Work. It sends them when home opens, and again after you move about 150 m, at most once every 20 seconds. The setting is off by default. These requests send your position and both places in the clear, as journey start and end points.
 
 Map requests reveal the area you view, including when the map follows your location.
 
@@ -35,7 +36,7 @@ The app uses these services to provide search, transport information, and maps:
 
 | Service | Data sent | Purpose |
 |---|---|---|
-| [Transitous](https://transitous.org/) | Search text, search language, rounded location bias, journey start and end points, travel time, journey options, nearby position, stop and trip IDs, and the map area at street-level zoom | Search, journey planning, departures, disruptions, live trip times, and stops on the map |
+| [Transitous](https://transitous.org/) | Search text, search language, rounded location bias, journey start and end points, travel time, journey options, nearby position, your position with your Home and Work places when travel times are on, stop and trip IDs, and the map area at street-level zoom | Search, journey planning, departures, disruptions, live trip times, travel times to Home and Work, and stops on the map |
 | [IGN Géoplateforme](https://cartes.gouv.fr/) | Address search text, without location bias | French address search, only when the text looks like an address and the first Transitous match identifies France |
 | [OpenFreeMap](https://openfreemap.org/) | Requests for map icons, fonts, and tiles for the area you view | Map display |
 

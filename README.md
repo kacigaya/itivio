@@ -115,12 +115,13 @@ Read the [privacy policy](PRIVACY.md) for details about location, network servic
 - The location sent for search suggestions is rounded to about 1 km. Walking directions use your location on the device only, and send it only when you select "Plan a new route".
 - Your location does not need Google Play services. Android backup and device transfer are turned off for the app data.
 - Favorites, Home and Work, recent searches, journey options, and settings stay on your device. The disruptions list sends the IDs of your saved stops to Transitous, while the home screen is open on a phone, because it shows the number of alerts.
+- "Travel time to Home and Work" in the settings is off by default. When it is on, the home screen sends your position and your Home and Work places to Transitous at full precision, to show the travel time on their buttons. It sends them again after you move about 150 m, at most once every 20 seconds.
 
 The app sends requests to these services only:
 
 | Service | Use | Data sent |
 |---|---|---|
-| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the IDs of your saved stops for the disruptions list, the map area you look at when you zoom in to street level |
+| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the IDs of your saved stops for the disruptions list, your position with your Home and Work places when "Travel time to Home and Work" is on, the map area you look at when you zoom in to street level |
 | [IGN Géoplateforme](https://cartes.gouv.fr/) | French address search | Search text, without your location |
 | [OpenFreeMap](https://openfreemap.org/) | Map tiles | The map area you look at |
 

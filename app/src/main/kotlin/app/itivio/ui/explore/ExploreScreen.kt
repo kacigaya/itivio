@@ -16,6 +16,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import app.itivio.ui.disruptions.DisruptionGroups
 import app.itivio.ui.disruptions.disruptions
 import androidx.compose.foundation.layout.Arrangement
@@ -92,6 +93,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Button
 import app.itivio.ui.common.STACK_FONT_SCALE
 import androidx.compose.ui.platform.LocalDensity
+import app.itivio.ui.common.formatDuration
+import java.time.Duration
 
 // Drag handle, search row, shortcut chips, title, and the first departures.
 val ExplorePeekHeight = 344.dp
@@ -117,6 +120,8 @@ fun ExploreScreen(
     onStop: (Location) -> Unit,
     onSettings: () -> Unit,
     places: SavedPlacesViewModel = koinViewModel(),
+    /** The travel time to each set shortcut, when the rider turned it on in the settings. */
+    shortcutTimes: Map<Shortcut, Duration> = emptyMap(),
 ) {
     val searchBarState = rememberLocationSearchBarState()
     val textState = rememberLocationTextState()
@@ -160,6 +165,7 @@ fun ExploreScreen(
             }
             SavedChips(
                 saved = saved,
+                times = shortcutTimes,
                 onOpen = { onDestination(Endpoint.Place(it)) },
                 onAssign = { shortcut ->
                     assigning = shortcut
@@ -286,7 +292,7 @@ private fun HomeTitles(selected: HomePage, alerts: Int, onSelect: (HomePage) -> 
  * search to set it. The row keeps its height while storage loads, so the sheet does not jump.
  */
 @Composable
-private fun SavedChips(saved: SavedPlaces?, onOpen: (Location) -> Unit, onAssign: (Shortcut) -> Unit) {
+private fun SavedChips(saved: SavedPlaces?, times: Map<Shortcut, Duration>, onOpen: (Location) -> Unit, onAssign: (Shortcut) -> Unit) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -300,6 +306,7 @@ private fun SavedChips(saved: SavedPlaces?, onOpen: (Location) -> Unit, onAssign
             SavedChip(
                 icon = shortcut.iconRes(),
                 label = stringResource(if (location != null) shortcut.labelRes() else shortcut.setLabelRes()),
+                detail = times[shortcut]?.takeIf { location != null }?.let { formatDuration(it) },
                 onClick = { if (location != null) onOpen(location) else onAssign(shortcut) },
             )
         }
@@ -309,10 +316,21 @@ private fun SavedChips(saved: SavedPlaces?, onOpen: (Location) -> Unit, onAssign
     }
 }
 
-/** A saved place as a tonal button: bolder than a chip, because it starts a journey with one tap. */
+/**
+ * A saved place as a tonal button: bolder than a chip, because it starts a journey with one tap.
+ * With [detail], the time follows the name in a light weight, and the button has one spoken label.
+ */
 @Composable
-private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit) {
-    FilledTonalButton(onClick = onClick, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
+private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit, detail: String? = null) {
+    FilledTonalButton(
+        onClick = onClick,
+        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+        modifier = detail?.let {
+            // A screen reader reads the label, not the separator.
+            val description = stringResource(R.string.saved_chip_description, label, it)
+            Modifier.semantics { contentDescription = description }
+        } ?: Modifier,
+    ) {
         Icon(painterResource(icon), contentDescription = null, Modifier.size(ButtonDefaults.IconSize))
         Text(
             label,
@@ -321,6 +339,9 @@ private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = ButtonDefaults.IconSpacing).widthIn(max = 160.dp),
         )
+        detail?.let {
+            Text(stringResource(R.string.saved_chip_time, it), fontWeight = FontWeight.Light, maxLines = 1)
+        }
     }
 }
 

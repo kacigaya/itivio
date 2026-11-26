@@ -22,6 +22,9 @@
     <string name="shortcut_set_work">Set work</string>
     <string name="shortcut_search_home">Search for your home</string>
     <string name="shortcut_search_work">Search for your work</string>
+    <!-- The travel time after the name of a saved place. %1$s is the time, such as "32 min". -->
+    <string name="saved_chip_time">" · %1$s"</string>
+    <string name="saved_chip_description">Travel time to %1$s: %2$s</string>
     <string name="search_set_shortcut_hint">Search for a place, then pick it</string>
     <string name="search_nearby_stops">Nearby stops</string>
     <string name="saved_favorites">Favorites</string>
@@ -135,6 +138,8 @@
     <string name="settings_options_max_transfers">At most %1$s</string>
     <string name="settings_options_slow">Slow walking</string>
     <string name="settings_options_fast">Fast walking</string>
+    <string name="settings_shortcut_times">Travel time to Home and Work</string>
+    <string name="settings_shortcut_times_body">On home, shows the travel time on the Home and Work buttons. Each time home opens, the app sends your position and these 2 places to Transitous.</string>
     <string name="settings_data">Stored data</string>
     <string name="settings_clear_recents_body">Removes your search history. Your favorites stay.</string>
     <string name="settings_delete_all">Delete all app data</string>
