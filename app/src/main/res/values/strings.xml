@@ -169,6 +169,16 @@
     <string name="travel_day_time">%1$s, %2$s</string>
     <string name="travel_today">Today</string>
     <string name="travel_tomorrow">Tomorrow</string>
+    <string name="travel_plus_minutes">+%1$d min</string>
+    <string name="travel_plus_hours">+%1$d h</string>
+    <plurals name="travel_add_minutes">
+        <item quantity="one">Add %d minute</item>
+        <item quantity="other">Add %d minutes</item>
+    </plurals>
+    <plurals name="travel_add_hours">
+        <item quantity="one">Add %d hour</item>
+        <item quantity="other">Add %d hours</item>
+    </plurals>
 
     <!-- Journey options -->
     <string name="options_chip">Options</string>
@@ -186,6 +196,10 @@
     <string name="options_speed_normal">Normal</string>
     <string name="options_speed_fast">Fast</string>
     <string name="options_reset">Reset</string>
+    <plurals name="options_reset_count">
+        <item quantity="one">Reset %d change</item>
+        <item quantity="other">Reset %d changes</item>
+    </plurals>
 
     <!-- Results -->
     <string name="results_empty_title">No routes found</string>

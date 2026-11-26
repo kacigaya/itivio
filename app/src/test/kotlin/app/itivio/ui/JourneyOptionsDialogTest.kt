@@ -85,7 +85,7 @@ class JourneyOptionsDialogTest {
     fun `reset goes back to the defaults`() {
         show(JourneyOptions(excludedModes = setOf(TransitMode.FERRY), maxTransfers = 2, wheelchair = true))
 
-        compose.onNodeWithText("Reset").performClick()
+        compose.onNodeWithText("Reset 3 changes").performClick()
         compose.onNodeWithText("Done").performClick()
 
         compose.runOnIdle { assertEquals(JourneyOptions(), confirmed) }
