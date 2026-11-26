@@ -202,7 +202,7 @@ fun ExploreScreen(
                             } else {
                                 item(key = "intro") { Intro(onRequestLocation) }
                             }
-                            HomePage.DISRUPTIONS -> disruptions(disruptions, now, onRetryDisruptions)
+                            HomePage.DISRUPTIONS -> disruptions(disruptions, now, onRetryDisruptions, compact = true)
                         }
                     }
                 }
