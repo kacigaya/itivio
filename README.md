@@ -18,19 +18,8 @@
 
 itivio is an open-source Android app for public transport that keeps your data on your device. Plan journeys by bus, tram, metro, train, and ferry. There is no account, no ads, and no analytics.
 
-Routing comes from [Transitous](https://transitous.org/), a community service. Coverage differs by region, and some regions have no live data. The interface uses Material 3 Expressive with light and dark themes and Material You colors, in English and French, on phones, tablets, and foldables.
-
-<h2 id="screenshots"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-screenshots.svg"><img src="assets/readme/light/h-screenshots.svg" alt="Screenshots"></picture></h2>
 <div align="center">
 <a href="https://github.com/kacigaya/itivio/releases/download/v0.10.1/demo.mp4"><img src="assets/demo.gif" alt="itivio demo: know where to board, and which train is yours" width="720"></a>
-</div>
-<div align="center">
-<img src="assets/readme/shots/01-home.png" width="32%" alt="Home: map, nearby departures, disruptions">
-<img src="assets/readme/shots/02-search.png" width="32%" alt="Search with suggestions">
-<img src="assets/readme/shots/03-results.png" width="32%" alt="Journey results grouped by line">
-<img src="assets/readme/shots/04-itinerary.png" width="32%" alt="Itinerary with where to board">
-<img src="assets/readme/shots/05-walk.png" width="32%" alt="Walking directions on the map">
-<img src="assets/readme/shots/06-disruptions.png" width="32%" alt="Disruptions for your saved stops">
 </div>
 
 <h2 id="features"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-features.svg"><img src="assets/readme/light/h-features.svg" alt="Features"></picture></h2>
