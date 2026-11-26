@@ -21,6 +21,7 @@
     <string name="shortcut_search_home">Cherchez votre domicile</string>
     <string name="shortcut_search_work">Cherchez votre lieu de travail</string>
     <string name="search_set_shortcut_hint">Cherchez un lieu, puis choisissez-le</string>
+    <string name="search_nearby_stops">Arrêts à proximité</string>
     <string name="saved_favorites">Favoris</string>
     <string name="saved_recents">Recherches récentes</string>
     <string name="saved_clear_recents">Effacer les recherches récentes</string>

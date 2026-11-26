@@ -231,6 +231,7 @@ fun ExploreScreen(
             onStop(location)
         },
         places = places,
+        nearby = (nearby as? LoadState.Ready)?.value.orEmpty(),
     )
 }
 
