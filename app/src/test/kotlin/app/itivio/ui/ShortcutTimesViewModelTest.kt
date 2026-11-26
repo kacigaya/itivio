@@ -36,6 +36,12 @@ class ShortcutTimesViewModelTest {
         override suspend fun setTheme(mode: ThemeMode) { theme.value = mode }
         override val shortcutTimes = MutableStateFlow(on)
         override suspend fun setShortcutTimes(on: Boolean) { shortcutTimes.value = on }
+        override val disruptionAlerts = MutableStateFlow(false)
+        override suspend fun setDisruptionAlerts(on: Boolean) { disruptionAlerts.value = on }
+        override val severeAlertsOnly = MutableStateFlow(true)
+        override suspend fun setSevereAlertsOnly(on: Boolean) { severeAlertsOnly.value = on }
+        override val notifiedAlerts = MutableStateFlow(emptySet<String>())
+        override suspend fun setNotifiedAlerts(keys: Set<String>) { notifiedAlerts.value = keys }
     }
 
     private val repository = FakeRoutingRepository()

@@ -140,6 +140,12 @@
     <string name="settings_options_fast">Marche rapide</string>
     <string name="settings_shortcut_times">Temps de trajet vers Domicile et Travail</string>
     <string name="settings_shortcut_times_body">Sur l’accueil, affiche le temps de trajet sur les boutons Domicile et Travail. À chaque ouverture de l’accueil, l’app envoie votre position et ces 2 lieux à Transitous.</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_disruption_alerts">Alertes de perturbation</string>
+    <string name="settings_disruption_alerts_body">Toutes les 30 minutes, l’app envoie les identifiants de vos arrêts enregistrés à Transitous et vous prévient des nouvelles alertes. Elle n’envoie pas votre position.</string>
+    <string name="settings_severe_only">Alertes graves uniquement</string>
+    <string name="settings_severe_only_body">Par exemple, trafic interrompu. Les retards et les déviations ne préviennent pas.</string>
+    <string name="alerts_channel">Alertes de perturbation</string>
     <string name="settings_data">Données enregistrées</string>
     <string name="settings_clear_recents_body">Supprime votre historique de recherche. Vos favoris restent.</string>
     <string name="settings_delete_all">Supprimer toutes les données</string>

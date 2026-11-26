@@ -47,6 +47,9 @@ import androidx.annotation.RequiresApi
 import android.app.LocaleManager
 import androidx.compose.material3.Switch
 import androidx.compose.foundation.selection.toggleable
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.Manifest
 
 /**
  * The settings: theme, language, journey options, stored data, and the way to the about screen.
@@ -62,9 +65,15 @@ fun SettingsScreen(
     onClearRecents: () -> Unit,
     onDeleteAll: () -> Unit,
     onAbout: () -> Unit,
+    disruptionAlerts: Boolean = false,
+    severeAlertsOnly: Boolean = true,
+    onDisruptionAlerts: (Boolean) -> Unit = {},
+    onSevereAlertsOnly: (Boolean) -> Unit = {},
     shortcutTimes: Boolean = false,
     onShortcutTimes: (Boolean) -> Unit = {},
 ) {
+    // An alert without this permission is checked, but Android shows no notification.
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     var editingOptions by rememberSaveable { mutableStateOf(false) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
@@ -105,6 +114,29 @@ fun SettingsScreen(
                 checked = shortcutTimes,
                 onCheckedChange = onShortcutTimes,
             )
+        }
+        section("notifications", R.string.settings_notifications) {
+            SwitchRow(
+                icon = R.drawable.ic_warning,
+                title = stringResource(R.string.settings_disruption_alerts),
+                body = stringResource(R.string.settings_disruption_alerts_body),
+                checked = disruptionAlerts,
+                onCheckedChange = { on ->
+                    onDisruptionAlerts(on)
+                    if (on && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                },
+            )
+            if (disruptionAlerts) {
+                SwitchRow(
+                    icon = R.drawable.ic_info,
+                    title = stringResource(R.string.settings_severe_only),
+                    body = stringResource(R.string.settings_severe_only_body),
+                    checked = severeAlertsOnly,
+                    onCheckedChange = onSevereAlertsOnly,
+                )
+            }
         }
         section("data", R.string.settings_data) {
             SettingsRow(

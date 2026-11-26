@@ -56,6 +56,15 @@ class DisruptionsTest {
 
 
     @Test
+    fun `only new alerts notify, and severe only leaves out the others`() {
+        val disruptions = disruptionsOf(listOf(departure("Zoo", "U2", closed, detour, lift)))
+        val notified = setOf(lift.notificationKey())
+
+        assertEquals(listOf(closed, detour), alertsToNotify(disruptions, severeOnly = false, notified).map { it.alert })
+        assertEquals(listOf(closed), alertsToNotify(disruptions, severeOnly = true, notified).map { it.alert })
+    }
+
+    @Test
     fun `alerts with the same lines and effect share a stack in place of the first`() {
         val worksMonday = Alert("RER A works on Monday", "", effect = AlertEffect.REDUCED_SERVICE)
         val worksFriday = Alert("RER A works on Friday", "", effect = AlertEffect.REDUCED_SERVICE)

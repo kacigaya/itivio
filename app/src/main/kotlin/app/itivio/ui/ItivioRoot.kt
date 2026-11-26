@@ -386,6 +386,10 @@ fun ItivioRoot(
                                 onClearRecents = settings::clearRecents,
                                 onDeleteAll = settings::deleteAll,
                                 onAbout = { backStack.push(AboutRoute) },
+                                disruptionAlerts = settings.disruptionAlerts.collectAsStateWithLifecycle().value,
+                                severeAlertsOnly = settings.severeAlertsOnly.collectAsStateWithLifecycle().value,
+                                onDisruptionAlerts = settings::setDisruptionAlerts,
+                                onSevereAlertsOnly = settings::setSevereAlertsOnly,
                                 shortcutTimes = settings.shortcutTimes.collectAsStateWithLifecycle().value,
                                 onShortcutTimes = settings::setShortcutTimes,
                             )

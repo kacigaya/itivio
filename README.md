@@ -117,12 +117,13 @@ Read the [privacy policy](PRIVACY.md) for details about location, network servic
 - Favorites, Home and Work, recent searches, journey options, and settings stay on your device. The disruptions list sends the IDs of your saved stops to Transitous, while the home screen is open on a phone, because it shows the number of alerts.
 - "Travel time to Home and Work" in the settings is off by default. When it is on, the home screen sends your position and your Home and Work places to Transitous at full precision, to show the travel time on their buttons. It sends them again after you move about 150 m, at most once every 20 seconds.
 - A departure reminder stays on your device. It uses an Android alarm and a notification, and sends nothing. It works while the app is closed and after a restart. The app asks for the notification permission when you set the first reminder, and sets none if you decline.
+- "Disruption alerts" in the settings is off by default. When it is on, the app sends the IDs of your saved stops to Transitous in the background, about every 30 minutes, and notifies you of new alerts. It sends no location.
 
 The app sends requests to these services only:
 
 | Service | Use | Data sent |
 |---|---|---|
-| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the IDs of your saved stops for the disruptions list, your position with your Home and Work places when "Travel time to Home and Work" is on, the map area you look at when you zoom in to street level |
+| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the IDs of your saved stops for the disruptions list and, when "Disruption alerts" is on, in the background, your position with your Home and Work places when "Travel time to Home and Work" is on, the map area you look at when you zoom in to street level |
 | [IGN Géoplateforme](https://cartes.gouv.fr/) | French address search | Search text, without your location |
 | [OpenFreeMap](https://openfreemap.org/) | Map tiles | The map area you look at |
 

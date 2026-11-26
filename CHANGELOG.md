@@ -28,6 +28,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 - See how long it takes to get home or to work, right on the Home and Work buttons. Turn on "Travel time to Home and Work" in the settings. It is off by default, because it sends your position and both places to Transitous.
 - Get a reminder when it is time to leave. "Remind me" on the itinerary offers when to leave, or 2, 5, or 10 minutes before. While the itinerary is open, the reminder moves with live delays, and it stays set while the app is closed. The reminder is kept on the device and is set again after a restart.
 - The app now asks for two more permissions, both for the reminder and both one time only. "Notifications" is what makes a reminder visible. "Alarms and reminders" lets Android show it at the exact minute; if you decline, the reminder can come a few minutes late. The app needs no permission to send you anything from a server.
+- Get notified of new disruptions on your saved stops. Turn on "Disruption alerts" in the settings. It is off by default. When on, the app checks your saved stops every 30 minutes in the background and sends only their IDs. By default, only severe alerts notify.
 
 ## 0.14.2
 
