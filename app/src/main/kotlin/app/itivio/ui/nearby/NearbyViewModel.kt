@@ -19,12 +19,21 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
+import app.itivio.domain.Location
+import app.itivio.domain.LocationKind
 
 /**
  * Departures from one stop, in time order. [distanceMeters] is the straight-line distance from
  * the device to the nearest platform, or null without a position.
  */
 data class StopDepartures(val name: String, val departures: List<Departure>, val distanceMeters: Double? = null)
+
+/** The stop as a place to plan to: its station when the provider gives one, else its first platform. */
+fun StopDepartures.toLocation(): Location? {
+    val stop = departures.firstOrNull()?.stop ?: return null
+    val id = stop.stationId ?: stop.stopId ?: return null
+    return Location(id, name, LocationKind.STOP, stop.point, stopId = id, modes = departures.map { it.mode }.toSet())
+}
 
 /**
  * Upcoming departures around the device. Refreshes while the screen is visible, and again when

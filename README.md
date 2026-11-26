@@ -1,33 +1,36 @@
-<p align="center">
-  <img src="assets/logo.svg" alt="itivio app icon" width="140">
-</p>
+<!-- tools/readme-art.py makes the images in assets/readme/light/ and assets/readme/dark/. Run it after a change to their texts. -->
 
-<h1 align="center">itivio</h1>
+<div align="center">
 
-<p align="center">
-  <strong>A public transport app for Android that keeps your data on your device.</strong><br>
-  <em>Plan journeys by bus, tram, metro, train, and ferry. Open source, no account, no ads.</em>
-</p>
+<picture><source media="(prefers-color-scheme: dark) and (max-width: 640px)" srcset="assets/readme/dark/banner-m.svg"><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/banner.svg"><source media="(max-width: 640px)" srcset="assets/readme/light/banner-m.svg"><img src="assets/readme/light/banner.svg" alt="itivio: public transport for Android. Your data stays on your phone." width="100%"></picture>
 
-<p align="center">
-  <a href="https://kotlinlang.org"><img alt="Kotlin 2.4.21" src="https://shieldcn.dev/badge/Kotlin-2.4.21-7f52ff.svg?variant=secondary&amp;logo=kotlin"></a>
-  <a href="https://developer.android.com"><img alt="Android compile SDK 37" src="https://shieldcn.dev/badge/Android-SDK_37-3ddc84.svg?variant=secondary&amp;logo=android&amp;logoColor=171717"></a>
-  <a href="https://m3.material.io"><img alt="Material 3 Expressive" src="https://shieldcn.dev/badge/Material_3-Expressive-6750a4.svg?variant=secondary"></a>
-  <a href="https://gradle.org"><img alt="Gradle 9.9" src="https://shieldcn.dev/badge/Gradle-9.9-02303a.svg?variant=secondary&amp;logo=gradle"></a>
-  <a href="https://github.com/kacigaya/itivio/blob/main/LICENSE"><img alt="GPL-3.0-or-later License" src="https://shieldcn.dev/github/license/kacigaya/itivio.svg?variant=secondary"></a>
-</p>
+<a href="https://github.com/kacigaya/itivio/releases"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/btn-download.svg"><img src="assets/readme/light/btn-download.svg" alt="Download APK"></picture></a>
+<a href="https://kacigaya.github.io/itivio/"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/btn-website.svg"><img src="assets/readme/light/btn-website.svg" alt="Website"></picture></a>
+<a href="PRIVACY.md"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/btn-privacy.svg"><img src="assets/readme/light/btn-privacy.svg" alt="Privacy policy"></picture></a>
 
-<p align="center">
-  <a href="https://github.com/kacigaya/itivio/releases/download/v0.10.1/demo.mp4"><img src="assets/demo.gif" alt="itivio demo: know where to board, and which train is yours" width="720"></a>
-</p>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/badge-adfree.svg"><img src="assets/readme/light/badge-adfree.svg" alt="No ads"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/badge-private.svg"><img src="assets/readme/light/badge-private.svg" alt="No analytics"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/badge-m3e.svg"><img src="assets/readme/light/badge-m3e.svg" alt="Material 3 Expressive"></picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/badge-gpl.svg"><img src="assets/readme/light/badge-gpl.svg" alt="GPL-3.0-or-later"></picture>
 
-## Features
+</div>
+
+<div align="center">
+<a href="https://github.com/kacigaya/itivio/releases/download/v0.10.1/demo.mp4"><img src="assets/demo.gif" alt="itivio demo: know where to board, and which train is yours" width="720"></a>
+</div>
+
+<h2 id="features"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-features.svg"><img src="assets/readme/light/h-features.svg" alt="Features"></picture></h2>
+
+<picture><source media="(prefers-color-scheme: dark) and (max-width: 640px)" srcset="assets/readme/dark/features-m.svg"><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/features.svg"><source media="(max-width: 640px)" srcset="assets/readme/light/features-m.svg"><img src="assets/readme/light/features.svg" alt="Features: journey planning, where to board, live times, walking directions, disruptions, and no account" width="100%"></picture>
+
+<details>
+<summary><b>All features</b></summary>
 
 - Map with your current location.
 - Place and stop search with suggestions.
 - Favorite places and stops, Home and Work shortcuts, and recent searches. They stay on your device.
 - Departures from stops near you, with live countdowns.
-- A departure board for each stop. Tap a stop on the map, or select "Show departures" for a stop in the search.
+- A departure board for each stop, with filters for each line and service alerts for the selected line. Tap a stop on the map, or select "Show departures" for a stop in the search.
 - Journey planning with all public transport modes. Leave now, leave at a time, or arrive by a time.
 - Journey options: transport modes, a transfer limit, wheelchair-accessible routing, and walking speed. The app keeps them between starts.
 - Routes grouped by line, with the next departures of each route.
@@ -47,19 +50,16 @@
 - A departures widget for the home screen: the next 3 departures of one stop, with a refresh button. Open a stop and tap "Add to home screen".
 - Layout for phones, tablets, and foldables.
 
-## Install
+</details>
+
+<h2 id="install"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-install.svg"><img src="assets/readme/light/h-install.svg" alt="Install"></picture></h2>
 
 Download the APK from the [newest release](https://github.com/kacigaya/itivio/releases). The universal APK works on all devices. The app needs Android 8.0 or later.
 
-Releases from v0.14.0 on are signed with the project key. The SHA-256 fingerprint of its certificate is:
-
-```
-E7:15:4A:73:3D:EF:B1:DC:B6:8A:80:FD:C8:35:56:FF:88:B4:EA:2F:83:6D:36:A3:30:6A:DF:A0:C6:8A:29:81
-```
-
 To check a download, compare it with `SHA256SUMS.txt` of the release, or run `apksigner verify --print-certs` on the APK.
 
-### Update from v0.13.1 or earlier
+<details>
+<summary><b>Update from v0.13.1 or earlier</b></summary>
 
 Versions up to v0.13.1 used a debug key. Android cannot update an app to a version with another key, so this change needs one reinstall:
 
@@ -69,101 +69,80 @@ Versions up to v0.13.1 used a debug key. Android cannot update an app to a versi
 
 Later releases update in place.
 
-## Privacy
+</details>
 
-Read the [privacy policy](PRIVACY.md) for details about location, network services, stored data, and deletion.
-
-- No account, no analytics, no ads.
-- The app does not log your journeys or your location.
-- The app rounds the location it sends for search suggestions to about 1 km.
-- Walking directions use your location on the device only. The app sends it only when you select "Plan a new route".
-- Your location does not need Google Play services.
-- Favorites, Home and Work, and recent searches are stored on your device. The disruptions list sends saved stop IDs as described below.
-- Journey options stay on your device. They go to Transitous only as part of a journey request. This includes the wheelchair option.
-- The disruptions list sends the IDs of your saved stops (Home, Work, and favorites) to Transitous, to get their alerts. On a phone, it sends them while the home screen is open, because the home screen shows the number of alerts. On a tablet, it sends them only while the Disruptions page is open. A saved place that is not a stop is not sent.
-- A departures widget on the home screen sends the ID of its stop to Transitous when Android updates it, about every 30 minutes, and when you tap its refresh button. It sends no location.
-- The settings stay on your device. "Delete all app data" in the settings removes the saved places, the journey options, and the settings.
-- The app turns off Android backup and device transfer for its data.
-
-The app sends requests to these services:
-
-| Service | Use | Data sent |
-|---|---|---|
-| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the stop of each departures widget, the IDs of your saved stops for the disruptions list, the map area you look at when you zoom in to street level |
-| [IGN Géoplateforme](https://cartes.gouv.fr/) | French address search | Search text, without your location |
-| [OpenFreeMap](https://openfreemap.org/) | Map tiles | The map area you look at |
-
-## Data sources
-
-Routing comes from [Transitous](https://transitous.org/), a community service that runs [MOTIS](https://github.com/motis-project/motis). Transitous combines timetables from many transit agencies. See the [list of data sources](https://transitous.org/sources/).
-
-French address search also uses IGN Géoplateforme and the [Base Adresse Nationale](https://adresse.data.gouv.fr/). Address-like queries go to IGN when the first Transitous match identifies France. IGN failures leave Transitous suggestions available.
-
-Boarding positions in Paris come from the RATP dataset [Positionnement dans la rame](https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/positionnement-dans-la-rame). Exit numbers, names, and coordinates come from the [Accès dataset](https://data.iledefrance-mobilites.fr/explore/dataset/acces/). Île-de-France Mobilités publishes both under the Licence Ouverte 2.0 (Etalab). The app ships copies. `tools/boarding-positions.py` builds them.
-
-Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Map tiles from [OpenFreeMap](https://openfreemap.org/). The map styles derive from [OSM Liberty](https://github.com/maputnik/osm-liberty) (BSD 3-Clause code, CC BY design) with [OpenMapTiles](https://openmaptiles.org/) data.
-
-Coverage differs by region. Some regions have no live data.
-
-## Build
+<h2 id="build"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-build.svg"><img src="assets/readme/light/h-build.svg" alt="Build from source"></picture></h2>
 
 Requirements: JDK 21 and the Android SDK (compile SDK 37).
 
 ```sh
+git clone https://github.com/kacigaya/itivio.git
+cd itivio
 ./gradlew :app:assembleDebug
 ./gradlew :app:testDebugUnitTest
 ./gradlew :app:lintDebug
 ```
 
-### APK builds on GitHub
+<details>
+<summary><b>Technical specifications</b></summary>
 
-Tests, lint, and the debug build run on each push and pull request. To download APKs, run the workflow manually:
+- **Core platform**: 100% Kotlin 2.4.21, AGP 9.5.2, Gradle 9.9.2, JDK 21. Compile SDK 37.2, min SDK 26 (Android 8.0).
+- **UI & design**: Jetpack Compose, Material 3 Expressive, Navigation 3. Dynamic color (Material You) on Android 12+, fallback tonal-spot scheme from `#1B6B5A`. Light and dark themes, English and French, layouts for phones, tablets, and foldables.
+- **Maps**: MapLibre with OpenFreeMap tiles; custom light and dark styles derived from OSM Liberty.
+- **Networking**: Ktor (OkHttp engine) with kotlinx.serialization, against the MOTIS 2 API of Transitous; IGN Géoplateforme for French address search.
+- **Storage**: Room with KSP for saved places; Preferences DataStore for journey options and settings.
+- **DI & async**: Koin; coroutines and StateFlow.
+- **Boarding data**: offline tables built from the RATP / Île-de-France Mobilités datasets, shipped inside the APK. No request for them.
+- **License & requirements**: free and open source under GNU GPL v3.0 or later. No account, no ads, no analytics. Android 8.0 or later.
 
-1. Open [Build APK](https://github.com/kacigaya/itivio/actions/workflows/apk.yml).
-2. Select **Run workflow** on `main`.
-3. Wait for the build to pass.
-4. Download `itivio-debug-apks` from the run's **Artifacts** section.
-5. Extract the archive. Install the universal APK, or select the APK for your CPU type.
+</details>
 
-The workflow runs tests and lint before uploading the APKs. These are debug builds signed with a temporary debug key. Later builds can need a reinstall because the key can change. Artifacts expire after 14 days. A GitHub login is required to download them.
+<details>
+<summary><b>Project structure, CI, and release signing</b></summary>
 
-See [Quality checks](docs/quality.md) for screenshot references and the manual accessibility checks.
+- Layers: `ui/` (Compose screens, ViewModels, theme), `domain/` (models and repository contracts), `data/` (Transitous client, Room, DataStore, Koin bindings in `DataModule.kt`). `ui` never imports `data`.
+- CI: `.github/workflows/apk.yml` runs tests, lint, and the debug build on each push and pull request. A manual run also uploads `itivio-debug-apks` for 14 days. Those are debug-signed with a temporary key, so later builds can need a reinstall. See [docs/quality.md](docs/quality.md) for the screenshot references and manual accessibility checks.
+- Release builds: `./gradlew :app:assembleRelease` builds one APK per CPU type (`arm64-v8a`, `armeabi-v7a`, `x86_64`) plus a universal APK. Set `ITIVIO_KEYSTORE`, `ITIVIO_KEYSTORE_PASSWORD`, `ITIVIO_KEY_ALIAS`, and `ITIVIO_KEY_PASSWORD` (or `itivio.keystore`, `itivio.keystorePassword`, `itivio.keyAlias`, `itivio.keyPassword` in `~/.gradle/gradle.properties`; environment variables take priority). If any value is missing, the release APKs stay unsigned. Keep keys outside the repository. A `vX.Y.Z` tag runs [release.yml](.github/workflows/release.yml): tests, lint, the signed build, a signature check, and publishing with `SHA256SUMS.txt`. The tag must match `versionName`, and `CHANGELOG.md` must have a section for the version.
+- Website: `site/` is the project website, a static Next.js export that links the newest release. `.github/workflows/pages.yml` deploys it to GitHub Pages.
+- Transitous contact: every request sends a User-Agent with the `itivio.contact` Gradle property. If you publish a fork, change it: `./gradlew :app:assembleRelease -Pitivio.contact=you@example.com`. Read the [Transitous usage policy](https://transitous.org/api/) first: the service is for open-source, non-commercial apps only.
 
-### Website
+</details>
 
-`site/` holds the project website, a static Next.js export. It links the APKs of the newest release. `.github/workflows/pages.yml` deploys it to GitHub Pages. See `AGENTS.md` for the commands.
+<h2 id="privacy"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-privacy.svg"><img src="assets/readme/light/h-privacy.svg" alt="Privacy"></picture></h2>
 
-### Release builds
+Read the [privacy policy](PRIVACY.md) for details about location, network services, stored data, and deletion.
 
-Run `./gradlew :app:assembleRelease` to build one APK per CPU type (`arm64-v8a`, `armeabi-v7a`, and `x86_64`) plus a universal APK.
+- No account, no analytics, no ads. The app does not log your journeys or your location.
+- The location sent for search suggestions is rounded to about 1 km. Walking directions use your location on the device only, and send it only when you select "Plan a new route".
+- Your location does not need Google Play services. Android backup and device transfer are turned off for the app data.
+- Favorites, Home and Work, recent searches, journey options, and settings stay on your device. The disruptions list sends the IDs of your saved stops to Transitous, while the home screen is open on a phone, because it shows the number of alerts.
+- "Travel time to Home and Work" in the settings is off by default. When it is on, the home screen sends your position and your Home and Work places to Transitous at full precision, to show the travel time on their buttons. It sends them again after you move about 150 m, at most once every 20 seconds.
+- A departure reminder stays on your device. It uses an Android alarm and a notification, and sends nothing. It works while the app is closed and after a restart. The app asks for the notification permission when you set the first reminder, and sets none if you decline.
+- "Disruption alerts" in the settings is off by default. When it is on, the app sends the IDs of your saved stops to Transitous in the background, about every 30 minutes, and notifies you of new alerts. It sends no location.
+- A departures widget on the home screen sends the ID of its stop to Transitous when Android updates it, about every 30 minutes, and when you tap its refresh button. It sends no location.
 
-Set all four environment variables to sign the release APKs:
+The app sends requests to these services only:
 
-- `ITIVIO_KEYSTORE`: path to the keystore file.
-- `ITIVIO_KEYSTORE_PASSWORD`: keystore password.
-- `ITIVIO_KEY_ALIAS`: signing key alias.
-- `ITIVIO_KEY_PASSWORD`: signing key password.
+| Service | Use | Data sent |
+|---|---|---|
+| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the stop of each departures widget, the IDs of your saved stops for the disruptions list and, when "Disruption alerts" is on, in the background, your position with your Home and Work places when "Travel time to Home and Work" is on, the map area you look at when you zoom in to street level |
+| [IGN Géoplateforme](https://cartes.gouv.fr/) | French address search | Search text, without your location |
+| [OpenFreeMap](https://openfreemap.org/) | Map tiles | The map area you look at |
 
-You can also set `itivio.keystore`, `itivio.keystorePassword`, `itivio.keyAlias`, and `itivio.keyPassword` in `~/.gradle/gradle.properties`. Environment variables take priority. If any value is missing, the release APKs stay unsigned. Keep keys and passwords outside the repository.
+<h2 id="faq"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-faq.svg"><img src="assets/readme/light/h-faq.svg" alt="FAQ"></picture></h2>
 
-Published releases come from [Release](https://github.com/kacigaya/itivio/actions/workflows/release.yml). A `vX.Y.Z` tag runs tests and lint, builds the release APKs with the project key from the repository secrets, checks their signatures, and publishes them with `SHA256SUMS.txt`. The tag must match `versionName`, and `CHANGELOG.md` must have a section for the version.
+- **Is itivio really free?** Yes. Open source under GNU GPL v3.0 or later, with no ads, no analytics, and no account.
+- **Can I use it without location access?** Yes. Location is optional: you can search and plan journeys without it.
+- **Does it need Google Play services?** No. Location comes from the Android framework provider.
+- **What leaves my phone?** Only the requests in the privacy table above. Favorites, recent searches, settings, and journey options stay on the device.
+- **Where does "where to board" come from?** The RATP / Île-de-France Mobilités datasets, shipped as offline tables in the APK. It covers Paris metro platforms and some RER platforms; other regions show no boarding hint.
+- **Why does coverage differ by region?** Routing comes from Transitous, a community service that combines agency timetables. Some regions have no live data; scheduled times then show without a live marker.
+- **How do I verify a download?** Compare it with `SHA256SUMS.txt` of the release, or run `apksigner verify --print-certs` and check the fingerprint above.
 
-### Transitous contact
+<h2 id="credits"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-credits.svg"><img src="assets/readme/light/h-credits.svg" alt="Credits"></picture></h2>
 
-Transitous asks each app to send contact details with every request. The app puts the `itivio.contact` Gradle property in its User-Agent. If you publish a fork, change the contact to your own:
+Routing: [Transitous](https://transitous.org/), a community [MOTIS](https://github.com/motis-project/motis) service (see the [list of data sources](https://transitous.org/sources/)). French addresses: IGN Géoplateforme, [Base Adresse Nationale](https://adresse.data.gouv.fr/). Boarding positions and exits in Paris: the RATP datasets [Positionnement dans la rame](https://prim.iledefrance-mobilites.fr/fr/jeux-de-donnees/positionnement-dans-la-rame) and [Accès](https://data.iledefrance-mobilites.fr/explore/dataset/acces/) from Île-de-France Mobilités, under the Licence Ouverte 2.0; `tools/boarding-positions.py` builds the offline tables. Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. Map tiles from [OpenFreeMap](https://openfreemap.org/). Map styles derive from [OSM Liberty](https://github.com/maputnik/osm-liberty) (BSD 3-Clause code, CC BY design) with [OpenMapTiles](https://openmaptiles.org/) data.
 
-```sh
-./gradlew :app:assembleRelease -Pitivio.contact=you@example.com
-```
+itivio is licensed under the **GNU General Public License, version 3 or later** ([LICENSE](LICENSE)). The app bundles the Google Sans Flex typeface, unmodified, under the [SIL Open Font License 1.1](licenses/GoogleSansFlex-OFL.txt). The icons are Material Symbols, under the Apache License 2.0.
 
-Read the [Transitous usage policy](https://transitous.org/api/) before you publish a fork. The service is for open-source, non-commercial apps only.
-
-## Contributing and security
-
-Read [Contributing](CONTRIBUTING.md) for setup and checks. See the [changelog](CHANGELOG.md) for version history and the [security policy](SECURITY.md) to report a vulnerability.
-
-## License
-
-itivio is free software. You can redistribute it and change it under the terms of the [GNU General Public License](LICENSE), version 3 or any later version.
-
-The app bundles the Google Sans Flex typeface, unmodified. It has its own license, the [SIL Open Font License 1.1](licenses/GoogleSansFlex-OFL.txt). The icons are Material Symbols, under the Apache License 2.0.
+Contributing: see [CONTRIBUTING.md](CONTRIBUTING.md). Version history is in [CHANGELOG.md](CHANGELOG.md). To report a vulnerability, follow [SECURITY.md](SECURITY.md).

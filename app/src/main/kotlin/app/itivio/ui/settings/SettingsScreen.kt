@@ -40,6 +40,16 @@ import app.itivio.ui.common.Choice
 import app.itivio.ui.common.ChoiceButtons
 import app.itivio.ui.common.Page
 import app.itivio.ui.results.JourneyOptionsDialog
+import app.itivio.domain.WalkingSpeed
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.annotation.RequiresApi
+import android.app.LocaleManager
+import androidx.compose.material3.Switch
+import androidx.compose.foundation.selection.toggleable
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.Manifest
 
 /**
  * The settings: theme, language, journey options, stored data, and the way to the about screen.
@@ -55,7 +65,15 @@ fun SettingsScreen(
     onClearRecents: () -> Unit,
     onDeleteAll: () -> Unit,
     onAbout: () -> Unit,
+    disruptionAlerts: Boolean = false,
+    severeAlertsOnly: Boolean = true,
+    onDisruptionAlerts: (Boolean) -> Unit = {},
+    onSevereAlertsOnly: (Boolean) -> Unit = {},
+    shortcutTimes: Boolean = false,
+    onShortcutTimes: (Boolean) -> Unit = {},
 ) {
+    // An alert without this permission is checked, but Android shows no notification.
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     var editingOptions by rememberSaveable { mutableStateOf(false) }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
@@ -68,7 +86,7 @@ fun SettingsScreen(
                 SettingsRow(
                     icon = R.drawable.ic_language,
                     title = stringResource(R.string.settings_language),
-                    body = stringResource(R.string.settings_language_body),
+                    body = languageSummary(),
                     onClick = {
                         try {
                             context.startActivity(
@@ -85,10 +103,40 @@ fun SettingsScreen(
             SettingsRow(
                 icon = R.drawable.ic_tune,
                 title = stringResource(R.string.options_title),
-                body = stringResource(R.string.settings_options_body),
+                body = options?.let { optionsSummary(it) } ?: stringResource(R.string.settings_options_body),
                 enabled = options != null,
                 onClick = { editingOptions = true },
             )
+            SwitchRow(
+                icon = R.drawable.ic_schedule,
+                title = stringResource(R.string.settings_shortcut_times),
+                body = stringResource(R.string.settings_shortcut_times_body),
+                checked = shortcutTimes,
+                onCheckedChange = onShortcutTimes,
+            )
+        }
+        section("notifications", R.string.settings_notifications) {
+            SwitchRow(
+                icon = R.drawable.ic_warning,
+                title = stringResource(R.string.settings_disruption_alerts),
+                body = stringResource(R.string.settings_disruption_alerts_body),
+                checked = disruptionAlerts,
+                onCheckedChange = { on ->
+                    onDisruptionAlerts(on)
+                    if (on && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                },
+            )
+            if (disruptionAlerts) {
+                SwitchRow(
+                    icon = R.drawable.ic_info,
+                    title = stringResource(R.string.settings_severe_only),
+                    body = stringResource(R.string.settings_severe_only_body),
+                    checked = severeAlertsOnly,
+                    onCheckedChange = onSevereAlertsOnly,
+                )
+            }
         }
         section("data", R.string.settings_data) {
             SettingsRow(
@@ -142,6 +190,35 @@ fun SettingsScreen(
     }
 }
 
+/** The language the app shows, and whether it follows the device or is set for this app. Android 13 and later. */
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+private fun languageSummary(): String {
+    val locale = LocalConfiguration.current.locales[0]
+    val name = locale.getDisplayLanguage(locale).replaceFirstChar { it.titlecase(locale) }
+    val ownLanguage = LocalContext.current.getSystemService(LocaleManager::class.java)?.applicationLocales?.isEmpty == false
+    return stringResource(if (ownLanguage) R.string.settings_language_app else R.string.settings_language_system, name)
+}
+
+/** The journey options in a few words: only the ones away from their default. */
+@Composable
+internal fun optionsSummary(options: JourneyOptions): String {
+    if (options.isDefault) return stringResource(R.string.settings_options_default)
+    val parts = buildList {
+        val off = options.excludedModes.size
+        if (off > 0) add(pluralStringResource(R.plurals.settings_options_modes_off, off, off))
+        when (val limit = options.maxTransfers) {
+            null -> Unit
+            0 -> add(stringResource(R.string.settings_options_direct))
+            else -> add(stringResource(R.string.settings_options_max_transfers, pluralStringResource(R.plurals.transfers, limit, limit)))
+        }
+        if (options.wheelchair) add(stringResource(R.string.options_wheelchair))
+        else if (options.walkingSpeed == WalkingSpeed.SLOW) add(stringResource(R.string.settings_options_slow))
+        else if (options.walkingSpeed == WalkingSpeed.FAST) add(stringResource(R.string.settings_options_fast))
+    }
+    return parts.joinToString(" · ")
+}
+
 /** A titled group of rows on one card. */
 internal fun LazyListScope.section(key: String, title: Int, content: @Composable () -> Unit) {
     item(key = key) {
@@ -174,6 +251,19 @@ internal fun SettingsRow(
         leadingContent = { Icon(painterResource(icon), contentDescription = null) },
         colors = ListItemDefaults.colors(containerColor = Color.Transparent, headlineColor = color, leadingIconColor = color),
         modifier = if (onClick != null) Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick) else Modifier,
+    )
+}
+
+/** A setting that turns on or off. The whole row toggles the switch. */
+@Composable
+private fun SwitchRow(@DrawableRes icon: Int, title: String, body: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    ListItem(
+        headlineContent = { Text(title, fontWeight = FontWeight.SemiBold) },
+        supportingContent = { Text(body, fontWeight = FontWeight.Light) },
+        leadingContent = { Icon(painterResource(icon), contentDescription = null) },
+        trailingContent = { Switch(checked = checked, onCheckedChange = null) },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = Modifier.toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
     )
 }
 

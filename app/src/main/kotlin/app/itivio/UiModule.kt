@@ -18,6 +18,7 @@ import org.koin.dsl.module
 import org.koin.android.ext.koin.androidContext
 import app.itivio.ui.widget.GlanceStopWidgets
 import app.itivio.domain.StopWidgets
+import app.itivio.ui.explore.ShortcutTimesViewModel
 
 val uiModule = module {
     single { UserLocation() }
@@ -33,5 +34,6 @@ val uiModule = module {
     viewModelOf(::MapStopsViewModel)
     viewModelOf(::DisruptionsViewModel)
     viewModelOf(::SettingsViewModel)
+    viewModel { ShortcutTimesViewModel(get(), get(), get(), get(), get()) }
     viewModel { WalkRerouteViewModel(get()) }
 }

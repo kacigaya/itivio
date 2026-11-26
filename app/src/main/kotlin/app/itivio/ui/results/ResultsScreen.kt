@@ -40,6 +40,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.clickable
@@ -59,6 +61,7 @@ import app.itivio.ui.search.LocationSearchView
 import app.itivio.ui.search.rememberLocationSearchBarState
 import app.itivio.ui.search.rememberLocationTextState
 import java.time.Instant
+import androidx.compose.material3.FilledTonalButton
 import kotlinx.coroutines.launch
 
 val ResultsPeekHeight = 360.dp
@@ -114,6 +117,7 @@ fun ResultsScreen(
                 onPickTime = { pickingTime = true },
                 onPickOptions = { pickingOptions = true },
                 onSort, onSelect, onOpen, onRetry,
+                onResetOptions = { onOptions(JourneyOptions()) },
             )
         }
     }
@@ -210,6 +214,7 @@ private fun ResultsList(
     onSelect: (String) -> Unit,
     onOpen: (String) -> Unit,
     onRetry: () -> Unit,
+    onResetOptions: () -> Unit,
 ) {
     val highlighted = state.highlighted?.id
     LazyColumn(
@@ -224,13 +229,27 @@ private fun ResultsList(
             is LoadState.Failed -> item(key = "error") { FailureState(results.failure, onRetry) }
             is LoadState.Ready -> if (results.value.isEmpty()) {
                 item(key = "empty") {
-                    MessageState(
-                        icon = R.drawable.ic_info,
-                        title = stringResource(R.string.results_empty_title),
-                        body = stringResource(R.string.results_empty_body),
-                        actionLabel = stringResource(R.string.retry),
-                        onAction = onRetry,
-                    )
+                    // The same request would find nothing again, so the actions change it.
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        MessageState(
+                            icon = R.drawable.ic_info,
+                            title = stringResource(R.string.results_empty_title),
+                            body = stringResource(R.string.results_empty_body),
+                        )
+                        FilledTonalButton(onClick = onRetry) { Text(stringResource(R.string.retry)) }
+                        FilledTonalButton(onClick = onPickTime) {
+                            Icon(painterResource(R.drawable.ic_schedule), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                            Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                            Text(stringResource(R.string.results_change_time))
+                        }
+                        if (!state.options.isDefault) {
+                            FilledTonalButton(onClick = onResetOptions, modifier = Modifier.padding(top = 8.dp)) {
+                                Icon(painterResource(R.drawable.ic_tune), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                                Text(stringResource(R.string.results_reset_options))
+                            }
+                        }
+                    }
                 }
             } else {
                 items(state.routes, key = { it.first().routeKey() }) { route ->
@@ -238,6 +257,7 @@ private fun ResultsList(
                         route = route,
                         selected = route.any { it.id == highlighted },
                         now = now,
+                        arriveBy = state.time.takeIf { state.arriveBy },
                         onClick = {
                             onSelect(route.first().id)
                             onOpen(route.first().id)
@@ -293,19 +313,29 @@ internal fun FilterButton(
     enabled: Boolean = true,
     @DrawableRes leadingIcon: Int? = null,
     @DrawableRes trailingIcon: Int? = null,
+    supporting: String? = null,
 ) {
+    val description = if (supporting != null) stringResource(R.string.filter_button_description, label, supporting) else null
     FilledTonalToggleButton(
         checked = checked,
+        modifier = modifier.semantics { description?.let { contentDescription = it } },
         onCheckedChange = { onClick() },
         enabled = enabled,
         contentPadding = if (leadingIcon != null) ButtonDefaults.ButtonWithIconContentPadding else ButtonDefaults.ContentPadding,
-        modifier = modifier,
     ) {
         if (leadingIcon != null) {
             Icon(painterResource(leadingIcon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
             Spacer(Modifier.width(ButtonDefaults.IconSpacing))
         }
-        Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        if (supporting == null) {
+            Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        } else {
+            // A second, small line keeps a long label short, so the next buttons stay in view.
+            Column {
+                Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(supporting, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            }
+        }
         if (trailingIcon != null) {
             Icon(painterResource(trailingIcon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
         }

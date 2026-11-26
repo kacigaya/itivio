@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import app.itivio.domain.DisruptionWatch
 
 /**
  * The settings and the data the app keeps. A storage failure, such as a full disk, must not stop
@@ -24,6 +25,7 @@ class SettingsViewModel(
     private val journeyOptions: JourneyOptionsRepository,
     private val places: PlacesRepository,
     private val appData: AppData,
+    private val watch: DisruptionWatch,
 ) : ViewModel() {
     val theme: StateFlow<ThemeMode> = settings.theme.catch { emit(ThemeMode.SYSTEM) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ThemeMode.SYSTEM)
@@ -32,13 +34,34 @@ class SettingsViewModel(
     val options: StateFlow<JourneyOptions?> = journeyOptions.options.catch { emit(JourneyOptions()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    val disruptionAlerts: StateFlow<Boolean> = settings.disruptionAlerts.catch { emit(false) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    val severeAlertsOnly: StateFlow<Boolean> = settings.severeAlertsOnly.catch { emit(true) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+
+    val shortcutTimes: StateFlow<Boolean> = settings.shortcutTimes.catch { emit(false) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     fun setTheme(mode: ThemeMode) = write { settings.setTheme(mode) }
+
+    fun setDisruptionAlerts(on: Boolean) = write {
+        settings.setDisruptionAlerts(on)
+        watch.enable(on)
+    }
+
+    fun setSevereAlertsOnly(on: Boolean) = write { settings.setSevereAlertsOnly(on) }
+
+    fun setShortcutTimes(on: Boolean) = write { settings.setShortcutTimes(on) }
 
     fun setOptions(options: JourneyOptions) = write { journeyOptions.save(options) }
 
     fun clearRecents() = write { places.clearRecents() }
 
-    fun deleteAll() = write { appData.deleteAll() }
+    fun deleteAll() = write {
+        watch.enable(false)
+        appData.deleteAll()
+    }
 
     private fun write(action: suspend () -> Unit) {
         viewModelScope.launch {

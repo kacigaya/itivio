@@ -56,6 +56,26 @@ class SettingsStorageTest {
     }
 
     @Test
+    fun `disruption alerts stay off and notify severe alerts only until the user changes them`() = scope.runTest {
+        assertEquals(false, settings.disruptionAlerts.first())
+        assertEquals(true, settings.severeAlertsOnly.first())
+        assertEquals(emptySet<String>(), settings.notifiedAlerts.first())
+
+        settings.setDisruptionAlerts(true)
+        settings.setNotifiedAlerts(setOf("a"))
+        assertEquals(true, settings.disruptionAlerts.first())
+        assertEquals(setOf("a"), settings.notifiedAlerts.first())
+    }
+
+    @Test
+    fun `travel times to the shortcuts stay off until the user turns them on`() = scope.runTest {
+        assertEquals(false, settings.shortcutTimes.first())
+
+        settings.setShortcutTimes(true)
+        assertEquals(true, settings.shortcutTimes.first())
+    }
+
+    @Test
     fun `an unknown stored theme falls back to the system`() = scope.runTest {
         store.edit { it[stringPreferencesKey("theme")] = "SEPIA" }
 

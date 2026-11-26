@@ -138,6 +138,7 @@ class TrainSelectionViewModelTest {
         runCurrent()
         assertEquals(plan, viewModel.journey.value)
         assertEquals(0, viewModel.selection.value.failedLeg)
+        assertEquals(departure, viewModel.selection.value.failedDeparture)
         repository.tripResult = { Trip(emptyList()) }
         viewModel.selectDeparture(0, departure)
         runCurrent()

@@ -116,6 +116,17 @@ import org.maplibre.spatialk.units.extensions.meters
 import org.maplibre.compose.location.rememberDefaultHeadingProvider
 import org.maplibre.compose.location.rememberDefaultLocationProvider
 import org.maplibre.compose.location.rememberLocationState
+import app.itivio.ui.explore.ShortcutTimesViewModel
+import app.itivio.domain.ReminderScheduler
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.os.Build
+import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.NotificationManagerCompat
 import app.itivio.domain.StopWidgets
 
 @Serializable data object ExploreRoute : NavKey
@@ -153,6 +164,21 @@ fun ItivioRoot(
     }
     val wide = isWideLayout()
     val widgets = koinInject<StopWidgets>()
+    val reminders = koinInject<ReminderScheduler>()
+    val reminder by reminders.active.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    // A reminder without the notification permission would show nothing, so the app asks first and
+    // sets no reminder when the rider says no.
+    var waitingReminder by remember { mutableStateOf<Pair<Journey, Int>?>(null) }
+    var reminderBlocked by remember { mutableStateOf(false) }
+    val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        val waiting = waitingReminder
+        waitingReminder = null
+        reminderBlocked = !granted
+        if (granted && waiting != null) reminders.schedule(waiting.first, waiting.second)
+    }
+    val notificationsAllowed =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || NotificationManagerCompat.from(context).areNotificationsEnabled()
     val userLocation = koinInject<UserLocation>()
     val top = backStack.last()
 
@@ -318,6 +344,7 @@ fun ItivioRoot(
                             // home, so they load while home is open. A wide window has its own page.
                             val disruptions: DisruptionsViewModel = koinViewModel()
                             val homeDisruptions = if (wide) null else disruptions.disruptions.collectAsStateWithLifecycle().value
+                            val shortcutTimes: ShortcutTimesViewModel = koinViewModel()
                             ExploreScreen(
                                 wide = wide,
                                 locationGranted = locationGranted,
@@ -336,6 +363,7 @@ fun ItivioRoot(
                                     location.stopId?.let { openStop(MapStop(it, location.name, location.point)) }
                                 },
                                 onSettings = { backStack.push(SettingsRoute) },
+                                shortcutTimes = shortcutTimes.times.collectAsStateWithLifecycle().value,
                             )
                         }
                         entry<DisruptionsRoute>(metadata = DisruptionsPage) {
@@ -360,6 +388,12 @@ fun ItivioRoot(
                                 onClearRecents = settings::clearRecents,
                                 onDeleteAll = settings::deleteAll,
                                 onAbout = { backStack.push(AboutRoute) },
+                                disruptionAlerts = settings.disruptionAlerts.collectAsStateWithLifecycle().value,
+                                severeAlertsOnly = settings.severeAlertsOnly.collectAsStateWithLifecycle().value,
+                                onDisruptionAlerts = settings::setDisruptionAlerts,
+                                onSevereAlertsOnly = settings::setSevereAlertsOnly,
+                                shortcutTimes = settings.shortcutTimes.collectAsStateWithLifecycle().value,
+                                onShortcutTimes = settings::setShortcutTimes,
                             )
                         }
                         entry<AboutRoute>(metadata = FullScreenPage) {
@@ -423,6 +457,8 @@ fun ItivioRoot(
                                 }
                                 val tracked = tracker.journey.collectAsStateWithLifecycle().value?.takeIf { it.id == journey.id }
                                 val visible = tracked ?: journey
+                                // A reminder follows the live times while the tracker runs.
+                                LaunchedEffect(visible) { reminders.update(visible) }
                                 LaunchedEffect(visible, state.time, state.arriveBy) {
                                     trackedJourney = visible
                                     lineTimes.show(visible, if (state.arriveBy) journey.departure.best else state.time)
@@ -436,6 +472,32 @@ fun ItivioRoot(
                                 ItineraryScreen(
                                     wide = wide,
                                     journey = visible,
+                                    reminder = reminder?.takeIf { it.journeyId == visible.id && it.at.isAfter(now) },
+                                    onRemind = { lead ->
+                                        when {
+                                            lead == null -> {
+                                                reminderBlocked = false
+                                                reminders.cancel()
+                                            }
+                                            notificationsAllowed -> {
+                                                reminderBlocked = false
+                                                reminders.schedule(visible, lead)
+                                            }
+                                            else -> {
+                                                waitingReminder = visible to lead
+                                                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                            }
+                                        }
+                                    },
+                                    exactAlarmsAllowed = reminders.canScheduleExact(),
+                                    onAllowExactAlarms = {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                            val settings = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                                                .setData(Uri.parse("package:${context.packageName}"))
+                                            context.startActivity(settings)
+                                        }
+                                    },
+                                    reminderNotice = if (reminderBlocked) stringResource(R.string.reminder_needs_permission) else null,
                                     now = now,
                                     boarding = boarding,
                                     lineTimes = lineTimes.times.collectAsStateWithLifecycle().value,

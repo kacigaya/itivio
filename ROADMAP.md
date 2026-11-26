@@ -101,7 +101,7 @@ Limits for this release:
 A tab that lists the service disruptions ("Perturbations" in French) that affect the user's stops. All items are done.
 
 - [x] Add top-level navigation with two destinations: Map and Disruptions. Use a navigation bar on phones and a navigation rail on wide screens.
-- [x] Ask for alerts with the stop times of the tab. The other screens keep `withAlerts=false` on `/v6/stoptimes`.
+- [x] Ask for alerts with the stop times of the tab and the stop departure board. The nearby departures and itinerary screens keep `withAlerts=false` on `/v6/stoptimes`.
 - [x] Read the severity, effect, cause, and impact period of an alert.
 - [x] Show the disruptions in two groups: saved stops (Home, Work, and favorites), then stops near the user.
 - [x] Put the most severe disruptions first in each group.
@@ -114,7 +114,7 @@ A tab that lists the service disruptions ("Perturbations" in French) that affect
 Limits for this release:
 
 - The provider has no endpoint that lists all disruptions of a network or a line. The tab shows only the disruptions on the stops it asks about.
-- The tab loads disruptions only while it is on screen. The app sends no background requests and no notifications.
+- The tab loads disruptions only while it is on screen. Background requests and notifications are the separate, opt-in "Disruption alerts" in the settings: off by default, one check every 30 minutes, and only the IDs of the saved stops.
 - Alerts come with departures. A line with no departure soon shows no alert.
 - Many feeds give no severity. The app then ranks an alert by its effect.
 
@@ -219,7 +219,7 @@ These items are not planned before v1.0.0:
 
 - Home screen widget for departures. Shipped as the departures widget of the stop screen.
 - Departure reminders.
-- Disruption notifications.
+- Disruption notifications. Shipped as the opt-in "Disruption alerts" in the settings.
 - Disruptions by line, and a list for the full network. This needs a provider endpoint that does not exist today.
 - Voice instructions in the walking view.
 - Alternative walking routes on the map.
