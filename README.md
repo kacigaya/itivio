@@ -1,5 +1,5 @@
-<!-- Image assets to add under assets/readme/ (placeholders until then):
-  banner.webp
+<!-- Image assets under assets/readme/:
+  banner.svg
   light/ + dark/: btn-download.svg, btn-website.svg, btn-source.svg, btn-privacy.svg,
     badge-adfree.svg, badge-private.svg, badge-android.svg, badge-m3e.svg, badge-gpl.svg,
     h-screenshots.svg, hm-screenshots.svg, h-features.svg, hm-features.svg, h-install.svg, hm-install.svg,
@@ -9,7 +9,7 @@
 -->
 
 <div align="center">
-<img src="assets/readme/banner.webp" alt="itivio" width="100%">
+<img src="assets/readme/banner.svg" alt="itivio" width="100%">
 <br><br>
 <p align="center">
   <a href="https://github.com/kacigaya/itivio/releases"><img alt="Latest release" src="https://shieldcn.dev/github/v/release/kacigaya/itivio.svg?variant=secondary"></a>
