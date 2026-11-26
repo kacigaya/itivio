@@ -10,7 +10,10 @@ export function Demo({ src, poster }: { src: string; poster: string }) {
   }, []);
 
   return (
-    <figure className="demo">
+    <figure className="demo rv pop">
+      <div className="blob b1" aria-hidden="true" />
+      <div className="blob b2" aria-hidden="true" />
+      <div className="blob b3" aria-hidden="true" />
       <video ref={video} src={src} poster={poster} width={1280} height={720} controls muted loop playsInline preload="metadata" />
       <figcaption>Plan a journey, find where to board, then walk it turn by turn.</figcaption>
     </figure>
