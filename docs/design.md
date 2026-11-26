@@ -105,11 +105,11 @@ Departures within 400 m, on one card for each stop name. The cards are in order 
 
 ## Travel time
 
-The results filters are tonal toggle buttons, the same as the saved places on home. A checked button has the `secondary` color. The travel time button, before the sort buttons, opens a time picker bottom sheet. The sheet has a row of connected buttons (Leave at, Arrive by), the same as the walking speed, day chips for the next 7 days, and the M3 Expressive scroll time picker with a keyboard input toggle. "Leave now" resets to the current time. Times use the device time zone. The button shows as checked when the time is not "now".
+The results filters are tonal toggle buttons, the same as the saved places on home. A checked button has the `secondary` color. The travel time button, before the sort buttons, opens a time picker bottom sheet. The sheet has a row of connected buttons (Leave at, Arrive by), the same as the walking speed, day chips for the next 7 days, and the M3 Expressive scroll time picker with a keyboard input toggle. "+15 min", "+30 min", and "+1 h" below the picker move the picked time forward, also past midnight to the next day. A step that goes past the last day of the picker is disabled. A screen reader hears "Add 15 minutes". "Leave now" resets to the current time. Times use the device time zone. The button shows as checked when the time is not "now".
 
 ## Journey options
 
-The options button, after the travel time button, opens a bottom sheet with the same layout as the travel time sheet. Both sheets come up from the bottom edge, and a swipe down or a tap outside closes them without changes. "Done", "Cancel", and "Leave now" send the sheet down in the time and easing of "Back" between screens, then apply their action. The button shows as checked when an option is not at its default.
+The options button, after the travel time button, opens a bottom sheet with the same layout as the travel time sheet. Both sheets come up from the bottom edge, and a swipe down or a tap outside closes them without changes. Both sheets have a heavy title, like the pages. "Done" is the only filled button in the row of buttons, so the main action stands out from "Cancel". "Done", "Cancel", and "Leave now" send the sheet down in the time and easing of "Back" between screens, then apply their action. The button shows as checked when an option is not at its default.
 
 - Transport modes: one filter chip for each mode, with the mode icon. The chips are in a grid of equal columns: three on a 411 dp phone, fewer on a narrow screen or with large text. Each chip has one line with a short name ("Suburban", "Express"; in French "Banlieue", "TGV"). A screen reader gets the full name. The chips of a row have one height, at least 48 dp, with 8 dp between rows. A tap on the last selected mode changes nothing, and a line of text says why.
 - Maximum transfers: one row of five connected buttons: an infinity icon for no limit, then 0 to 3. A line of text below the row gives the choice in words. A screen reader gets the full name of each button.
@@ -119,7 +119,7 @@ A row of connected buttons (`ChoiceButtons`) is the single-choice control of the
 
 The dialog has no switch for flights. No journey uses a flight.
 
-The dialog edits a copy. "Done" applies all changes with one new search. "Reset" puts the copy back to the defaults. "Cancel" drops the changes.
+The dialog edits a copy. "Done" applies all changes with one new search. "Reset" puts the copy back to the defaults. Its label gives the number of controls away from their default ("Reset 3 changes"), and each mode turned off counts once. With no change, it reads "Reset" and is disabled. "Cancel" drops the changes.
 
 ## Itinerary
 
@@ -132,6 +132,8 @@ Each transit leg shows the next 4 departures of its line at the boarding stop as
 When the data gives one, a "Where to board" row sits below the line and the direction. It is a `surfaceContainerHighest` card with the part of the train in heavy text ("At the front"), the reason ("Transfer" and the badge of the next line, or "Near the exit"), and a drawing of a train of three parts. The rear is on the left and the front, with its nose, is on the right, in the direction of travel. The part to board uses `primary`; the other parts use `outline`. The text names the part, so color is not the only cue. For an exit, the reason names the exit number ("Near exit 3"). A screen reader gets one sentence.
 
 When the data knows the exits of the alighting platform, a "Best exit" row sits below the alighting stop: an exit icon, the label, and the exit number and name in bold ("3 – r. M. Chasles"). It shows also when the exit has no single part of the train. See `architecture.md` for the data and its limits.
+
+A stop row puts its time at the end of the name line. When the name and the time do not fit on one line, the time moves below the name, so a long name such as "S+U Alexanderplatz" never breaks early.
 
 The rail and the stop dots draw on the same whole pixel, so the rail has no step below a dot.
 

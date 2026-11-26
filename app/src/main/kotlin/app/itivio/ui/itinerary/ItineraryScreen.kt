@@ -11,11 +11,11 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -48,6 +48,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.MultiContentMeasurePolicy
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -68,6 +75,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Canvas
@@ -694,11 +702,16 @@ private fun StopRow(
     Row(Modifier.height(IntrinsicSize.Min).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(RailWidth).fillMaxHeight(), contentAlignment = Alignment.Center) { rail() }
         Column(Modifier.weight(1f).padding(vertical = 6.dp)) {
-            Text(
-                // "My location" has no name.
-                stop.name.ifBlank { stringResource(R.string.search_my_location) },
-                style = if (emphasized) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
-                fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium,
+            NameAndTime(
+                name = {
+                    Text(
+                        // "My location" has no name.
+                        stop.name.ifBlank { stringResource(R.string.search_my_location) },
+                        style = if (emphasized) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+                        fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium,
+                    )
+                },
+                time = time,
             )
             caption?.let {
                 Text(
@@ -709,8 +722,76 @@ private fun StopRow(
                 )
             }
         }
-        time()
     }
+}
+
+/**
+ * The stop name with its time at the end of the same line. When both do not fit, the time moves
+ * below the name, so a long name keeps the full width and does not break early. Internal for the
+ * wrap test.
+ */
+@Composable
+internal fun NameAndTime(name: @Composable () -> Unit, time: @Composable () -> Unit) {
+    Layout(contents = listOf(name, time), measurePolicy = NameAndTimeMeasurePolicy)
+}
+
+/**
+ * The stack measurement of [NameAndTime]: both on one line, or the time under the name. The
+ * intrinsic heights report the stacked sum, because [StopRow] sizes its rail with
+ * `IntrinsicSize.Min`; the default max-of-children policy would stop the rail above the time.
+ */
+private object NameAndTimeMeasurePolicy : MultiContentMeasurePolicy {
+    private val Name = 0
+    private val Time = 1
+
+    override fun MeasureScope.measure(measurables: List<List<Measurable>>, constraints: Constraints): MeasureResult {
+        val gap = 12.dp.roundToPx()
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val timePlaceable = measurables[Time].first().measure(loose)
+        val nameMeasurable = measurables[Name].first()
+        val besideWidth = constraints.maxWidth - gap - timePlaceable.width
+        val oneLine = nameMeasurable.maxIntrinsicWidth(constraints.maxHeight) <= besideWidth
+        val namePlaceable = nameMeasurable.measure(loose.copy(maxWidth = if (oneLine) besideWidth else constraints.maxWidth))
+        return if (oneLine) {
+            val width = constraints.maxWidth
+            val height = maxOf(namePlaceable.height, timePlaceable.height)
+            layout(width, height) {
+                namePlaceable.placeRelative(0, (height - namePlaceable.height) / 2)
+                timePlaceable.placeRelative(width - timePlaceable.width, (height - timePlaceable.height) / 2)
+            }
+        } else {
+            val nameHeight = namePlaceable.height
+            layout(constraints.maxWidth, nameHeight + timePlaceable.height) {
+                namePlaceable.placeRelative(0, 0)
+                timePlaceable.placeRelative(0, nameHeight)
+            }
+        }
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<List<IntrinsicMeasurable>>, height: Int): Int =
+        maxOf(measurables[Name].first().minIntrinsicWidth(height), measurables[Time].first().minIntrinsicWidth(height))
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<List<IntrinsicMeasurable>>, height: Int): Int =
+        measurables[Name].first().maxIntrinsicWidth(height) + 12.dp.roundToPx() + measurables[Time].first().maxIntrinsicWidth(height)
+
+    /** The height at [width]: both beside, or the name over the time. */
+    private fun IntrinsicMeasureScope.heightAt(measurables: List<List<IntrinsicMeasurable>>, width: Int): Int {
+        val time = measurables[Time].first()
+        val timeWidth = time.maxIntrinsicWidth(Constraints.Infinity)
+        val besideWidth = width - 12.dp.roundToPx() - timeWidth
+        val oneLine = measurables[Name].first().maxIntrinsicWidth(Constraints.Infinity) <= besideWidth
+        return if (oneLine) {
+            maxOf(measurables[Name].first().maxIntrinsicHeight(besideWidth), time.maxIntrinsicHeight(timeWidth))
+        } else {
+            measurables[Name].first().maxIntrinsicHeight(width) + time.maxIntrinsicHeight(timeWidth)
+        }
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<List<IntrinsicMeasurable>>, width: Int): Int =
+        heightAt(measurables, width)
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<List<IntrinsicMeasurable>>, width: Int): Int =
+        heightAt(measurables, width)
 }
 
 /**
