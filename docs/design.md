@@ -150,6 +150,7 @@ The empty state says that some regions publish no alerts. On a compact window, t
 ## Settings and about
 
 The about page has a tonal "What’s new" button beside the version. It opens the GitHub release of that version in the browser. The APK is installed by hand, so no store shows the changes. The app itself sends no request.
+The Language row gives the language the app shows and whether it follows the device or is set for this app ("English · follows the device"). The Journey options row lists only the options away from their default ("2 modes off · At most 1 transfer · Fast walking"), or names the defaults.
 
 At larger text sizes, the theme choices use a vertical radio group so each label stays readable. Each choice keeps its icon.
 
