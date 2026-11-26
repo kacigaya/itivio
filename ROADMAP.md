@@ -101,7 +101,7 @@ Limits for this release:
 A tab that lists the service disruptions ("Perturbations" in French) that affect the user's stops. All items are done.
 
 - [x] Add top-level navigation with two destinations: Map and Disruptions. Use a navigation bar on phones and a navigation rail on wide screens.
-- [x] Ask for alerts with the stop times of the tab. The other screens keep `withAlerts=false` on `/v6/stoptimes`.
+- [x] Ask for alerts with the stop times of the tab and the stop departure board. The nearby departures and itinerary screens keep `withAlerts=false` on `/v6/stoptimes`.
 - [x] Read the severity, effect, cause, and impact period of an alert.
 - [x] Show the disruptions in two groups: saved stops (Home, Work, and favorites), then stops near the user.
 - [x] Put the most severe disruptions first in each group.

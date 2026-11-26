@@ -40,12 +40,19 @@ internal class DataStoreSettingsRepository(private val store: DataStore<Preferen
     override suspend fun setNotifiedAlerts(keys: Set<String>) {
         store.edit { it[NOTIFIED_ALERTS] = keys }
     }
+
+    override val shortcutTimes: Flow<Boolean> = store.data.map { it[SHORTCUT_TIMES] ?: false }
+
+    override suspend fun setShortcutTimes(on: Boolean) {
+        store.edit { it[SHORTCUT_TIMES] = on }
+    }
 }
 
 private val THEME = stringPreferencesKey("theme")
 private val DISRUPTION_ALERTS = booleanPreferencesKey("disruption_alerts")
 private val SEVERE_ALERTS_ONLY = booleanPreferencesKey("severe_alerts_only")
 private val NOTIFIED_ALERTS = stringSetPreferencesKey("notified_alerts")
+private val SHORTCUT_TIMES = booleanPreferencesKey("shortcut_times")
 
 /**
  * The Room table of the saved places and the `settings` DataStore file. The file also holds the

@@ -40,6 +40,9 @@ class SettingsViewModel(
     val severeAlertsOnly: StateFlow<Boolean> = settings.severeAlertsOnly.catch { emit(true) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
 
+    val shortcutTimes: StateFlow<Boolean> = settings.shortcutTimes.catch { emit(false) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     fun setTheme(mode: ThemeMode) = write { settings.setTheme(mode) }
 
     fun setDisruptionAlerts(on: Boolean) = write {
@@ -48,6 +51,8 @@ class SettingsViewModel(
     }
 
     fun setSevereAlertsOnly(on: Boolean) = write { settings.setSevereAlertsOnly(on) }
+
+    fun setShortcutTimes(on: Boolean) = write { settings.setShortcutTimes(on) }
 
     fun setOptions(options: JourneyOptions) = write { journeyOptions.save(options) }
 

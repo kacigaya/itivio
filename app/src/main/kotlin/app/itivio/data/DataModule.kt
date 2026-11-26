@@ -26,6 +26,9 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import app.itivio.data.alerts.WorkManagerDisruptionWatch
 import app.itivio.domain.DisruptionWatch
+import app.itivio.data.reminders.AlarmReminderScheduler
+import app.itivio.data.reminders.DataStoreReminderStorage
+import app.itivio.domain.ReminderScheduler
 
 val dataModule = module {
     single { createHttpClient() }
@@ -46,6 +49,7 @@ val dataModule = module {
     single<SettingsRepository> { DataStoreSettingsRepository(get()) }
     single<AppData> { LocalAppData(get<PlacesDatabase>().places(), get()) }
     single<DisruptionWatch> { WorkManagerDisruptionWatch(androidContext()) }
+    single<ReminderScheduler> { AlarmReminderScheduler(androidContext(), DataStoreReminderStorage(get())) }
     single<BoardingRepository> {
         val assets = androidContext().assets
         IdfmBoardingRepository(

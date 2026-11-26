@@ -68,6 +68,14 @@ class SettingsStorageTest {
     }
 
     @Test
+    fun `travel times to the shortcuts stay off until the user turns them on`() = scope.runTest {
+        assertEquals(false, settings.shortcutTimes.first())
+
+        settings.setShortcutTimes(true)
+        assertEquals(true, settings.shortcutTimes.first())
+    }
+
+    @Test
     fun `an unknown stored theme falls back to the system`() = scope.runTest {
         store.edit { it[stringPreferencesKey("theme")] = "SEPIA" }
 

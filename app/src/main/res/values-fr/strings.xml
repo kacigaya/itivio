@@ -20,7 +20,10 @@
     <string name="shortcut_set_work">Définir le travail</string>
     <string name="shortcut_search_home">Cherchez votre domicile</string>
     <string name="shortcut_search_work">Cherchez votre lieu de travail</string>
+    <string name="saved_chip_time">" · %1$s"</string>
+    <string name="saved_chip_description">Temps de trajet vers %1$s : %2$s</string>
     <string name="search_set_shortcut_hint">Cherchez un lieu, puis choisissez-le</string>
+    <string name="search_nearby_stops">Arrêts à proximité</string>
     <string name="saved_favorites">Favoris</string>
     <string name="saved_recents">Recherches récentes</string>
     <string name="saved_clear_recents">Effacer les recherches récentes</string>
@@ -38,8 +41,9 @@
     <string name="locate_me">Afficher ma position</string>
 
     <!-- Explore -->
-    <string name="explore_title">Préparez un trajet</string>
-    <string name="explore_body">Cherchez un arrêt, une adresse ou un lieu pour voir les itinéraires en transports en commun. Autorisez la localisation pour voir les départs près de vous.</string>
+    <string name="explore_title">Voir les départs près de vous</string>
+    <string name="explore_body">Prochains départs des arrêts à moins de 400 m.</string>
+    <string name="explore_search_hint">Ou cherchez un arrêt, une adresse ou un lieu.</string>
 
     <!-- Nearby -->
     <string name="home_departures">Départs</string>
@@ -63,6 +67,8 @@
     <string name="stop_directions">Itinéraire vers cet arrêt</string>
     <string name="stop_favorite">Favori</string>
     <string name="stop_departures">Départs</string>
+    <string name="stop_all_lines">Toutes les lignes</string>
+    <string name="stop_line_filter">Ligne %1$s</string>
     <string name="stop_empty_title">Aucun départ à venir</string>
     <string name="stop_empty_body">Les horaires n’ont aucun départ prochain à cet arrêt, ou ils ne couvrent pas cet arrêt.</string>
 
@@ -78,7 +84,13 @@
     <string name="disruptions_empty_body">Il n’y a aucune alerte pour vos arrêts enregistrés ni pour les arrêts près de vous. Certaines régions ne publient aucune alerte.</string>
     <string name="disruption_show_more">Afficher le texte complet</string>
     <string name="disruption_show_less">Afficher moins de texte</string>
+    <string name="disruption_collapse">Réduire</string>
     <string name="disruption_more_information">Plus d’informations</string>
+    <plurals name="disruption_count">
+        <item quantity="one">%d alerte</item>
+        <item quantity="many">%d alertes</item>
+        <item quantity="other">%d alertes</item>
+    </plurals>
     <!-- %1$s and %2$s are a date with a time. -->
     <string name="disruption_until">Jusqu’au %1$s</string>
     <string name="disruption_from">À partir du %1$s</string>
@@ -112,9 +124,22 @@
     <string name="settings_theme_light">Clair</string>
     <string name="settings_theme_dark">Sombre</string>
     <string name="settings_language">Langue</string>
-    <string name="settings_language_body">Ouvre le réglage de langue d’Android pour cette application.</string>
     <string name="settings_journeys">Trajets</string>
     <string name="settings_options_body">Modes de transport, correspondances et marche. Ces options s’appliquent à chaque recherche.</string>
+    <string name="settings_language_system">%1$s · suit l’appareil</string>
+    <string name="settings_language_app">%1$s · choisie pour cette app</string>
+    <string name="settings_options_default">Tous les modes, correspondances sans limite, marche normale</string>
+    <plurals name="settings_options_modes_off">
+        <item quantity="one">%d mode désactivé</item>
+        <item quantity="many">%d modes désactivés</item>
+        <item quantity="other">%d modes désactivés</item>
+    </plurals>
+    <string name="settings_options_direct">Trajets directs uniquement</string>
+    <string name="settings_options_max_transfers">%1$s au plus</string>
+    <string name="settings_options_slow">Marche lente</string>
+    <string name="settings_options_fast">Marche rapide</string>
+    <string name="settings_shortcut_times">Temps de trajet vers Domicile et Travail</string>
+    <string name="settings_shortcut_times_body">Sur l’accueil, affiche le temps de trajet sur les boutons Domicile et Travail. À chaque ouverture de l’accueil, l’app envoie votre position et ces 2 lieux à Transitous.</string>
     <string name="settings_notifications">Notifications</string>
     <string name="settings_disruption_alerts">Alertes de perturbation</string>
     <string name="settings_disruption_alerts_body">Toutes les 30 minutes, l’app envoie les identifiants de vos arrêts enregistrés à Transitous et vous prévient des nouvelles alertes. Elle n’envoie pas votre position.</string>
@@ -134,6 +159,7 @@
     <!-- About -->
     <string name="about_title">À propos</string>
     <string name="about_version">Version %1$s</string>
+    <string name="about_whats_new">Nouveautés</string>
     <string name="about_license">Licence</string>
     <string name="about_license_name">Licence publique générale GNU</string>
     <string name="about_license_body">itivio est un logiciel libre. Vous pouvez l’utiliser, le modifier et le partager selon la version 3 de la licence, ou toute version ultérieure.</string>
@@ -163,6 +189,19 @@
     <string name="travel_day_time">%1$s, %2$s</string>
     <string name="travel_today">Aujourd’hui</string>
     <string name="travel_tomorrow">Demain</string>
+    <string name="travel_plus_minutes">+%1$d min</string>
+    <string name="travel_plus_hours">+%1$d h</string>
+    <plurals name="travel_add_minutes">
+        <item quantity="one">Ajouter %d minute</item>
+        <item quantity="many">Ajouter %d minutes</item>
+        <item quantity="other">Ajouter %d minutes</item>
+    </plurals>
+    <plurals name="travel_add_hours">
+        <item quantity="one">Ajouter %d heure</item>
+        <item quantity="many">Ajouter %d heures</item>
+        <item quantity="other">Ajouter %d heures</item>
+    </plurals>
+    <string name="travel_yesterday">Hier</string>
 
     <!-- Journey options -->
     <string name="options_chip">Options</string>
@@ -180,12 +219,20 @@
     <string name="options_speed_normal">Normale</string>
     <string name="options_speed_fast">Rapide</string>
     <string name="options_reset">Réinitialiser</string>
+    <plurals name="options_reset_count">
+        <item quantity="one">Annuler %d modification</item>
+        <item quantity="many">Annuler %d modifications</item>
+        <item quantity="other">Annuler %d modifications</item>
+    </plurals>
 
     <!-- Results -->
     <string name="results_empty_title">Aucun itinéraire trouvé</string>
     <string name="results_empty_body">Essayez une autre heure, un arrêt proche ou d’autres options de trajet. Les données de transport ne couvrent peut-être pas cette zone.</string>
+    <string name="results_change_time">Changer l’heure</string>
+    <string name="results_reset_options">Réinitialiser les options</string>
     <string name="results_from_stop">au départ de %1$s</string>
     <string name="results_walk_only">Tout le trajet à pied</string>
+    <string name="results_spare">%1$s d’avance</string>
     <plurals name="transfers">
         <item quantity="one">%d correspondance</item>
         <item quantity="many">%d correspondances</item>
@@ -200,6 +247,8 @@
     <string name="no_transfers">Direct</string>
     <string name="walk_distance">%1$s à pied</string>
     <string name="time_range">%1$s – %2$s</string>
+    <string name="route_time_range_description">Départ à %1$s, arrivée à %2$s</string>
+    <string name="filter_button_description">%1$s, %2$s</string>
     <string name="cancelled">Supprimé</string>
     <string name="sort_best">Meilleur</string>
     <string name="sort_fastest">Le plus rapide</string>
@@ -234,6 +283,26 @@
     <string name="itinerary_next_departures">Prochains départs</string>
     <string name="itinerary_leave_in">Départ dans %1$s</string>
     <string name="itinerary_leave_now">Partez maintenant</string>
+    <string name="reminder_channel">Rappels de départ</string>
+    <string name="reminder_title_now">C’est l’heure de partir</string>
+    <plurals name="reminder_title">
+        <item quantity="one">Partez dans %d minute</item>
+        <item quantity="many">Partez dans %d minutes</item>
+        <item quantity="other">Partez dans %d minutes</item>
+    </plurals>
+    <string name="reminder_text">%1$s vers %2$s depuis %3$s à %4$s.</string>
+    <string name="reminder_text_walk">Partez à %1$s.</string>
+    <string name="reminder_remind_me">Me rappeler</string>
+    <string name="reminder_set">Rappel à %1$s</string>
+    <string name="reminder_lead_now">À l’heure de partir</string>
+    <plurals name="reminder_lead">
+        <item quantity="one">%d minute avant</item>
+        <item quantity="many">%d minutes avant</item>
+        <item quantity="other">%d minutes avant</item>
+    </plurals>
+    <string name="reminder_none">Pas de rappel</string>
+    <string name="reminder_allow_exact">Autoriser l’heure exacte</string>
+    <string name="reminder_needs_permission">Android n’affiche aucun rappel sans l’autorisation de notification. Activez-la dans les réglages.</string>
     <string name="itinerary_arrive_in">Arrivée dans %1$s</string>
     <string name="itinerary_current_step">Étape en cours</string>
 
@@ -243,8 +312,8 @@
     <string name="walk_open_short">Itinéraire</string>
     <string name="walk_close">Fermer l’itinéraire à pied</string>
     <string name="walk_recenter">Recentrer</string>
-    <string name="walk_then">Puis</string>
-    <string name="walk_then_instruction">Puis\u00A0: %1$s</string>
+    <string name="walk_then_in">Puis dans %1$s</string>
+    <string name="walk_then_in_instruction">Puis dans %1$s\u00A0: %2$s</string>
     <string name="walk_north_up">Afficher le nord en haut</string>
     <string name="walk_heading_up">Tourner la carte avec vous</string>
     <string name="walk_overview">Afficher tout l’itinéraire</string>
@@ -253,6 +322,7 @@
     <string name="walk_progress">Partie de la marche effectuée</string>
     <string name="walk_destination">votre destination</string>
     <string name="walk_off_route">Vous êtes hors de l’itinéraire.</string>
+    <string name="walk_off_route_distance">Vous êtes à %1$s.</string>
     <string name="walk_replan">Calculer un nouvel itinéraire</string>
     <string name="walk_no_location">Autorisez la localisation pour suivre votre marche.</string>
     <string name="walk_depart">Commencez à marcher</string>
@@ -345,13 +415,14 @@
     <string name="boarding_description">Où monter : %1$s, %2$s</string>
     <string name="boarding_exit_number">Près de la sortie %1$s</string>
     <string name="boarding_best_exit">Meilleure sortie</string>
+    <string name="boarding_direction">Avant</string>
     <string name="boarding_best_exit_description">Meilleure sortie : %1$s</string>
     <string name="about_boarding">Position dans la rame</string>
     <string name="about_boarding_body">RATP, via Île-de-France Mobilités. Licence Ouverte 2.0. Métro et RER à Paris.</string>
     <string name="itinerary_reset_train">Réinitialiser</string>
     <string name="itinerary_changing_train">Mise à jour du train…</string>
     <string name="itinerary_loading_departures">Chargement des départs…</string>
-    <string name="itinerary_change_train_failed">Impossible de changer de train. Réessayez.</string>
+    <string name="itinerary_change_train_failed">Impossible de changer de train.</string>
     <string name="itinerary_missed_connection">Cette correspondance n’est plus possible. Choisissez un autre départ pour la prochaine étape.</string>
     <string name="itinerary_platform_changed">Le quai a changé. Suivez les panneaux dans la gare.</string>
 </resources>

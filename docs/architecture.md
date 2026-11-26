@@ -89,6 +89,16 @@ The language uses the per-app language setting of Android (`locales_config.xml`)
 
 "Delete all app data" (`domain.AppData`) deletes all rows of `saved_place` and clears the `settings` file. The search cache, the live data cache, and the planning session are in memory only and end with the process.
 
+## Departure reminders
+
+`domain.ReminderScheduler` holds one reminder at a time, on the device. The itinerary offers "When it is time to leave" and 2, 5, or 10 minutes before the departure (`ReminderScheduler.LEAD_MINUTES`). While the itinerary is on screen, the live times of the trip move the reminder (`update`). A new time does not set a reminder again after it went off, and a reminder whose time has passed is neither shown nor set.
+
+`AlarmReminderScheduler` sets an `AlarmManager` alarm with `setExactAndAllowWhileIdle` when `canScheduleExactAlarms()` allows it, and with `setAndAllowWhileIdle` otherwise, including when Android refuses the exact call with a `SecurityException`, so a reminder is never lost. An inexact alarm can come a few minutes late in doze. Android 14 and later deny exact alarms by default, and the reminder menu then offers `Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM`.
+
+The reminder is stored in the `settings` DataStore file: the journey ID, the alarm time, the lead time, and the notification text as it was written when the reminder was set. The keys need no migration; a file without them holds no reminder. `ReminderReceiver` shows the notification and reads no data of the app. A reboot clears every alarm, so `ReminderBootReceiver`, on the `BOOT_COMPLETED` broadcast (`RECEIVE_BOOT_COMPLETED`), sets the stored reminder again; a reminder that passed while the device was off is dropped. The app asks for `POST_NOTIFICATIONS` before it sets a reminder and sets none when the rider refuses, because a reminder that shows nothing is not a reminder.
+
+Limits: one reminder at a time. "Delete all app data" clears the `settings` file, which removes it.
+
 ## Disruptions
 
 MOTIS has no endpoint that lists the disruptions of a network or a line. Alerts come with stop times: with `withAlerts=true`, each stop time carries the alerts for its trip at that stop. The disruptions list sends:
@@ -100,7 +110,7 @@ MOTIS has no endpoint that lists the disruptions of a network or a line. Alerts 
 
 The mapper reads the severity, the effect, the cause, and the impact periods. Many feeds give no severity; `Alert.level` then uses the effect. A value that the app does not know reads as "unknown". The description can contain HTML. The app shows its text and follows no link in it. The "More information" button opens only `http` and `https` links.
 
-A request that fails leaves out its stop. The tab shows an error only when no request of the first load gives an answer. Other screens keep `withAlerts=false`.
+A request that fails leaves out its stop. The tab shows an error only when no request of the first load gives an answer. The stop departure board also asks with `withAlerts=true`, so it can show the alerts of the stop. Other screens keep `withAlerts=false`.
 
 Limits:
 
@@ -148,9 +158,10 @@ Off the route, `WalkRerouteViewModel` plans a walk from the position to the end 
 - Every request sends `User-Agent: itivio/<version> (+<contact>)`. Set the contact with the `itivio.contact` Gradle property.
 - Settings → About shows the Transitous and IGN/BAN credits and links to `https://transitous.org/sources/`. Other screens have no provider footer. The info button on the map opens the OpenStreetMap, OpenMapTiles, and OpenFreeMap credits. The credits start closed, the same as the default MapLibre Android control.
 - Autocomplete waits for typing to pause, needs 2 or more characters, and cancels stale requests.
-- `/plan` runs only on explicit user action. No background polling.
+- `/plan` runs only on explicit user action, except for "Travel time to Home and Work". No background polling. The journey options dialog sends one request when the user confirms, not one for each change.
 - The only background requests come from "Disruption alerts", which the rider turns on. `DisruptionAlertWorker` is a WorkManager periodic task (30 min, network required). It asks `/v6/stoptimes` with `withAlerts=true` for each saved stop, the same requests as the disruptions list, and notifies alerts whose text key (`Alert.notificationKey`, a digest of the header and the description) it has not seen. It stores the keys of the current alerts in the `settings` DataStore, so an alert that ends is forgotten. Only the alerts it showed count as seen: the ones over the cap of three notifications wait for the next check, and a denied notification permission leaves them all for later. A check that gets no answer from any stop ends as a success, so the next period tries again instead of backing off for hours against a community server. Turning the setting off or "Delete all app data" cancels the task. The journey options dialog sends one request when the user confirms, not one for each change.
 - The volume of the background check: one `/stoptimes` request for each saved stop, at most 10, for 20 departures each, so at most 10 requests per 30 minutes and about 480 per day if the rider saves 10 stops. Each answer holds the alerts of those departures. The work requires a network (`NetworkType.CONNECTED`), not an unmetered one, because an alert is only useful soon and one answer is under a few hundred kB; Android also batches the periodic work into a maintenance window.
+- With "Travel time to Home and Work" turned on (off by default), `ShortcutTimesViewModel` sends two `/plan` requests while home is open: from the device position to Home, and to Work. They go out when home opens, and after a move of 150 m, at most once every 20 seconds (`ShortcutTimesViewModel.MIN_INTERVAL`). A new place or a new option plans at once. The requests run only while home is on screen and the app is in the foreground.
 - `/stoptimes` refreshes once a minute, only while the nearby list is on screen and the app is in the foreground. A move of less than 150 m does not send a new request.
 - The itinerary scans up to eight `/stoptimes` pages for each transit leg, once a minute, only while the itinerary is on screen and the app is in the foreground. It stops when it has four matching departures.
 - The itinerary also sends one `/trip` request for each transit leg that has not ended, once a minute, under the same conditions.
@@ -167,12 +178,13 @@ Off the route, `WalkRerouteViewModel` plans a walk from the position to the end 
 - French address queries also go to IGN. No coordinates are sent to IGN.
 - The search bias point is rounded to about 1 km before it is sent.
 - The nearby departures center is rounded to about 10 m before it is sent. The disruptions list uses the same rounding.
-- The disruptions list sends the IDs of the saved stops. This is the only place where saved places go to a service without a journey request.
-- The origin of a journey is sent at full precision only when the user plans from their location.
+- The disruptions list sends the IDs of the saved stops. Otherwise, saved places go to Transitous only as the start or the end of a journey request. That includes the two requests of "Travel time to Home and Work", which send the position at full precision and do not wait for a tap.
+- The origin of a journey is sent at full precision only when the user plans from their location, including the opt-in travel times above.
 - The walking view uses the device position on the device. It sends it to Transitous in two cases: "Plan a new route", as the origin of a new journey, and an automatic new walk when the walker is off the route, at most once every 20 seconds.
 - The compass runs only while the walking view is open.
 - The walking view asks for the best fix twice a second and a compass reading five times a second. Other screens use the library standard: one fix a second and one compass reading a second.
 - Favorites and recent searches stay on the device. Backup and device transfer are off.
+- A departure reminder stays on the device: an `AlarmManager` alarm and a notification, with no request. The stored reminder holds the journey ID, its time, and the notification text.
 - Journey options stay on the device. Transitous gets them only as parameters of a journey request.
 - Location comes from the Android framework provider. Google Play services is not required.
 

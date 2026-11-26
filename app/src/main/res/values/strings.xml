@@ -22,7 +22,11 @@
     <string name="shortcut_set_work">Set work</string>
     <string name="shortcut_search_home">Search for your home</string>
     <string name="shortcut_search_work">Search for your work</string>
+    <!-- The travel time after the name of a saved place. %1$s is the time, such as "32 min". -->
+    <string name="saved_chip_time">" · %1$s"</string>
+    <string name="saved_chip_description">Travel time to %1$s: %2$s</string>
     <string name="search_set_shortcut_hint">Search for a place, then pick it</string>
+    <string name="search_nearby_stops">Nearby stops</string>
     <string name="saved_favorites">Favorites</string>
     <string name="saved_recents">Recent searches</string>
     <string name="saved_clear_recents">Clear recent searches</string>
@@ -40,8 +44,9 @@
     <string name="locate_me">Show my location</string>
 
     <!-- Explore -->
-    <string name="explore_title">Plan a journey</string>
-    <string name="explore_body">Search for a stop, an address, or a place to see public transport routes. Allow location to see departures near you.</string>
+    <string name="explore_title">See departures near you</string>
+    <string name="explore_body">Next departures from stops within 400 m.</string>
+    <string name="explore_search_hint">Or search for a stop, an address, or a place.</string>
 
     <!-- Nearby -->
     <string name="home_departures">Departures</string>
@@ -64,6 +69,8 @@
     <string name="stop_directions">Directions to here</string>
     <string name="stop_favorite">Favorite</string>
     <string name="stop_departures">Departures</string>
+    <string name="stop_all_lines">All lines</string>
+    <string name="stop_line_filter">Line %1$s</string>
     <string name="stop_empty_title">No upcoming departures</string>
     <string name="stop_empty_body">The timetable has no departures from this stop soon, or it does not cover this stop.</string>
 
@@ -79,7 +86,12 @@
     <string name="disruptions_empty_body">There are no alerts for your saved stops or for the stops near you. Some regions publish no alerts.</string>
     <string name="disruption_show_more">Show the full text</string>
     <string name="disruption_show_less">Show less text</string>
+    <string name="disruption_collapse">Show less</string>
     <string name="disruption_more_information">More information</string>
+    <plurals name="disruption_count">
+        <item quantity="one">%d alert</item>
+        <item quantity="other">%d alerts</item>
+    </plurals>
     <!-- %1$s and %2$s are a date with a time. -->
     <string name="disruption_until">Until %1$s</string>
     <string name="disruption_from">From %1$s</string>
@@ -113,9 +125,21 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_language">Language</string>
-    <string name="settings_language_body">Opens the language setting of Android for this app.</string>
     <string name="settings_journeys">Journeys</string>
     <string name="settings_options_body">Transport modes, transfers, and walking. They apply to each search.</string>
+    <string name="settings_language_system">%1$s · follows the device</string>
+    <string name="settings_language_app">%1$s · set for this app</string>
+    <string name="settings_options_default">All modes, no transfer limit, normal walking speed</string>
+    <plurals name="settings_options_modes_off">
+        <item quantity="one">%d mode off</item>
+        <item quantity="other">%d modes off</item>
+    </plurals>
+    <string name="settings_options_direct">Direct only</string>
+    <string name="settings_options_max_transfers">At most %1$s</string>
+    <string name="settings_options_slow">Slow walking</string>
+    <string name="settings_options_fast">Fast walking</string>
+    <string name="settings_shortcut_times">Travel time to Home and Work</string>
+    <string name="settings_shortcut_times_body">On home, shows the travel time on the Home and Work buttons. Each time home opens, the app sends your position and these 2 places to Transitous.</string>
     <string name="settings_notifications">Notifications</string>
     <string name="settings_disruption_alerts">Disruption alerts</string>
     <string name="settings_disruption_alerts_body">Every 30 minutes, the app sends the IDs of your saved stops to Transitous and notifies you of new alerts on them. It sends no location.</string>
@@ -135,6 +159,8 @@
     <!-- About -->
     <string name="about_title">About</string>
     <string name="about_version">Version %1$s</string>
+    <string name="about_whats_new">What’s new</string>
+    <string name="about_release_url" translatable="false">https://github.com/kacigaya/itivio/releases/tag/v%1$s</string>
     <string name="about_license">License</string>
     <string name="about_license_name">GNU General Public License</string>
     <string name="about_license_body">itivio is free software. You can use it, change it, and share it under version 3 of the license, or any later version.</string>
@@ -175,6 +201,17 @@
     <string name="travel_day_time">%1$s, %2$s</string>
     <string name="travel_today">Today</string>
     <string name="travel_tomorrow">Tomorrow</string>
+    <string name="travel_plus_minutes">+%1$d min</string>
+    <string name="travel_plus_hours">+%1$d h</string>
+    <plurals name="travel_add_minutes">
+        <item quantity="one">Add %d minute</item>
+        <item quantity="other">Add %d minutes</item>
+    </plurals>
+    <plurals name="travel_add_hours">
+        <item quantity="one">Add %d hour</item>
+        <item quantity="other">Add %d hours</item>
+    </plurals>
+    <string name="travel_yesterday">Yesterday</string>
 
     <!-- Journey options -->
     <string name="options_chip">Options</string>
@@ -192,12 +229,19 @@
     <string name="options_speed_normal">Normal</string>
     <string name="options_speed_fast">Fast</string>
     <string name="options_reset">Reset</string>
+    <plurals name="options_reset_count">
+        <item quantity="one">Reset %d change</item>
+        <item quantity="other">Reset %d changes</item>
+    </plurals>
 
     <!-- Results -->
     <string name="results_empty_title">No routes found</string>
     <string name="results_empty_body">Try another time, a nearby stop, or other journey options. Transit data may not cover this area.</string>
+    <string name="results_change_time">Change the time</string>
+    <string name="results_reset_options">Reset journey options</string>
     <string name="results_from_stop">from %1$s</string>
     <string name="results_walk_only">Walk the whole way</string>
+    <string name="results_spare">%1$s to spare</string>
     <plurals name="transfers">
         <item quantity="one">%d transfer</item>
         <item quantity="other">%d transfers</item>
@@ -210,6 +254,8 @@
     <string name="no_transfers">Direct</string>
     <string name="walk_distance">%1$s walk</string>
     <string name="time_range">%1$s – %2$s</string>
+    <string name="route_time_range_description">Leaves %1$s, arrives %2$s</string>
+    <string name="filter_button_description">%1$s, %2$s</string>
     <string name="cancelled">Cancelled</string>
     <string name="sort_best">Best</string>
     <string name="sort_fastest">Fastest</string>
@@ -243,6 +289,24 @@
     <string name="itinerary_next_departures">Next departures</string>
     <string name="itinerary_leave_in">Leave in %1$s</string>
     <string name="itinerary_leave_now">Leave now</string>
+    <string name="reminder_channel">Departure reminders</string>
+    <string name="reminder_title_now">Time to leave</string>
+    <plurals name="reminder_title">
+        <item quantity="one">Leave in %d minute</item>
+        <item quantity="other">Leave in %d minutes</item>
+    </plurals>
+    <string name="reminder_text">%1$s towards %2$s from %3$s at %4$s.</string>
+    <string name="reminder_text_walk">Leave at %1$s.</string>
+    <string name="reminder_remind_me">Remind me</string>
+    <string name="reminder_set">Reminder at %1$s</string>
+    <string name="reminder_lead_now">When it is time to leave</string>
+    <plurals name="reminder_lead">
+        <item quantity="one">%d minute before</item>
+        <item quantity="other">%d minutes before</item>
+    </plurals>
+    <string name="reminder_none">No reminder</string>
+    <string name="reminder_allow_exact">Allow exact times</string>
+    <string name="reminder_needs_permission">Android shows no reminder without the notification permission. Turn it on in the settings.</string>
     <string name="itinerary_arrive_in">Arrive in %1$s</string>
     <string name="itinerary_current_step">Current step</string>
 
@@ -252,8 +316,8 @@
     <string name="walk_open_short">Directions</string>
     <string name="walk_close">Close walking directions</string>
     <string name="walk_recenter">Recenter</string>
-    <string name="walk_then">Then</string>
-    <string name="walk_then_instruction">Then: %1$s</string>
+    <string name="walk_then_in">Then in %1$s</string>
+    <string name="walk_then_in_instruction">Then in %1$s: %2$s</string>
     <string name="walk_north_up">Show north up</string>
     <string name="walk_heading_up">Turn the map with you</string>
     <string name="walk_overview">Show the full route</string>
@@ -262,6 +326,7 @@
     <string name="walk_progress">Part of the walk done</string>
     <string name="walk_destination">your destination</string>
     <string name="walk_off_route">You are off the route.</string>
+    <string name="walk_off_route_distance">You are %1$s from it.</string>
     <string name="walk_replan">Plan a new route</string>
     <string name="walk_no_location">Allow location to follow your walk.</string>
     <string name="walk_depart">Start walking</string>
@@ -356,6 +421,7 @@
     <string name="boarding_description">Where to board: %1$s, %2$s</string>
     <string name="boarding_exit_number">Near exit %1$s</string>
     <string name="boarding_best_exit">Best exit</string>
+    <string name="boarding_direction">Front</string>
     <string name="boarding_exit_name" translatable="false">%1$s – %2$s</string>
     <string name="boarding_best_exit_description">Best exit: %1$s</string>
     <string name="about_boarding">Boarding positions</string>
@@ -364,7 +430,7 @@
     <string name="itinerary_reset_train">Reset</string>
     <string name="itinerary_changing_train">Updating train…</string>
     <string name="itinerary_loading_departures">Loading departures…</string>
-    <string name="itinerary_change_train_failed">Could not change the train. Try again.</string>
+    <string name="itinerary_change_train_failed">Could not change the train.</string>
     <string name="itinerary_missed_connection">This connection no longer works. Choose another departure for the next leg.</string>
     <string name="itinerary_platform_changed">Platform changed. Follow the signs at the station.</string>
 </resources>

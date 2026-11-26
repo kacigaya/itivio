@@ -16,6 +16,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import app.itivio.ui.disruptions.DisruptionGroups
 import app.itivio.ui.disruptions.disruptions
 import androidx.compose.foundation.layout.Arrangement
@@ -86,6 +87,14 @@ import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Button
+import app.itivio.ui.common.STACK_FONT_SCALE
+import androidx.compose.ui.platform.LocalDensity
+import app.itivio.ui.common.formatDuration
+import java.time.Duration
 
 // Drag handle, search row, shortcut chips, title, and the first departures.
 val ExplorePeekHeight = 344.dp
@@ -111,6 +120,8 @@ fun ExploreScreen(
     onStop: (Location) -> Unit,
     onSettings: () -> Unit,
     places: SavedPlacesViewModel = koinViewModel(),
+    /** The travel time to each set shortcut, when the rider turned it on in the settings. */
+    shortcutTimes: Map<Shortcut, Duration> = emptyMap(),
 ) {
     val searchBarState = rememberLocationSearchBarState()
     val textState = rememberLocationTextState()
@@ -154,6 +165,7 @@ fun ExploreScreen(
             }
             SavedChips(
                 saved = saved,
+                times = shortcutTimes,
                 onOpen = { onDestination(Endpoint.Place(it)) },
                 onAssign = { shortcut ->
                     assigning = shortcut
@@ -196,7 +208,7 @@ fun ExploreScreen(
                             } else {
                                 item(key = "intro") { Intro(onRequestLocation) }
                             }
-                            HomePage.DISRUPTIONS -> disruptions(disruptions, now, onRetryDisruptions)
+                            HomePage.DISRUPTIONS -> disruptions(disruptions, now, onRetryDisruptions, compact = true)
                         }
                     }
                 }
@@ -225,6 +237,7 @@ fun ExploreScreen(
             onStop(location)
         },
         places = places,
+        nearby = (nearby as? LoadState.Ready)?.value.orEmpty(),
     )
 }
 
@@ -279,7 +292,7 @@ private fun HomeTitles(selected: HomePage, alerts: Int, onSelect: (HomePage) -> 
  * search to set it. The row keeps its height while storage loads, so the sheet does not jump.
  */
 @Composable
-private fun SavedChips(saved: SavedPlaces?, onOpen: (Location) -> Unit, onAssign: (Shortcut) -> Unit) {
+private fun SavedChips(saved: SavedPlaces?, times: Map<Shortcut, Duration>, onOpen: (Location) -> Unit, onAssign: (Shortcut) -> Unit) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -293,6 +306,7 @@ private fun SavedChips(saved: SavedPlaces?, onOpen: (Location) -> Unit, onAssign
             SavedChip(
                 icon = shortcut.iconRes(),
                 label = stringResource(if (location != null) shortcut.labelRes() else shortcut.setLabelRes()),
+                detail = times[shortcut]?.takeIf { location != null }?.let { formatDuration(it) },
                 onClick = { if (location != null) onOpen(location) else onAssign(shortcut) },
             )
         }
@@ -302,10 +316,21 @@ private fun SavedChips(saved: SavedPlaces?, onOpen: (Location) -> Unit, onAssign
     }
 }
 
-/** A saved place as a tonal button: bolder than a chip, because it starts a journey with one tap. */
+/**
+ * A saved place as a tonal button: bolder than a chip, because it starts a journey with one tap.
+ * With [detail], the time follows the name in a light weight, and the button has one spoken label.
+ */
 @Composable
-private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit) {
-    FilledTonalButton(onClick = onClick, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
+private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit, detail: String? = null) {
+    FilledTonalButton(
+        onClick = onClick,
+        contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+        modifier = detail?.let {
+            // A screen reader reads the label, not the separator.
+            val description = stringResource(R.string.saved_chip_description, label, it)
+            Modifier.semantics { contentDescription = description }
+        } ?: Modifier,
+    ) {
         Icon(painterResource(icon), contentDescription = null, Modifier.size(ButtonDefaults.IconSize))
         Text(
             label,
@@ -314,6 +339,9 @@ private fun SavedChip(@DrawableRes icon: Int, label: String, onClick: () -> Unit
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = ButtonDefaults.IconSpacing).widthIn(max = 160.dp),
         )
+        detail?.let {
+            Text(stringResource(R.string.saved_chip_time, it), fontWeight = FontWeight.Light, maxLines = 1)
+        }
     }
 }
 
@@ -339,22 +367,52 @@ private fun LocateButton(locationGranted: Boolean, onRequestLocation: () -> Unit
     }
 }
 
-/** Without location the sheet explains the app and asks for access; nearby departures need it. */
+/**
+ * Without location, one short card asks for access at the top of the sheet, with its button on
+ * the same line, so the button shows at the peek height. Large text stacks the button below.
+ */
 @Composable
 private fun Intro(onRequestLocation: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val stacked = LocalDensity.current.fontScale >= STACK_FONT_SCALE
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        Text(stringResource(R.string.explore_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
-        Text(
-            stringResource(R.string.explore_body),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        FilledTonalButton(onClick = onRequestLocation, modifier = Modifier.padding(top = 8.dp)) {
-            Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
-            Text(stringResource(R.string.allow_location), modifier = Modifier.padding(start = 8.dp))
+        Surface(color = scheme.primaryContainer, contentColor = scheme.onPrimaryContainer, shape = MaterialTheme.shapes.largeIncreased) {
+            val text: @Composable () -> Unit = {
+                Text(
+                    stringResource(R.string.explore_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier.semantics { heading() },
+                )
+                Text(stringResource(R.string.explore_body), style = MaterialTheme.typography.bodySmall)
+            }
+            val button: @Composable () -> Unit = {
+                Button(onClick = onRequestLocation) { Text(stringResource(R.string.allow_location)) }
+            }
+            if (stacked) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    text()
+                    button()
+                }
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+                ) {
+                    Column(Modifier.weight(1f)) { text() }
+                    button()
+                }
+            }
         }
+        Text(
+            stringResource(R.string.explore_search_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = scheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 8.dp),
+        )
     }
 }

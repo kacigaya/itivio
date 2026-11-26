@@ -49,6 +49,8 @@ class DisruptionAlertWorkerTest {
         override suspend fun setSevereAlertsOnly(on: Boolean) { severeAlertsOnly.value = on }
         override val notifiedAlerts = MutableStateFlow(emptySet<String>())
         override suspend fun setNotifiedAlerts(keys: Set<String>) { notifiedAlerts.value = keys }
+        override val shortcutTimes = MutableStateFlow(false)
+        override suspend fun setShortcutTimes(on: Boolean) { shortcutTimes.value = on }
     }
 
     private val context = ApplicationProvider.getApplicationContext<Application>()
