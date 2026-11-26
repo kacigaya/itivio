@@ -16,8 +16,6 @@
 
 </div>
 
-itivio is an open-source Android app for public transport that keeps your data on your device. Plan journeys by bus, tram, metro, train, and ferry. There is no account, no ads, and no analytics.
-
 <div align="center">
 <a href="https://github.com/kacigaya/itivio/releases/download/v0.10.1/demo.mp4"><img src="assets/demo.gif" alt="itivio demo: know where to board, and which train is yours" width="720"></a>
 </div>
@@ -57,12 +55,6 @@ itivio is an open-source Android app for public transport that keeps your data o
 <h2 id="install"><picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/h-install.svg"><img src="assets/readme/light/h-install.svg" alt="Install"></picture></h2>
 
 Download the APK from the [newest release](https://github.com/kacigaya/itivio/releases). The universal APK works on all devices. The app needs Android 8.0 or later.
-
-Releases from v0.14.0 on are signed with the project key. The SHA-256 fingerprint of its certificate is:
-
-```
-E7:15:4A:73:3D:EF:B1:DC:B6:8A:80:FD:C8:35:56:FF:88:B4:EA:2F:83:6D:36:A3:30:6A:DF:A0:C6:8A:29:81
-```
 
 To check a download, compare it with `SHA256SUMS.txt` of the release, or run `apksigner verify --print-certs` on the APK.
 

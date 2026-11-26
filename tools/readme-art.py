@@ -28,6 +28,7 @@ OUT = Path("assets/readme")
 
 THEMES = {
     "light": {
+        "banner": "#0C6B59",
         "primary": "#0C6B59", "on_primary": "#FFFFFF",
         "primary_container": "#A1F2DB", "on_primary_container": "#005142",
         "secondary_container": "#CDE9DE", "on_secondary_container": "#334C44",
@@ -35,6 +36,7 @@ THEMES = {
         "on_surface": "#171D1B", "on_surface_variant": "#3F4945", "outline_variant": "#BFC9C4",
     },
     "dark": {
+        "banner": "#005142",
         "primary": "#85D6BF", "on_primary": "#00382D",
         "primary_container": "#005142", "on_primary_container": "#A1F2DB",
         "secondary_container": "#334C44", "on_secondary_container": "#CDE9DE",
@@ -198,9 +200,9 @@ def banner(c: dict, mobile: bool) -> str:
         y = pad
         parts = [logo((w - logo_size) / 2, y, logo_size)]
         y += logo_size + 24 + word * 0.74
-        parts.append(text("itivio", w / 2, y, word, 800, c["on_primary_container"], "middle"))
+        parts.append(text("itivio", w / 2, y, word, 800, "#FFFFFF", "middle"))
         for i, ln in enumerate(lines):
-            parts.append(text(ln, w / 2, y + 52 + i * 42, tag, 400, c["on_primary_container"], "middle"))
+            parts.append(text(ln, w / 2, y + 52 + i * 42, tag, 400, "#FFFFFF", "middle"))
         h = y + 52 + (len(lines) - 1) * 42 + pad
     else:
         w, h, logo_size, word, tag, pad = 1200, 256, 144, 84, 28, 56
@@ -208,9 +210,9 @@ def banner(c: dict, mobile: bool) -> str:
         if tx + width(TAGLINE, tag, 400) > w - pad:
             raise SystemExit("The tagline does not fit in the banner")
         parts = [logo(pad, (h - logo_size) / 2, logo_size),
-                 text("itivio", tx, 134, word, 800, c["on_primary_container"]),
-                 text(TAGLINE, tx + 2, 184, tag, 400, c["on_primary_container"])]
-    return svg(w, h, "itivio", f'<rect width="{w}" height="{round(h)}" rx="32" fill="{c["primary_container"]}"/>' + "".join(parts))
+                 text("itivio", tx, 134, word, 800, "#FFFFFF"),
+                 text(TAGLINE, tx + 2, 184, tag, 400, "#FFFFFF")]
+    return svg(w, h, "itivio", f'<rect width="{w}" height="{round(h)}" rx="32" fill="{c["banner"]}"/>' + "".join(parts))
 
 
 def heading(c: dict, label: str) -> str:
