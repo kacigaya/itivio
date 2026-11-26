@@ -198,6 +198,7 @@
         <item quantity="one">Add %d hour</item>
         <item quantity="other">Add %d hours</item>
     </plurals>
+    <string name="travel_yesterday">Yesterday</string>
 
     <!-- Journey options -->
     <string name="options_chip">Options</string>
@@ -225,6 +226,7 @@
     <string name="results_empty_body">Try another time, a nearby stop, or other journey options. Transit data may not cover this area.</string>
     <string name="results_from_stop">from %1$s</string>
     <string name="results_walk_only">Walk the whole way</string>
+    <string name="results_spare">%1$s to spare</string>
     <plurals name="transfers">
         <item quantity="one">%d transfer</item>
         <item quantity="other">%d transfers</item>
@@ -238,6 +240,7 @@
     <string name="walk_distance">%1$s walk</string>
     <string name="time_range">%1$s – %2$s</string>
     <string name="route_time_range_description">Leaves %1$s, arrives %2$s</string>
+    <string name="filter_button_description">%1$s, %2$s</string>
     <string name="cancelled">Cancelled</string>
     <string name="sort_best">Best</string>
     <string name="sort_fastest">Fastest</string>

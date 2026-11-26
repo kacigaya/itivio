@@ -189,6 +189,7 @@
         <item quantity="many">Ajouter %d heures</item>
         <item quantity="other">Ajouter %d heures</item>
     </plurals>
+    <string name="travel_yesterday">Hier</string>
 
     <!-- Journey options -->
     <string name="options_chip">Options</string>
@@ -217,6 +218,7 @@
     <string name="results_empty_body">Essayez une autre heure, un arrêt proche ou d’autres options de trajet. Les données de transport ne couvrent peut-être pas cette zone.</string>
     <string name="results_from_stop">au départ de %1$s</string>
     <string name="results_walk_only">Tout le trajet à pied</string>
+    <string name="results_spare">%1$s d’avance</string>
     <plurals name="transfers">
         <item quantity="one">%d correspondance</item>
         <item quantity="many">%d correspondances</item>
@@ -232,6 +234,7 @@
     <string name="walk_distance">%1$s à pied</string>
     <string name="time_range">%1$s – %2$s</string>
     <string name="route_time_range_description">Départ à %1$s, arrivée à %2$s</string>
+    <string name="filter_button_description">%1$s, %2$s</string>
     <string name="cancelled">Supprimé</string>
     <string name="sort_best">Meilleur</string>
     <string name="sort_fastest">Le plus rapide</string>
