@@ -40,8 +40,9 @@
     <string name="locate_me">Show my location</string>
 
     <!-- Explore -->
-    <string name="explore_title">Plan a journey</string>
-    <string name="explore_body">Search for a stop, an address, or a place to see public transport routes. Allow location to see departures near you.</string>
+    <string name="explore_title">See departures near you</string>
+    <string name="explore_body">Next departures from stops within 400 m.</string>
+    <string name="explore_search_hint">Or search for a stop, an address, or a place.</string>
 
     <!-- Nearby -->
     <string name="home_departures">Departures</string>
