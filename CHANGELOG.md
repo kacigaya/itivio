@@ -9,6 +9,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 - Move the travel time forward in one tap with "+15 min", "+30 min", and "+1 h" in the travel time sheet.
 - Show how many journey options differ from the defaults on the Reset button, for example "Reset 3 changes".
 - Keep long stop names readable in the itinerary. When the name and the time do not fit on one line, the time moves below the name. At large text, names no longer break into pieces.
+- Fix the itinerary duration at large text. "26 min" broke into "2", "6", and "min" on 3 lines. The departure and arrival times now move below it.
 
 ## 0.14.2
 
