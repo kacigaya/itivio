@@ -59,7 +59,10 @@ import app.itivio.ui.common.formatTime
  * shows the first journey and the next departures of its first line.
  */
 @Composable
-fun RouteCard(route: List<Journey>, selected: Boolean, now: Instant, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun RouteCard(
+    route: List<Journey>, selected: Boolean, now: Instant, onClick: () -> Unit, modifier: Modifier = Modifier,
+    arriveBy: Instant? = null,
+) {
     val journey = route.first()
     val scheme = MaterialTheme.colorScheme
     val secondary = if (selected) scheme.onSecondaryContainer else scheme.onSurfaceVariant
@@ -75,23 +78,42 @@ fun RouteCard(route: List<Journey>, selected: Boolean, now: Instant, onClick: ()
         modifier = modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LegChain(journey, Modifier.weight(1f))
+            // The clock times lead: a rider plans by "leave at, arrive by" first. They move above the
+            // duration's line only when both do not fit.
+            val departure = formatTime(journey.departure.best, journey.legs.first().from.zone)
+            val arrival = formatTime(journey.arrival.best, journey.legs.last().to.zone)
+            val timeRangeDescription = stringResource(R.string.route_time_range_description, departure, arrival)
+            FlowRow(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                itemVerticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    stringResource(R.string.time_range, departure, arrival),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    modifier = Modifier
+                        .padding(end = 12.dp)
+                        .clearAndSetSemantics { contentDescription = timeRangeDescription },
+                )
                 Text(
                     amountText(formatDuration(journey.duration), unitScale = 0.7f),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                 )
             }
+            LegChain(journey)
             LegBar(journey, walkColor = secondary)
             NextDepartures(route, now, secondary)
             Text(
                 listOfNotNull(
                     if (journey.isCancelled) stringResource(R.string.cancelled) else null,
-                    stringResource(R.string.walk_arrive, formatTime(journey.arrival.best, journey.legs.last().to.zone)),
                     if (journey.transfers == 0) stringResource(R.string.no_transfers)
                     else pluralStringResource(R.plurals.transfers, journey.transfers, journey.transfers),
                     if (journey.walkingMeters > 0) stringResource(R.string.walk_distance, formatDistance(journey.walkingMeters)) else null,
+                    // With "Arrive by", the margin before the target time says how safe the route is.
+                    arriveBy?.let { target -> spareMinutes(journey.arrival.best, target) }
+                        ?.let { stringResource(R.string.results_spare, formatDuration(Duration.ofMinutes(it))) },
                 ).joinToString(" · "),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (journey.isCancelled) scheme.error else secondary,
@@ -100,6 +122,13 @@ fun RouteCard(route: List<Journey>, selected: Boolean, now: Instant, onClick: ()
         }
     }
 }
+
+/**
+ * The whole minutes between [arrival] and an "Arrive by" [target], for "3 min to spare". Null when
+ * no minute is left, and from an hour: such a margin says nothing about the risk of the route.
+ */
+internal fun spareMinutes(arrival: Instant, target: Instant): Long? =
+    Duration.between(arrival, target).toMinutes().takeIf { it in 1 until 60 }
 
 private const val SHOWN_DEPARTURES = 3
 

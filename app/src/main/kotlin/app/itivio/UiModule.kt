@@ -15,6 +15,7 @@ import app.itivio.ui.walk.WalkRerouteViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
+import app.itivio.ui.explore.ShortcutTimesViewModel
 
 val uiModule = module {
     single { UserLocation() }
@@ -29,5 +30,6 @@ val uiModule = module {
     viewModelOf(::MapStopsViewModel)
     viewModelOf(::DisruptionsViewModel)
     viewModelOf(::SettingsViewModel)
+    viewModel { ShortcutTimesViewModel(get(), get(), get(), get(), get()) }
     viewModel { WalkRerouteViewModel(get()) }
 }

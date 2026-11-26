@@ -116,6 +116,7 @@ import org.maplibre.spatialk.units.extensions.meters
 import org.maplibre.compose.location.rememberDefaultHeadingProvider
 import org.maplibre.compose.location.rememberDefaultLocationProvider
 import org.maplibre.compose.location.rememberLocationState
+import app.itivio.ui.explore.ShortcutTimesViewModel
 import app.itivio.domain.ReminderScheduler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -341,6 +342,7 @@ fun ItivioRoot(
                             // home, so they load while home is open. A wide window has its own page.
                             val disruptions: DisruptionsViewModel = koinViewModel()
                             val homeDisruptions = if (wide) null else disruptions.disruptions.collectAsStateWithLifecycle().value
+                            val shortcutTimes: ShortcutTimesViewModel = koinViewModel()
                             ExploreScreen(
                                 wide = wide,
                                 locationGranted = locationGranted,
@@ -359,6 +361,7 @@ fun ItivioRoot(
                                     location.stopId?.let { openStop(MapStop(it, location.name, location.point)) }
                                 },
                                 onSettings = { backStack.push(SettingsRoute) },
+                                shortcutTimes = shortcutTimes.times.collectAsStateWithLifecycle().value,
                             )
                         }
                         entry<DisruptionsRoute>(metadata = DisruptionsPage) {
@@ -383,6 +386,8 @@ fun ItivioRoot(
                                 onClearRecents = settings::clearRecents,
                                 onDeleteAll = settings::deleteAll,
                                 onAbout = { backStack.push(AboutRoute) },
+                                shortcutTimes = settings.shortcutTimes.collectAsStateWithLifecycle().value,
+                                onShortcutTimes = settings::setShortcutTimes,
                             )
                         }
                         entry<AboutRoute>(metadata = FullScreenPage) {

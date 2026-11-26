@@ -38,7 +38,8 @@ class StopDeparturesViewModel(private val repository: RoutingRepository) : ViewM
                 }
                 while (true) {
                     shown?.let { emit(LoadState.Ready(it)) } ?: emit(LoadState.Loading)
-                    val result = runCatching { repository.stopDepartures(id) }
+                    // The alerts come with the departures; the board shows them above the list.
+                    val result = runCatching { repository.stopDepartures(id, withAlerts = true) }
                     val failure = result.exceptionOrNull()?.toFailure()
                     if (failure == null) {
                         shown = result.getOrThrow()

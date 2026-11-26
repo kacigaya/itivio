@@ -10,6 +10,11 @@ interface SettingsRepository {
     val theme: Flow<ThemeMode>
 
     suspend fun setTheme(mode: ThemeMode)
+
+    /** Shows the travel time to Home and Work on home. Off by default: it sends the position and both places. */
+    val shortcutTimes: Flow<Boolean>
+
+    suspend fun setShortcutTimes(on: Boolean)
 }
 
 /** All the data the app keeps on the device: saved places, journey options, and settings. */

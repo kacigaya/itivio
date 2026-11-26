@@ -50,7 +50,7 @@ class Choice(
 )
 
 /** Text this large does not fit beside an icon in a third of a row. */
-private const val STACK_FONT_SCALE = 1.5f
+internal const val STACK_FONT_SCALE = 1.5f
 
 /**
  * A single choice as a row of connected toggle buttons. The selected button has the secondary
