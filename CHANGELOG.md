@@ -14,6 +14,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 - Say which way the train goes in "Where to board", with a "Front →" label under the nose of the drawing. "Best exit" now uses the same card, so the two hints read together.
 - Say how far you are from the route when you walk off it. The off-route banner also gives "Plan a new route" its own line, so the text no longer wraps into a narrow column.
 - Show how far away the next turn is in the walking view: "Then in 20 m". The "Recenter" button is now round like the compass button, so the two map buttons form one group.
+- See what changed in your version: "What’s new" on the about page opens its release notes in the browser.
 
 ## 0.14.2
 
