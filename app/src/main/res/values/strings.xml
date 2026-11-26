@@ -129,6 +129,8 @@
     <!-- About -->
     <string name="about_title">About</string>
     <string name="about_version">Version %1$s</string>
+    <string name="about_whats_new">What’s new</string>
+    <string name="about_release_url" translatable="false">https://github.com/kacigaya/itivio/releases/tag/v%1$s</string>
     <string name="about_license">License</string>
     <string name="about_license_name">GNU General Public License</string>
     <string name="about_license_body">itivio is free software. You can use it, change it, and share it under version 3 of the license, or any later version.</string>

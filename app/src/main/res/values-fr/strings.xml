@@ -128,6 +128,7 @@
     <!-- About -->
     <string name="about_title">À propos</string>
     <string name="about_version">Version %1$s</string>
+    <string name="about_whats_new">Nouveautés</string>
     <string name="about_license">Licence</string>
     <string name="about_license_name">Licence publique générale GNU</string>
     <string name="about_license_body">itivio est un logiciel libre. Vous pouvez l’utiliser, le modifier et le partager selon la version 3 de la licence, ou toute version ultérieure.</string>
