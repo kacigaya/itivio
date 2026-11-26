@@ -29,7 +29,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={sans.variable}>
-      <body>{children}</body>
+      <body>
+        <script dangerouslySetInnerHTML={{ __html: `document.documentElement.classList.add("js")` }} />
+        {children}
+      </body>
     </html>
   );
 }
