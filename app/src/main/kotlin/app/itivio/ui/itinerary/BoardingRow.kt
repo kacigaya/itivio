@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,11 +28,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import app.itivio.R
 import app.itivio.domain.BoardingHint
 import app.itivio.domain.StationExit
 import app.itivio.domain.TrainPart
+import app.itivio.ui.common.IconTile
 import app.itivio.ui.common.LineBadge
 import app.itivio.ui.common.label
 
@@ -74,10 +77,22 @@ internal fun BoardingRow(hint: BoardingHint, trainPart: TrainPart) {
                     if (transfer != null) LineBadge(transfer.line, transfer.mode)
                 }
             }
-            TrainDrawing(trainPart, Modifier.size(width = 104.dp, height = 24.dp))
+            Column(Modifier.width(TrainWidth), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                TrainDrawing(trainPart, Modifier.size(width = TrainWidth, height = 24.dp))
+                // The front is on the right. The label says so, for riders who do not read the nose as the front.
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(stringResource(R.string.boarding_direction), style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant,
+                        textAlign = TextAlign.End, modifier = Modifier.weight(1f, fill = false))
+                    Icon(painterResource(R.drawable.ic_arrow_forward), contentDescription = null, tint = scheme.onSurfaceVariant,
+                        modifier = Modifier.size(12.dp))
+                }
+            }
         }
     }
 }
+
+/** The drawing keeps its width at large text; its label wraps below it, so the text beside it keeps its room. */
+private val TrainWidth = 104.dp
 
 /**
  * The best exit of the station, below the alighting stop: its number and its name. The data
@@ -89,15 +104,22 @@ internal fun ExitRow(exit: StationExit, modifier: Modifier = Modifier) {
     val number = exit.number?.takeIf { it.isNotBlank() }
     val name = if (number != null) stringResource(R.string.boarding_exit_name, number, exit.name) else exit.name
     val description = stringResource(R.string.boarding_best_exit_description, name)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    // The same card as the boarding row, so the exit reads as part of the same advice.
+    Surface(
+        color = scheme.surfaceContainerHighest,
+        shape = MaterialTheme.shapes.large,
         modifier = modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description },
     ) {
-        Icon(painterResource(R.drawable.ic_logout), contentDescription = null, tint = scheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.boarding_best_exit), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
-            Text(name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+        ) {
+            IconTile(R.drawable.ic_logout)
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.boarding_best_exit), style = MaterialTheme.typography.labelMedium, color = scheme.onSurfaceVariant)
+                Text(name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }

@@ -171,6 +171,16 @@
     <string name="travel_day_time">%1$s, %2$s</string>
     <string name="travel_today">Today</string>
     <string name="travel_tomorrow">Tomorrow</string>
+    <string name="travel_plus_minutes">+%1$d min</string>
+    <string name="travel_plus_hours">+%1$d h</string>
+    <plurals name="travel_add_minutes">
+        <item quantity="one">Add %d minute</item>
+        <item quantity="other">Add %d minutes</item>
+    </plurals>
+    <plurals name="travel_add_hours">
+        <item quantity="one">Add %d hour</item>
+        <item quantity="other">Add %d hours</item>
+    </plurals>
 
     <!-- Journey options -->
     <string name="options_chip">Options</string>
@@ -188,6 +198,10 @@
     <string name="options_speed_normal">Normal</string>
     <string name="options_speed_fast">Fast</string>
     <string name="options_reset">Reset</string>
+    <plurals name="options_reset_count">
+        <item quantity="one">Reset %d change</item>
+        <item quantity="other">Reset %d changes</item>
+    </plurals>
 
     <!-- Results -->
     <string name="results_empty_title">No routes found</string>
@@ -248,8 +262,8 @@
     <string name="walk_open_short">Directions</string>
     <string name="walk_close">Close walking directions</string>
     <string name="walk_recenter">Recenter</string>
-    <string name="walk_then">Then</string>
-    <string name="walk_then_instruction">Then: %1$s</string>
+    <string name="walk_then_in">Then in %1$s</string>
+    <string name="walk_then_in_instruction">Then in %1$s: %2$s</string>
     <string name="walk_north_up">Show north up</string>
     <string name="walk_heading_up">Turn the map with you</string>
     <string name="walk_overview">Show the full route</string>
@@ -258,6 +272,7 @@
     <string name="walk_progress">Part of the walk done</string>
     <string name="walk_destination">your destination</string>
     <string name="walk_off_route">You are off the route.</string>
+    <string name="walk_off_route_distance">You are %1$s from it.</string>
     <string name="walk_replan">Plan a new route</string>
     <string name="walk_no_location">Allow location to follow your walk.</string>
     <string name="walk_depart">Start walking</string>
@@ -352,6 +367,7 @@
     <string name="boarding_description">Where to board: %1$s, %2$s</string>
     <string name="boarding_exit_number">Near exit %1$s</string>
     <string name="boarding_best_exit">Best exit</string>
+    <string name="boarding_direction">Front</string>
     <string name="boarding_exit_name" translatable="false">%1$s – %2$s</string>
     <string name="boarding_best_exit_description">Best exit: %1$s</string>
     <string name="about_boarding">Boarding positions</string>
@@ -360,7 +376,7 @@
     <string name="itinerary_reset_train">Reset</string>
     <string name="itinerary_changing_train">Updating train…</string>
     <string name="itinerary_loading_departures">Loading departures…</string>
-    <string name="itinerary_change_train_failed">Could not change the train. Try again.</string>
+    <string name="itinerary_change_train_failed">Could not change the train.</string>
     <string name="itinerary_missed_connection">This connection no longer works. Choose another departure for the next leg.</string>
     <string name="itinerary_platform_changed">Platform changed. Follow the signs at the station.</string>
 </resources>
