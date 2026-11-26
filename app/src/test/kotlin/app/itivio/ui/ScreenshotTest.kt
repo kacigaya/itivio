@@ -317,6 +317,22 @@ open class ScreenshotTest {
     }
 
     @Test
+    fun resultsEmpty() = capture("results_empty") {
+        ResultsScreen(
+            wide = false,
+            now = t0.minusSeconds(240),
+            state = PlannerState(
+                optionsLoaded = true,
+                destination = Endpoint.Place(FakeRoutingRepository.location("Potsdamer Platz")),
+                options = JourneyOptions(maxTransfers = 0),
+                results = LoadState.Ready(emptyList()),
+            ),
+            onBack = {}, onOrigin = {}, onDestination = {}, onSwap = {}, onTime = { _, _ -> }, onOptions = {}, onSort = {},
+            onSelect = {}, onOpen = {}, onRetry = {},
+        )
+    }
+
+    @Test
     fun resultsLoading() = capture("results_loading") {
         ResultsScreen(
             wide = false,

@@ -23,6 +23,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 - Pick a nearby stop in one tap. The search on home lists the 3 nearest stops, with their lines and distance.
 - Start each route card with its clock times, such as "8:58 AM – 9:24 AM", so you can compare when routes leave and arrive at a glance.
 - Keep the results buttons in view after you pick a time on another day: the day moves to a second line. With "Arrive by", each route says how much time it leaves you, such as "3 min to spare".
+- When no route is found, offer what can help: "Change the time", and "Reset journey options" when you changed them. "Try again" is gone there, because the same search found nothing.
 
 ## 0.14.2
 
