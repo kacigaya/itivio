@@ -57,7 +57,7 @@ export function DownloadCard({ initial }: { initial: Downloads }) {
           {date && <> · {date}</>}
         </span>
       </p>
-      <a className="button" href={d.universal.url}>
+      <a className="button block" href={d.universal.url}>
         <DownloadIcon />
         Download APK
       </a>
