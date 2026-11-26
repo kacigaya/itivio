@@ -80,6 +80,7 @@
     <string name="disruptions_empty_body">There are no alerts for your saved stops or for the stops near you. Some regions publish no alerts.</string>
     <string name="disruption_show_more">Show the full text</string>
     <string name="disruption_show_less">Show less text</string>
+    <string name="disruption_collapse">Show less</string>
     <string name="disruption_more_information">More information</string>
     <plurals name="disruption_count">
         <item quantity="one">%d alert</item>
