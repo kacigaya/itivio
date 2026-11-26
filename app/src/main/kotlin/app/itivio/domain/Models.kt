@@ -323,6 +323,10 @@ data class JourneyOptions(
 ) {
     val isDefault: Boolean get() = this == JourneyOptions()
 
+    /** How many controls differ from the defaults: each mode turned off counts once. The unused walking speed does not count with the wheelchair switch on. */
+    val changeCount: Int get() =
+        excludedModes.size + listOf(maxTransfers != null, wheelchair || walkingSpeed != WalkingSpeed.NORMAL).count { it }
+
     /** Turns [mode] on or off. The last selectable mode stays on, so a journey can always use transit. */
     fun withMode(mode: TransitMode, allowed: Boolean): JourneyOptions {
         val excluded = if (allowed) excludedModes - mode else excludedModes + mode
@@ -404,3 +408,11 @@ fun disruptionsOf(departures: List<Departure>, shown: Set<Alert> = emptySet()): 
         }
         // Sorting is stable: equal disruptions keep the order of the departures.
         .sortedWith(compareByDescending<Disruption> { it.alert.level }.thenBy { it.alert.effect ?: AlertEffect.NO_EFFECT })
+
+/**
+ * The [disruptions] in stacks: the ones with the same lines, effect, and severity share a stack,
+ * such as works on one line in two periods. Each stack keeps the place of its first disruption.
+ */
+fun stackedDisruptions(disruptions: List<Disruption>): List<List<Disruption>> =
+    disruptions.groupBy { Triple(it.lines.map { line -> line.line.id ?: line.line.name }.toSet(), it.alert.effect, it.alert.level) }
+        .values.toList()

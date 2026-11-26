@@ -40,6 +40,11 @@ import app.itivio.ui.common.Choice
 import app.itivio.ui.common.ChoiceButtons
 import app.itivio.ui.common.Page
 import app.itivio.ui.results.JourneyOptionsDialog
+import app.itivio.domain.WalkingSpeed
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.annotation.RequiresApi
+import android.app.LocaleManager
 
 /**
  * The settings: theme, language, journey options, stored data, and the way to the about screen.
@@ -68,7 +73,7 @@ fun SettingsScreen(
                 SettingsRow(
                     icon = R.drawable.ic_language,
                     title = stringResource(R.string.settings_language),
-                    body = stringResource(R.string.settings_language_body),
+                    body = languageSummary(),
                     onClick = {
                         try {
                             context.startActivity(
@@ -85,7 +90,7 @@ fun SettingsScreen(
             SettingsRow(
                 icon = R.drawable.ic_tune,
                 title = stringResource(R.string.options_title),
-                body = stringResource(R.string.settings_options_body),
+                body = options?.let { optionsSummary(it) } ?: stringResource(R.string.settings_options_body),
                 enabled = options != null,
                 onClick = { editingOptions = true },
             )
@@ -140,6 +145,35 @@ fun SettingsScreen(
             dismissButton = { TextButton(onClick = { confirmingDelete = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
+}
+
+/** The language the app shows, and whether it follows the device or is set for this app. Android 13 and later. */
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@Composable
+private fun languageSummary(): String {
+    val locale = LocalConfiguration.current.locales[0]
+    val name = locale.getDisplayLanguage(locale).replaceFirstChar { it.titlecase(locale) }
+    val ownLanguage = LocalContext.current.getSystemService(LocaleManager::class.java)?.applicationLocales?.isEmpty == false
+    return stringResource(if (ownLanguage) R.string.settings_language_app else R.string.settings_language_system, name)
+}
+
+/** The journey options in a few words: only the ones away from their default. */
+@Composable
+internal fun optionsSummary(options: JourneyOptions): String {
+    if (options.isDefault) return stringResource(R.string.settings_options_default)
+    val parts = buildList {
+        val off = options.excludedModes.size
+        if (off > 0) add(pluralStringResource(R.plurals.settings_options_modes_off, off, off))
+        when (val limit = options.maxTransfers) {
+            null -> Unit
+            0 -> add(stringResource(R.string.settings_options_direct))
+            else -> add(stringResource(R.string.settings_options_max_transfers, pluralStringResource(R.plurals.transfers, limit, limit)))
+        }
+        if (options.wheelchair) add(stringResource(R.string.options_wheelchair))
+        else if (options.walkingSpeed == WalkingSpeed.SLOW) add(stringResource(R.string.settings_options_slow))
+        else if (options.walkingSpeed == WalkingSpeed.FAST) add(stringResource(R.string.settings_options_fast))
+    }
+    return parts.joinToString(" · ")
 }
 
 /** A titled group of rows on one card. */
