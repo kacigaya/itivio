@@ -254,8 +254,8 @@
     <string name="walk_open_short">Itinéraire</string>
     <string name="walk_close">Fermer l’itinéraire à pied</string>
     <string name="walk_recenter">Recentrer</string>
-    <string name="walk_then">Puis</string>
-    <string name="walk_then_instruction">Puis\u00A0: %1$s</string>
+    <string name="walk_then_in">Puis dans %1$s</string>
+    <string name="walk_then_in_instruction">Puis dans %1$s\u00A0: %2$s</string>
     <string name="walk_north_up">Afficher le nord en haut</string>
     <string name="walk_heading_up">Tourner la carte avec vous</string>
     <string name="walk_overview">Afficher tout l’itinéraire</string>
