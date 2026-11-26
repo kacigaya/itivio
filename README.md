@@ -10,7 +10,6 @@
 
 <picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/badge-adfree.svg"><img src="assets/readme/light/badge-adfree.svg" alt="No ads"></picture>
 <picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/badge-private.svg"><img src="assets/readme/light/badge-private.svg" alt="No analytics"></picture>
-<picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/badge-android.svg"><img src="assets/readme/light/badge-android.svg" alt="Android 8+"></picture>
 <picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/badge-m3e.svg"><img src="assets/readme/light/badge-m3e.svg" alt="Material 3 Expressive"></picture>
 <picture><source media="(prefers-color-scheme: dark)" srcset="assets/readme/dark/badge-gpl.svg"><img src="assets/readme/light/badge-gpl.svg" alt="GPL-3.0-or-later"></picture>
 

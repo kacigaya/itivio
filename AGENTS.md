@@ -67,6 +67,7 @@ Read `docs/architecture.md` and `docs/design.md` before changing code.
 
 - `tools/readme-art.py` writes every SVG in `assets/readme/light/` and `assets/readme/dark/` (banner, buttons, badges, section headings, feature cards) and deletes the old ones there. Run it from the repository root with `uv run tools/readme-art.py`; uv installs its one dependency, `uharfbuzz`, from the script header.
 - GitHub shows README SVGs as images, which cannot load fonts. The script writes text as Google Sans Flex outlines (`ROND=100`) from `res/font/google_sans_flex.ttf`, uses the `Theme.kt` colors, and takes icons from the app's vector drawables. It stops when a text does not fit.
+- `assets/demo.gif` has transparent rounded corners with a 24 px radius, because GitHub removes CSS from README HTML. The corner pixels use the transparent palette index 255 of the GIF, and the other pixels keep their original palette indices. Do the same again when the GIF changes.
 - The banner and the feature cards have a phone variant (`-m.svg`), picked with `max-width: 640px` in `<picture>`. Screenshots in `assets/readme/shots/` are copies of the screenshot test references.
 
 ## Docker Android accessibility checks
