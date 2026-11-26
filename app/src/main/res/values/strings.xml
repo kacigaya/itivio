@@ -237,6 +237,7 @@
     <string name="no_transfers">Direct</string>
     <string name="walk_distance">%1$s walk</string>
     <string name="time_range">%1$s – %2$s</string>
+    <string name="route_time_range_description">Leaves %1$s, arrives %2$s</string>
     <string name="cancelled">Cancelled</string>
     <string name="sort_best">Best</string>
     <string name="sort_fastest">Fastest</string>
