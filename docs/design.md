@@ -105,7 +105,7 @@ Departures within 400 m, on one card for each stop name. The cards are in order 
 
 ## Travel time
 
-The results filters are tonal toggle buttons, the same as the saved places on home. A checked button has the `secondary` color. The travel time button, before the sort buttons, opens a time picker bottom sheet. The sheet has a row of connected buttons (Leave at, Arrive by), the same as the walking speed, day chips for the next 7 days, and the M3 Expressive scroll time picker with a keyboard input toggle. "Leave now" resets to the current time. Times use the device time zone. The button shows as checked when the time is not "now".
+The results filters are tonal toggle buttons, the same as the saved places on home. A checked button has the `secondary` color. The travel time button, before the sort buttons, opens a time picker bottom sheet. The sheet has a row of connected buttons (Leave at, Arrive by), the same as the walking speed, day chips for the next 7 days, and the M3 Expressive scroll time picker with a keyboard input toggle. "+15 min", "+30 min", and "+1 h" below the picker move the picked time forward, also past midnight to the next day. A step that goes past the last day of the picker is disabled. A screen reader hears "Add 15 minutes". "Leave now" resets to the current time. Times use the device time zone. The button shows as checked when the time is not "now".
 
 ## Journey options
 
