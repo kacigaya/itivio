@@ -12,7 +12,7 @@
 <img src="assets/readme/banner.webp" alt="itivio" width="100%">
 <br><br>
 <p align="center">
-  <a href="https://github.com/kacigaya/itivio/releases"><img alt="Latest release" src="https://shieldcn.dev/github/release/kacigaya/itivio.svg?variant=secondary"></a>
+  <a href="https://github.com/kacigaya/itivio/releases"><img alt="Latest release" src="https://shieldcn.dev/github/v/release/kacigaya/itivio.svg?variant=secondary"></a>
   <a href="https://github.com/kacigaya/itivio/blob/main/LICENSE"><img alt="GPL-3.0-or-later License" src="https://shieldcn.dev/github/license/kacigaya/itivio.svg?variant=secondary"></a>
   <a href="https://kotlinlang.org"><img alt="Kotlin 2.4.21" src="https://shieldcn.dev/badge/Kotlin-2.4.21-7f52ff.svg?variant=secondary&amp;logo=kotlin"></a>
   <a href="https://developer.android.com"><img alt="Android compile SDK 37" src="https://shieldcn.dev/badge/Android-SDK_37-3ddc84.svg?variant=secondary&amp;logo=android&amp;logoColor=171717"></a>
