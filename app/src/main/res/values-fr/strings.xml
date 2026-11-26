@@ -69,6 +69,13 @@
     <string name="stop_departures">Départs</string>
     <string name="stop_all_lines">Toutes les lignes</string>
     <string name="stop_line_filter">Ligne %1$s</string>
+    <string name="widget_name">Départs</string>
+    <string name="widget_description">Les prochains départs d’un arrêt. Mis à jour environ toutes les 30 minutes, ou quand vous touchez Actualiser.</string>
+    <string name="widget_add">Ajouter à l’écran d’accueil</string>
+    <string name="widget_refresh">Actualiser les départs</string>
+    <string name="widget_pick_stop">Ouvrez un arrêt dans itivio, puis touchez « Ajouter à l’écran d’accueil ».</string>
+    <string name="widget_failed">Impossible de charger les départs.</string>
+    <string name="widget_updated">Mis à jour à %1$s</string>
     <string name="stop_empty_title">Aucun départ à venir</string>
     <string name="stop_empty_body">Les horaires n’ont aucun départ prochain à cet arrêt, ou ils ne couvrent pas cet arrêt.</string>
 

@@ -47,6 +47,7 @@
 - Settings for the theme and the journey options, and an action that deletes all app data.
 - English and French.
 - Light and dark themes with Material You colors.
+- A departures widget for the home screen: the next 3 departures of one stop, with a refresh button. Open a stop and tap "Add to home screen".
 - Layout for phones, tablets, and foldables.
 
 </details>
@@ -118,12 +119,13 @@ Read the [privacy policy](PRIVACY.md) for details about location, network servic
 - "Travel time to Home and Work" in the settings is off by default. When it is on, the home screen sends your position and your Home and Work places to Transitous at full precision, to show the travel time on their buttons. It sends them again after you move about 150 m, at most once every 20 seconds.
 - A departure reminder stays on your device. It uses an Android alarm and a notification, and sends nothing. It works while the app is closed and after a restart. The app asks for the notification permission when you set the first reminder, and sets none if you decline.
 - "Disruption alerts" in the settings is off by default. When it is on, the app sends the IDs of your saved stops to Transitous in the background, about every 30 minutes, and notifies you of new alerts. It sends no location.
+- A departures widget on the home screen sends the ID of its stop to Transitous when Android updates it, about every 30 minutes, and when you tap its refresh button. It sends no location.
 
 The app sends requests to these services only:
 
 | Service | Use | Data sent |
 |---|---|---|
-| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the IDs of your saved stops for the disruptions list and, when "Disruption alerts" is on, in the background, your position with your Home and Work places when "Travel time to Home and Work" is on, the map area you look at when you zoom in to street level |
+| [Transitous](https://transitous.org/) | Search, routes, departures, disruptions, stops on the map, live trip times | Search text, start and end points of a journey, journey options, the IDs of the stops and trips you open, the stop of each departures widget, the IDs of your saved stops for the disruptions list and, when "Disruption alerts" is on, in the background, your position with your Home and Work places when "Travel time to Home and Work" is on, the map area you look at when you zoom in to street level |
 | [IGN Géoplateforme](https://cartes.gouv.fr/) | French address search | Search text, without your location |
 | [OpenFreeMap](https://openfreemap.org/) | Map tiles | The map area you look at |
 

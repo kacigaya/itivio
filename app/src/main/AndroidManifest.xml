@@ -39,6 +39,20 @@
             </intent-filter>
         </activity>
         <receiver
+            android:name=".ui.widget.DeparturesWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/departures_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".ui.widget.WidgetPinnedReceiver"
+            android:exported="false" />
+        <receiver
             android:name=".data.reminders.ReminderReceiver"
             android:exported="false" />
         <receiver

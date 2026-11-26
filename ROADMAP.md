@@ -217,7 +217,7 @@ v1.0.0 ships when all these conditions are true:
 
 These items are not planned before v1.0.0:
 
-- Home screen widget for departures.
+- Home screen widget for departures. Shipped as the departures widget of the stop screen.
 - Departure reminders.
 - Disruption notifications. Shipped as the opt-in "Disruption alerts" in the settings.
 - Disruptions by line, and a list for the full network. This needs a provider endpoint that does not exist today.

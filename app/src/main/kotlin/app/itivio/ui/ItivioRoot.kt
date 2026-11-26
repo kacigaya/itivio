@@ -127,6 +127,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.NotificationManagerCompat
+import app.itivio.domain.StopWidgets
 
 @Serializable data object ExploreRoute : NavKey
 @Serializable data class StopRoute(val stopId: String, val name: String, val latitude: Double, val longitude: Double) : NavKey
@@ -162,6 +163,7 @@ fun ItivioRoot(
         }
     }
     val wide = isWideLayout()
+    val widgets = koinInject<StopWidgets>()
     val reminders = koinInject<ReminderScheduler>()
     val reminder by reminders.active.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -419,6 +421,7 @@ fun ItivioRoot(
                                 },
                                 onToggleFavorite = { places.toggleFavorite(stop) },
                                 onRetry = board::retry,
+                                onAddWidget = if (widgets.canPin) ({ widgets.pin(route.stopId, route.name) }) else null,
                             )
                         }
                         entry<ResultsRoute> {
