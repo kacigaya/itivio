@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -57,12 +56,16 @@ import app.itivio.ui.common.formatTime
 import app.itivio.ui.common.markedStringResource
 import java.time.Duration
 import java.time.Instant
+import androidx.annotation.DrawableRes
 
 // Drag handle, the summary row, and the progress bar.
 val WalkPeekHeight = 156.dp
 
 /** The provider default for walks, used when a leg has no distance or no duration. */
 private const val DEFAULT_METERS_PER_SECOND = 1.2
+
+/** The round map buttons (compass, recenter): one size, with `CircleShape`, so they read as one group. */
+private val MapButtonSize = 56.dp
 
 /**
  * Turn-by-turn directions for one walk. [progress] is the device position on the walk, or null without a fix. The app root replaces
@@ -104,20 +107,37 @@ fun WalkScreen(
         header = {
             route.instructions.getOrNull(index)?.let { instruction ->
                 val distance = if (instruction.maneuver == Maneuver.DEPART) instruction.lengthMeters else instruction.startMeters - along
-                InstructionCard(instruction, distance, destination, route.instructions.getOrNull(index + 1))
+                val thenMeters =
+                    if (instruction.maneuver == Maneuver.DEPART) instruction.lengthMeters
+                    else (instruction.startMeters + instruction.lengthMeters - along).coerceAtLeast(0.0)
+                InstructionCard(instruction, distance, destination, route.instructions.getOrNull(index + 1), thenMeters)
             }
             when {
-                !locationGranted -> Banner(stringResource(R.string.walk_no_location), stringResource(R.string.allow_location), onRequestLocation)
-                progress?.isOffRoute == true -> Banner(stringResource(R.string.walk_off_route), stringResource(R.string.walk_replan), onReplan)
+                !locationGranted -> Banner(
+                    R.drawable.ic_my_location, stringResource(R.string.walk_no_location), null,
+                    stringResource(R.string.allow_location), onRequestLocation,
+                )
+                progress?.isOffRoute == true -> Banner(
+                    R.drawable.ic_warning, stringResource(R.string.walk_off_route),
+                    stringResource(R.string.walk_off_route_distance, formatDistance(progress.offRouteMeters)),
+                    stringResource(R.string.walk_replan), onReplan,
+                )
             }
         },
         controls = {
             if (locationGranted) {
                 CompassButton(northUp, bearing, onNorthUp)
                 if (!following) {
-                    FilledTonalButton(onClick = onRecenter) {
-                        Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
-                        Text(stringResource(R.string.walk_recenter), modifier = Modifier.padding(start = 8.dp))
+                    // The same round button as the compass, so the two map buttons read as one group.
+                    FilledTonalIconButton(
+                        onClick = onRecenter,
+                        shape = CircleShape,
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        ),
+                        modifier = Modifier.size(MapButtonSize),
+                    ) {
+                        Icon(painterResource(R.drawable.ic_my_location), contentDescription = stringResource(R.string.walk_recenter))
                     }
                 }
             }
@@ -141,7 +161,7 @@ fun WalkScreen(
  * card on a tab, as an icon: the sheet lists it in words.
  */
 @Composable
-private fun InstructionCard(instruction: WalkInstruction, meters: Double, destination: String, then: WalkInstruction?) {
+private fun InstructionCard(instruction: WalkInstruction, meters: Double, destination: String, then: WalkInstruction?, thenMeters: Double) {
     val scheme = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth()) {
         Surface(
@@ -175,7 +195,8 @@ private fun InstructionCard(instruction: WalkInstruction, meters: Double, destin
             }
         }
         if (then != null) {
-            val description = stringResource(R.string.walk_then_instruction, instructionText(then, destination))
+            val distance = formatDistance(thenMeters)
+            val description = stringResource(R.string.walk_then_in_instruction, distance, instructionText(then, destination))
             Surface(
                 color = scheme.primaryContainer,
                 contentColor = scheme.onPrimaryContainer,
@@ -188,7 +209,7 @@ private fun InstructionCard(instruction: WalkInstruction, meters: Double, destin
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 10.dp),
                 ) {
-                    Text(stringResource(R.string.walk_then), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.walk_then_in, distance), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Medium)
                     Icon(painterResource(then.maneuver.icon()), contentDescription = null, modifier = Modifier.size(24.dp))
                 }
             }
@@ -209,7 +230,7 @@ private fun CompassButton(northUp: Boolean, bearing: () -> Float, onClick: () ->
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.error,
         ),
-        modifier = Modifier.size(56.dp),
+        modifier = Modifier.size(MapButtonSize),
     ) {
         Icon(
             painterResource(R.drawable.ic_navigation),
@@ -219,25 +240,33 @@ private fun CompassButton(northUp: Boolean, bearing: () -> Float, onClick: () ->
     }
 }
 
+/**
+ * A problem with the walk: an icon, the [title], an optional [detail], and a full-width button.
+ * The button has its own line, so long text in French or at large sizes keeps the full width.
+ */
 @Composable
-private fun Banner(message: String, action: String, onAction: () -> Unit) {
+private fun Banner(@DrawableRes icon: Int, title: String, detail: String?, action: String, onAction: () -> Unit) {
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
         shape = MaterialTheme.shapes.large,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
-        ) {
-            Text(
-                message,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite },
-            )
-            Button(onClick = onAction) { Text(action) }
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(20.dp))
+                Column(Modifier.weight(1f)) {
+                    // Only the title is a live region: the distance changes with each position.
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    )
+                    detail?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                }
+            }
+            Button(onClick = onAction, modifier = Modifier.fillMaxWidth()) { Text(action) }
         }
     }
 }

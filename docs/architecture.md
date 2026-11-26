@@ -100,7 +100,7 @@ MOTIS has no endpoint that lists the disruptions of a network or a line. Alerts 
 
 The mapper reads the severity, the effect, the cause, and the impact periods. Many feeds give no severity; `Alert.level` then uses the effect. A value that the app does not know reads as "unknown". The description can contain HTML. The app shows its text and follows no link in it. The "More information" button opens only `http` and `https` links.
 
-A request that fails leaves out its stop. The tab shows an error only when no request of the first load gives an answer. Other screens keep `withAlerts=false`.
+A request that fails leaves out its stop. The tab shows an error only when no request of the first load gives an answer. The stop departure board also asks with `withAlerts=true`, so it can show the alerts of the stop. Other screens keep `withAlerts=false`.
 
 Limits:
 

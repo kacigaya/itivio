@@ -2,12 +2,19 @@ package app.itivio.ui.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -22,12 +29,23 @@ fun AboutScreen(version: String, onBack: () -> Unit) {
         item(key = "app") {
             Column(Modifier.padding(horizontal = 24.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.ExtraBold)
-                Text(
-                    stringResource(R.string.about_version, version),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Light,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                // The APK is installed by hand, so no store shows the changes of this version.
+                val releaseUrl = stringResource(R.string.about_release_url, version)
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    itemVerticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        stringResource(R.string.about_version, version),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Light,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    FilledTonalButton(onClick = { uriHandler.openUri(releaseUrl) }, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
+                        Icon(painterResource(R.drawable.ic_open_in_new), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                        Text(stringResource(R.string.about_whats_new), modifier = Modifier.padding(start = ButtonDefaults.IconSpacing))
+                    }
+                }
             }
         }
         section("license", R.string.about_license) {

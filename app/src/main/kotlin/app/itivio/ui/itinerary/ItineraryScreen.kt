@@ -11,11 +11,11 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -48,6 +48,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.MultiContentMeasurePolicy
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -68,6 +75,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Canvas
@@ -173,6 +181,7 @@ fun ItineraryScreen(
                             platformChanged = index in selection.platformChangedLegs,
                             failed = selection.failedLeg == index,
                             onSelect = { onSelectDeparture(index, it) },
+                            onRetry = { selection.failedDeparture?.let { onSelectDeparture(index, it) } },
                             onReset = { onResetTrain(index) },
                         )
                         is Leg.Street -> StreetLegItem(leg, onWalk = { onWalk(index) }.takeIf { leg.hasWalkingView })
@@ -234,12 +243,17 @@ private fun Summary(journey: Journey, now: Instant, wide: Boolean) {
                     Tag(R.drawable.ic_directions_walk, distance, Modifier.clearAndSetSemantics { contentDescription = description })
                 }
             }
-            Row(verticalAlignment = Alignment.Bottom) {
+            // The times move below the duration when both do not fit, so "26 min" never breaks.
+            FlowRow(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                itemVerticalAlignment = Alignment.Bottom,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text(
                     amountText(formatDuration(journey.duration), unitScale = 0.5f),
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.weight(1f).semantics { heading() },
+                    modifier = Modifier.padding(end = 12.dp).semantics { heading() },
                 )
                 val range = stringResource(R.string.time_range, departure, arrival)
                 Row(
@@ -262,7 +276,7 @@ private fun Summary(journey: Journey, now: Instant, wide: Boolean) {
 private fun TransitLegItem(
     leg: Leg.Transit, departures: List<Departure>, now: Instant, boarding: BoardingHint?, pending: Boolean,
     loading: Boolean, departuresLoading: Boolean, canSelect: Boolean, changed: Boolean, platformChanged: Boolean, failed: Boolean,
-    onSelect: (Departure) -> Unit, onReset: () -> Unit,
+    onSelect: (Departure) -> Unit, onReset: () -> Unit, onRetry: () -> Unit,
 ) {
     val (lineColor, _) = lineColors(leg.line)
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -313,7 +327,7 @@ private fun TransitLegItem(
                     enter = reveal(), exit = conceal(),
                 ) {
                     TrainDepartures(upcoming, leg.tripId, now, loading, canSelect, changed, failed, onSelect, onReset,
-                        departuresLoading = departuresLoading)
+                        departuresLoading = departuresLoading, onRetry = onRetry)
                 }
                 val stops = leg.intermediateStops
                 FlowRow(
@@ -454,6 +468,7 @@ internal fun TrainDepartures(
     loading: Boolean, canSelect: Boolean, changed: Boolean, failed: Boolean,
     onSelect: (Departure) -> Unit, onReset: () -> Unit,
     departuresLoading: Boolean = false,
+    onRetry: () -> Unit = {},
 ) {
     val scheme = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth().selectableGroup(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -463,11 +478,28 @@ internal fun TrainDepartures(
             if (loading) LoadingIndicator(Modifier.size(32.dp).clearAndSetSemantics {})
             if (changed) TextButton(onClick = onReset, enabled = canSelect) { Text(stringResource(R.string.itinerary_reset_train)) }
         }
-        if (loading || failed) {
-            val status = if (failed) R.string.itinerary_change_train_failed else R.string.itinerary_changing_train
-            Text(stringResource(status),
-                style = MaterialTheme.typography.bodySmall, color = if (failed) scheme.error else scheme.onSurfaceVariant,
+        if (loading) {
+            Text(stringResource(R.string.itinerary_changing_train),
+                style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 4.dp, bottom = 6.dp).semantics { liveRegion = LiveRegionMode.Polite })
+        } else if (failed) {
+            Surface(
+                color = scheme.errorContainer,
+                contentColor = scheme.onErrorContainer,
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                ) {
+                    Icon(painterResource(R.drawable.ic_warning), contentDescription = null, modifier = Modifier.size(20.dp))
+                    Text(stringResource(R.string.itinerary_change_train_failed), style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite })
+                    TextButton(onClick = onRetry, enabled = canSelect) { Text(stringResource(R.string.retry)) }
+                }
+            }
         }
         // The first and the last row have the round corners of the list. The selected row is round on all sides.
         val outer = MaterialTheme.shapes.large.topStart
@@ -689,11 +721,16 @@ private fun StopRow(
     Row(Modifier.height(IntrinsicSize.Min).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.width(RailWidth).fillMaxHeight(), contentAlignment = Alignment.Center) { rail() }
         Column(Modifier.weight(1f).padding(vertical = 6.dp)) {
-            Text(
-                // "My location" has no name.
-                stop.name.ifBlank { stringResource(R.string.search_my_location) },
-                style = if (emphasized) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
-                fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium,
+            NameAndTime(
+                name = {
+                    Text(
+                        // "My location" has no name.
+                        stop.name.ifBlank { stringResource(R.string.search_my_location) },
+                        style = if (emphasized) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+                        fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium,
+                    )
+                },
+                time = time,
             )
             caption?.let {
                 Text(
@@ -704,8 +741,76 @@ private fun StopRow(
                 )
             }
         }
-        time()
     }
+}
+
+/**
+ * The stop name with its time at the end of the same line. When both do not fit, the time moves
+ * below the name, so a long name keeps the full width and does not break early. Internal for the
+ * wrap test.
+ */
+@Composable
+internal fun NameAndTime(name: @Composable () -> Unit, time: @Composable () -> Unit) {
+    Layout(contents = listOf(name, time), measurePolicy = NameAndTimeMeasurePolicy)
+}
+
+/**
+ * The stack measurement of [NameAndTime]: both on one line, or the time under the name. The
+ * intrinsic heights report the stacked sum, because [StopRow] sizes its rail with
+ * `IntrinsicSize.Min`; the default max-of-children policy would stop the rail above the time.
+ */
+private object NameAndTimeMeasurePolicy : MultiContentMeasurePolicy {
+    private val Name = 0
+    private val Time = 1
+
+    override fun MeasureScope.measure(measurables: List<List<Measurable>>, constraints: Constraints): MeasureResult {
+        val gap = 12.dp.roundToPx()
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val timePlaceable = measurables[Time].first().measure(loose)
+        val nameMeasurable = measurables[Name].first()
+        val besideWidth = constraints.maxWidth - gap - timePlaceable.width
+        val oneLine = nameMeasurable.maxIntrinsicWidth(constraints.maxHeight) <= besideWidth
+        val namePlaceable = nameMeasurable.measure(loose.copy(maxWidth = if (oneLine) besideWidth else constraints.maxWidth))
+        return if (oneLine) {
+            val width = constraints.maxWidth
+            val height = maxOf(namePlaceable.height, timePlaceable.height)
+            layout(width, height) {
+                namePlaceable.placeRelative(0, (height - namePlaceable.height) / 2)
+                timePlaceable.placeRelative(width - timePlaceable.width, (height - timePlaceable.height) / 2)
+            }
+        } else {
+            val nameHeight = namePlaceable.height
+            layout(constraints.maxWidth, nameHeight + timePlaceable.height) {
+                namePlaceable.placeRelative(0, 0)
+                timePlaceable.placeRelative(0, nameHeight)
+            }
+        }
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<List<IntrinsicMeasurable>>, height: Int): Int =
+        maxOf(measurables[Name].first().minIntrinsicWidth(height), measurables[Time].first().minIntrinsicWidth(height))
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<List<IntrinsicMeasurable>>, height: Int): Int =
+        measurables[Name].first().maxIntrinsicWidth(height) + 12.dp.roundToPx() + measurables[Time].first().maxIntrinsicWidth(height)
+
+    /** The height at [width]: both beside, or the name over the time. */
+    private fun IntrinsicMeasureScope.heightAt(measurables: List<List<IntrinsicMeasurable>>, width: Int): Int {
+        val time = measurables[Time].first()
+        val timeWidth = time.maxIntrinsicWidth(Constraints.Infinity)
+        val besideWidth = width - 12.dp.roundToPx() - timeWidth
+        val oneLine = measurables[Name].first().maxIntrinsicWidth(Constraints.Infinity) <= besideWidth
+        return if (oneLine) {
+            maxOf(measurables[Name].first().maxIntrinsicHeight(besideWidth), time.maxIntrinsicHeight(timeWidth))
+        } else {
+            measurables[Name].first().maxIntrinsicHeight(width) + time.maxIntrinsicHeight(timeWidth)
+        }
+    }
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<List<IntrinsicMeasurable>>, width: Int): Int =
+        heightAt(measurables, width)
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<List<IntrinsicMeasurable>>, width: Int): Int =
+        heightAt(measurables, width)
 }
 
 /**

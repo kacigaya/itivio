@@ -40,10 +40,12 @@ class StopDeparturesViewModelTest {
         runCurrent()
         assertEquals(LoadState.Ready(listOf(departure)), viewModel.departures.value)
         assertEquals(listOf("s"), repository.stopCalls)
+        assertEquals(listOf("s"), repository.stopAlertCalls)
 
         advanceTimeBy(REFRESH_MILLIS)
         runCurrent()
         assertEquals(listOf("s", "s"), repository.stopCalls)
+        assertEquals(listOf("s", "s"), repository.stopAlertCalls)
     }
 
     @Test

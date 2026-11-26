@@ -2,9 +2,15 @@ package app.itivio.ui.results
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
@@ -42,6 +48,14 @@ import java.time.temporal.ChronoUnit
 
 /** Trips can be planned this many days ahead; longer ranges rarely have reliable timetables. */
 private const val DAYS_AHEAD = 7
+private const val MINUTES_PER_DAY = 24 * 60
+private val TIME_STEPS = listOf(15, 30, 60)
+
+/** The day and the minute of the day [minutes] after [minuteOfDay] on [day], or null past the last day of the picker. */
+internal fun shiftTime(day: Int, minuteOfDay: Int, minutes: Int): Pair<Int, Int>? {
+    val total = day * MINUTES_PER_DAY + minuteOfDay + minutes
+    return (total / MINUTES_PER_DAY to total % MINUTES_PER_DAY).takeIf { it.first < DAYS_AHEAD }
+}
 
 /** The device clock in the app; screenshot tests supply a fixed date and time. */
 internal val LocalTravelClock = staticCompositionLocalOf<Clock?> { null }
@@ -51,6 +65,7 @@ internal val LocalTravelClock = staticCompositionLocalOf<Clock?> { null }
 fun TravelTimeChip(time: Instant?, arriveBy: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     FilterButton(
         label = travelTimeLabel(time, arriveBy),
+        supporting = time?.let { travelDayLabel(it) },
         checked = time != null,
         onClick = onClick,
         leadingIcon = R.drawable.ic_schedule,
@@ -63,15 +78,20 @@ fun TravelTimeChip(time: Instant?, arriveBy: Boolean, onClick: () -> Unit, modif
 private fun travelTimeLabel(time: Instant?, arriveBy: Boolean): String {
     if (time == null) return stringResource(R.string.travel_now)
     val wallClock = LocalTravelClock.current ?: Clock.systemDefaultZone()
-    val zone = wallClock.zone
-    val days = ChronoUnit.DAYS.between(LocalDate.now(wallClock), time.atZone(zone).toLocalDate()).toInt()
-    val clock = formatTime(time, zone)
-    val moment = if (days == 0) clock else stringResource(R.string.travel_day_time, dayLabel(days), clock)
-    return stringResource(if (arriveBy) R.string.travel_arrive_by else R.string.travel_leave_at, moment)
+    return stringResource(if (arriveBy) R.string.travel_arrive_by else R.string.travel_leave_at, formatTime(time, wallClock.zone))
+}
+
+/** The day of [time] for the second line of the chip, or null today. */
+@Composable
+private fun travelDayLabel(time: Instant): String? {
+    val wallClock = LocalTravelClock.current ?: Clock.systemDefaultZone()
+    val days = ChronoUnit.DAYS.between(LocalDate.now(wallClock), time.atZone(wallClock.zone).toLocalDate()).toInt()
+    return if (days == 0) null else dayLabel(days)
 }
 
 @Composable
 private fun dayLabel(offset: Int): String = when (offset) {
+    -1 -> stringResource(R.string.travel_yesterday)
     0 -> stringResource(R.string.travel_today)
     1 -> stringResource(R.string.travel_tomorrow)
     else -> {
@@ -120,7 +140,7 @@ fun TravelTimeDialog(
             )
             TextButton(onClick = { close { onConfirm(null, false) } }) { Text(stringResource(R.string.travel_now)) }
             TextButton(onClick = { close(onDismiss) }) { Text(stringResource(R.string.cancel)) }
-            TextButton(onClick = {
+            Button(onClick = {
                 val picked = today.plusDays(day.toLong()).atTime(clock.hour, clock.minute).atZone(zone).toInstant()
                 close { onConfirm(picked, arrive) }
             }) { Text(stringResource(R.string.done)) }
@@ -152,6 +172,36 @@ private fun TravelTimeFields(
     }
     val shapes = TimePickerDefaults.shapes()
     if (displayMode == TimePickerDisplayMode.Scroll) TimeScroll(clock, shapes) else TimeInput(clock, shapes)
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+    ) {
+        TIME_STEPS.forEach { step ->
+            val next = shiftTime(day, clock.hour * 60 + clock.minute, step)
+            val description = if (step % 60 == 0) {
+                pluralStringResource(R.plurals.travel_add_hours, step / 60, step / 60)
+            } else {
+                pluralStringResource(R.plurals.travel_add_minutes, step, step)
+            }
+            SuggestionChip(
+                onClick = {
+                    next?.let { (nextDay, minute) ->
+                        onDay(nextDay)
+                        clock.hour = minute / 60
+                        clock.minute = minute % 60
+                    }
+                },
+                enabled = next != null,
+                label = {
+                    Text(
+                        if (step % 60 == 0) stringResource(R.string.travel_plus_hours, step / 60)
+                        else stringResource(R.string.travel_plus_minutes, step),
+                    )
+                },
+                modifier = Modifier.semantics { contentDescription = description },
+            )
+        }
+    }
 }
 
 private val TimePickerDisplayModeSaver = Saver<TimePickerDisplayMode, Boolean>(
