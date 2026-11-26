@@ -2,11 +2,31 @@
 
 import { useEffect, useRef } from "react";
 
+const LOOP_START = 3.5;
+const LOOP_END = 19;
+const POSTER_FRAME = 13.5;
+
 export function Demo({ src, poster }: { src: string; poster: string }) {
   const video = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) video.current?.play().catch(() => {});
+    const v = video.current;
+    if (!v) return;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const start = () => {
+      v.currentTime = reduce ? POSTER_FRAME : LOOP_START;
+      if (!reduce) v.play().catch(() => {});
+    };
+    if (v.readyState >= 1) start();
+    else v.addEventListener("loadedmetadata", start, { once: true });
+
+    if (reduce) return;
+    const loop = () => {
+      if (v.currentTime >= LOOP_END) v.currentTime = LOOP_START;
+    };
+    v.addEventListener("timeupdate", loop);
+    return () => v.removeEventListener("timeupdate", loop);
   }, []);
 
   return (
