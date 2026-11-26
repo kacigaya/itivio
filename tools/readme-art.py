@@ -53,7 +53,7 @@ HEADINGS = {
 }
 BUTTONS = {"download": ("Download APK", True), "website": ("Website", False), "privacy": ("Privacy policy", False)}
 BADGES = {
-    "adfree": ("No ads", "ad_off"), "private": ("No analytics", "visibility_off"), "android": ("Android 8+", None),
+    "adfree": ("No ads", "ad_off"), "private": ("No analytics", "visibility_off"),
     "m3e": ("Material 3 Expressive", "palette"), "gpl": ("GPL-3.0-or-later", "license"),
 }
 SYMBOLS = {
