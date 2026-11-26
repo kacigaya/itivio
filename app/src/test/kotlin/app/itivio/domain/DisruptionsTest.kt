@@ -54,6 +54,20 @@ class DisruptionsTest {
         assertEquals(listOf(lift), disruptionsOf(departures, shown = setOf(detour)).map { it.alert })
     }
 
+
+    @Test
+    fun `alerts with the same lines and effect share a stack in place of the first`() {
+        val worksMonday = Alert("RER A works on Monday", "", effect = AlertEffect.REDUCED_SERVICE)
+        val worksFriday = Alert("RER A works on Friday", "", effect = AlertEffect.REDUCED_SERVICE)
+        val disruptions = disruptionsOf(
+            listOf(departure("Nation", "A", worksMonday, worksFriday), departure("Nation", "6", closed)),
+        )
+
+        val stacks = stackedDisruptions(disruptions)
+
+        assertEquals(listOf(listOf(closed), listOf(worksMonday, worksFriday)), stacks.map { stack -> stack.map { it.alert } })
+    }
+
     private fun departure(stop: String, line: String, vararg alerts: Alert) = Departure(
         stop = Stop(stop, GeoPoint(52.5, 13.4), stopId = stop),
         line = Line(line),
