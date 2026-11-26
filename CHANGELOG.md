@@ -5,8 +5,11 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
-- Show more disruptions at once on home. Each one is a short row that opens into the full card.
+## 1.0.0
 
+First stable release for Android 8.0 and later. It updates 0.14.2 in place.
+
+- Show more disruptions at once on home. Each one is a short row that opens into the full card.
 - Make "Done" easier to find in the travel time and journey options sheets. It is now a filled button, and the sheet titles are heavy like the page titles.
 - Move the travel time forward in one tap with "+15 min", "+30 min", and "+1 h" in the travel time sheet.
 - Show how many journey options differ from the defaults on the Reset button, for example "Reset 3 changes".
