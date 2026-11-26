@@ -133,6 +133,8 @@ When the data gives one, a "Where to board" row sits below the line and the dire
 
 When the data knows the exits of the alighting platform, a "Best exit" row sits below the alighting stop: an exit icon, the label, and the exit number and name in bold ("3 – r. M. Chasles"). It shows also when the exit has no single part of the train. See `architecture.md` for the data and its limits.
 
+A stop row puts its time at the end of the name line. When the name and the time do not fit on one line, the time moves below the name, so a long name such as "S+U Alexanderplatz" never breaks early.
+
 The rail and the stop dots draw on the same whole pixel, so the rail has no step below a dot.
 
 The itinerary shows departure skeletons until all eligible legs finish their first departure response and the boarding hints are ready. The hints and departures then appear together. Refreshes keep the displayed times. An empty or failed first response completes that leg’s loading state.
