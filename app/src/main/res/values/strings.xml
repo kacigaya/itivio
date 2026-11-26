@@ -81,6 +81,10 @@
     <string name="disruption_show_more">Show the full text</string>
     <string name="disruption_show_less">Show less text</string>
     <string name="disruption_more_information">More information</string>
+    <plurals name="disruption_count">
+        <item quantity="one">%d alert</item>
+        <item quantity="other">%d alerts</item>
+    </plurals>
     <!-- %1$s and %2$s are a date with a time. -->
     <string name="disruption_until">Until %1$s</string>
     <string name="disruption_from">From %1$s</string>

@@ -80,6 +80,11 @@
     <string name="disruption_show_more">Afficher le texte complet</string>
     <string name="disruption_show_less">Afficher moins de texte</string>
     <string name="disruption_more_information">Plus d’informations</string>
+    <plurals name="disruption_count">
+        <item quantity="one">%d alerte</item>
+        <item quantity="many">%d alertes</item>
+        <item quantity="other">%d alertes</item>
+    </plurals>
     <!-- %1$s and %2$s are a date with a time. -->
     <string name="disruption_until">Jusqu’au %1$s</string>
     <string name="disruption_from">À partir du %1$s</string>
