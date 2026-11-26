@@ -264,6 +264,7 @@
     <string name="walk_progress">Partie de la marche effectuée</string>
     <string name="walk_destination">votre destination</string>
     <string name="walk_off_route">Vous êtes hors de l’itinéraire.</string>
+    <string name="walk_off_route_distance">Vous êtes à %1$s.</string>
     <string name="walk_replan">Calculer un nouvel itinéraire</string>
     <string name="walk_no_location">Autorisez la localisation pour suivre votre marche.</string>
     <string name="walk_depart">Commencez à marcher</string>
