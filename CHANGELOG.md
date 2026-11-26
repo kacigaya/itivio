@@ -20,6 +20,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 - Show the current language and journey options in Settings. The rows now say what is set, for example "2 modes off · At most 1 transfer".
 - Without location access, home now shows a short card with the "Allow location" button in view, in place of a long introduction that pushed the button off the sheet.
 - Make the disruptions list shorter and clearer. Alerts with the same lines and effect, such as works in two periods, share one card. Long titles show 2 lines until you tap. "More information" now names the website it opens.
+- Pick a nearby stop in one tap. The search on home lists the 3 nearest stops, with their lines and distance.
 
 ## 0.14.2
 

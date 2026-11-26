@@ -175,6 +175,18 @@ open class ScreenshotTest {
     }
 
     @Test
+    fun searchNearby() = capture("search_nearby") {
+        val state = rememberSearchBarState()
+        val text = rememberTextFieldState()
+        LaunchedEffect(Unit) { state.animateToExpanded() }
+        // The fixture stops have no IDs; a nearby stop needs one to be a place.
+        val nearby = sampleDepartures.map { group ->
+            group.copy(departures = group.departures.map { it.copy(stop = it.stop.copy(stopId = group.name)) })
+        }
+        LocationSearchView(state, text, "Destination", offerMyLocation = false, onPick = {}, nearby = nearby)
+    }
+
+    @Test
     fun explore() = capture("explore") {
         ExploreScreen(
             wide = false, locationGranted = false, nearby = LoadState.Idle, now = t0,
