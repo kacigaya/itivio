@@ -8,7 +8,8 @@
 GitHub shows README SVGs as images, and an SVG image cannot load a font. So the script shapes
 each text with HarfBuzz and writes it as outlines of the Google Sans Flex font of the app
 (round terminals, as in Theme.kt). Colors come from the light and dark schemes in Theme.kt.
-Icons are the Material Symbols vector drawables of the app.
+Icons are the Material Symbols vector drawables of the app, or Material Symbols Rounded
+(filled, 24 px) from google/material-design-icons in SYMBOLS.
 
 Run it from the repository root after a change to the texts, colors, or font:
 
@@ -52,9 +53,15 @@ HEADINGS = {
 }
 BUTTONS = {"download": ("Download APK", True), "website": ("Website", False), "privacy": ("Privacy policy", False)}
 BADGES = {
-    "adfree": "No ads", "private": "No analytics", "android": "Android 8+",
-    "m3e": "Material 3 Expressive", "gpl": "GPL-3.0-or-later",
+    "adfree": ("No ads", "ad_off"), "private": ("No analytics", "visibility_off"), "android": ("Android 8+", None),
+    "m3e": ("Material 3 Expressive", "palette"), "gpl": ("GPL-3.0-or-later", "license"),
 }
+SYMBOLS = {
+    "ad_off": "M200-120q-33 0-56.5-23.5T120-200v-527l-37-37q-11-11-11-27.5T84-820q11-11 28-11t28 11l680 680q12 12 11.5 28T819-84q-12 11-28 11.5T763-84l-36-36H200Zm0-80h447L200-647v447Zm600-80q-15 0-27.5-10.5T760-321v-319H466q-16 0-30.5-6T410-663L301-772q-10-10-11.5-21t3.5-22q5-11 14-18t23-7h430q33 0 56.5 23.5T840-760v440q0 20-12.5 30T800-280Z",
+    "visibility_off": "M764-84 624-222q-35 11-71 16.5t-73 5.5q-134 0-245-72T61-462q-5-9-7.5-18.5T51-500q0-10 2.5-19.5T61-538q22-39 47-76t58-66l-83-84q-11-11-11-27.5T84-820q11-11 28-11t28 11l680 680q11 11 11.5 27.5T820-84q-11 11-28 11t-28-11ZM480-320q11 0 21-1t20-4L305-541q-3 10-4 20t-1 21q0 75 52.5 127.5T480-320Zm0-480q134 0 245.5 72.5T900-537q5 8 7.5 17.5T910-500q0 10-2 19.5t-7 17.5q-19 37-42.5 70T806-331q-14 14-33 13t-33-15l-80-80q-7-7-9-16.5t1-19.5q4-13 6-25t2-26q0-75-52.5-127.5T480-680q-14 0-26 2t-25 6q-10 3-20 1t-17-9l-33-33q-19-19-12.5-44t31.5-32q25-5 50.5-8t51.5-3Zm79 226q11 13 18.5 28.5T587-513q1 8-6 11t-13-3l-82-82q-6-6-2.5-13t11.5-7q19 2 35 10.5t29 22.5Z",
+    "license": "M480-440q-50 0-85-35t-35-85q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35Zm0 320L293-58q-20 7-36.5-5T240-95v-254q-38-42-59-96t-21-115q0-134 93-227t227-93q134 0 227 93t93 227q0 61-21 115t-59 96v254q0 20-16.5 32T667-58l-187-62Zm0-200q100 0 170-70t70-170q0-100-70-170t-170-70q-100 0-170 70t-70 170q0 100 70 170t170 70Z",
+}
+
 FEATURES = [
     ("directions", "Journey planning", "All modes. Leave now, leave at a time, or arrive by a time."),
     ("subway", "Where to board", "The part of the train nearest to your transfer or exit, in Paris."),
@@ -170,9 +177,12 @@ def greedy(s: str, size: float, wght: int, max_w: float) -> list[str]:
 
 
 def icon(name: str, x: float, y: float, size: float, fill: str) -> str:
-    xml = (DRAWABLES / f"ic_{name}.xml").read_text()
-    vw = float(re.search(r'viewportWidth="([\d.]+)"', xml).group(1))
-    paths = "".join(f'<path d="{d}"/>' for d in re.findall(r'pathData="([^"]+)"', xml))
+    if name in SYMBOLS:
+        vw, paths = 960, f'<path transform="translate(0 960)" d="{SYMBOLS[name]}"/>'
+    else:
+        xml = (DRAWABLES / f"ic_{name}.xml").read_text()
+        vw = float(re.search(r'viewportWidth="([\d.]+)"', xml).group(1))
+        paths = "".join(f'<path d="{d}"/>' for d in re.findall(r'pathData="([^"]+)"', xml))
     return f'<g fill="{fill}" transform="translate({num(x)} {num(y)}) scale({size / vw:.5f})">{paths}</g>'
 
 
@@ -221,14 +231,18 @@ def heading(c: dict, label: str) -> str:
     return svg(w + 2, size * 1.3, label, text(label, 0, size, size, 700, c["on_surface"]))
 
 
-def pill(label: str, height: float, size: float, wght: int, pad: float, fill: str, ink: str, stroke: str | None = None) -> str:
-    w = round(width(label, size, wght) + 2 * pad)
+def pill(label: str, height: float, size: float, wght: int, pad: float, fill: str, ink: str,
+         stroke: str | None = None, glyph: str | None = None) -> str:
+    ico = round(size * 1.2)
+    lead = pad - 2 + ico + 6 if glyph else pad
+    w = round(lead + width(label, size, wght) + pad)
     baseline = height / 2 + size * 0.716 / 2
     edge = f' stroke="{stroke}" stroke-width="1.5"' if stroke else ""
     inset = 0.75 if stroke else 0
     shape_ = (f'<rect x="{inset}" y="{inset}" width="{num(w - 2 * inset)}" height="{num(height - 2 * inset)}" '
               f'rx="{num(height / 2 - inset)}" fill="{fill}"{edge}/>')
-    return svg(w, height, label, shape_ + text(label, pad, baseline, size, wght, ink))
+    mark = icon(glyph, pad - 2, (height - ico) / 2, ico, ink) if glyph else ""
+    return svg(w, height, label, shape_ + mark + text(label, lead, baseline, size, wght, ink))
 
 
 def features(c: dict, mobile: bool) -> str:
@@ -270,8 +284,8 @@ def main():
         for key, (label, filled) in BUTTONS.items():
             fill, ink = (c["primary"], c["on_primary"]) if filled else (c["secondary_container"], c["on_secondary_container"])
             files[f"btn-{key}.svg"] = pill(label, 48, 17, 600, 24, fill, ink)
-        for key, label in BADGES.items():
-            files[f"badge-{key}.svg"] = pill(label, 28, 14, 500, 12, "none", c["on_surface_variant"], c["outline_variant"])
+        for key, (label, glyph) in BADGES.items():
+            files[f"badge-{key}.svg"] = pill(label, 28, 14, 500, 12, "none", c["on_surface_variant"], c["outline_variant"], glyph)
         for name, content in files.items():
             (out / name).write_text(content)
         print(f"{out}: {len(files)} files")
