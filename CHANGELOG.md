@@ -5,6 +5,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 
 ## Unreleased
 
+- Make "Done" easier to find in the travel time and journey options sheets. It is now a filled button, and the sheet titles are heavy like the page titles.
 - Move the travel time forward in one tap with "+15 min", "+30 min", and "+1 h" in the travel time sheet.
 
 ## 0.14.2
