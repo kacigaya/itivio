@@ -157,6 +157,18 @@
     <string name="travel_day_time">%1$s, %2$s</string>
     <string name="travel_today">Aujourd’hui</string>
     <string name="travel_tomorrow">Demain</string>
+    <string name="travel_plus_minutes">+%1$d min</string>
+    <string name="travel_plus_hours">+%1$d h</string>
+    <plurals name="travel_add_minutes">
+        <item quantity="one">Ajouter %d minute</item>
+        <item quantity="many">Ajouter %d minutes</item>
+        <item quantity="other">Ajouter %d minutes</item>
+    </plurals>
+    <plurals name="travel_add_hours">
+        <item quantity="one">Ajouter %d heure</item>
+        <item quantity="many">Ajouter %d heures</item>
+        <item quantity="other">Ajouter %d heures</item>
+    </plurals>
 
     <!-- Journey options -->
     <string name="options_chip">Options</string>

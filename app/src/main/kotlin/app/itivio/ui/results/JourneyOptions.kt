@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
@@ -81,7 +82,7 @@ fun JourneyOptionsDialog(options: JourneyOptions, onDismiss: () -> Unit, onConfi
                 )
             }
             TextButton(onClick = { close(onDismiss) }) { Text(stringResource(R.string.cancel)) }
-            TextButton(onClick = { close { onConfirm(draft) } }) { Text(stringResource(R.string.done)) }
+            Button(onClick = { close { onConfirm(draft) } }) { Text(stringResource(R.string.done)) }
         },
         fieldsArrangement = Arrangement.spacedBy(8.dp),
     ) { JourneyOptionsFields(draft, onChange = { draft = it }) }
