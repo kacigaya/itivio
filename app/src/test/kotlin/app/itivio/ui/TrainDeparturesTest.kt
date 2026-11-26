@@ -136,4 +136,17 @@ class TrainDeparturesTest {
         compose.onNodeWithContentDescription("Where to board", substring = true).assertExists()
         compose.onNodeWithText("Chessy").assertExists()
     }
+
+    @Test fun `a failed change offers to try the same train again`() {
+        var retries = 0
+        compose.setContent {
+            ItivioTheme(dynamicColor = false) {
+                TrainDepartures(listOf(first, second), second.tripId, now, loading = false, canSelect = true,
+                    changed = false, failed = true, onSelect = {}, onReset = {}, onRetry = { retries++ })
+            }
+        }
+        compose.onNodeWithText("Could not change the train.").assertExists()
+        compose.onNodeWithText("Try again").performClick()
+        compose.runOnIdle { assertEquals(1, retries) }
+    }
 }
