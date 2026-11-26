@@ -16,6 +16,7 @@ All 0.x versions are pre-releases. Entries below follow the Git tags. See the
 - Show how far away the next turn is in the walking view: "Then in 20 m". The "Recenter" button is now round like the compass button, so the two map buttons form one group.
 - See what changed in your version: "What’s new" on the about page opens its release notes in the browser.
 - Show the current language and journey options in Settings. The rows now say what is set, for example "2 modes off · At most 1 transfer".
+- Without location access, home now shows a short card with the "Allow location" button in view, in place of a long introduction that pushed the button off the sheet.
 
 ## 0.14.2
 
