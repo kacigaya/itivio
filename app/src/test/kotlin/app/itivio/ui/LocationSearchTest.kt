@@ -6,15 +6,28 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import app.itivio.domain.Departure
+import app.itivio.domain.GeoPoint
+import app.itivio.domain.Line
 import app.itivio.domain.LocationKind
 import app.itivio.domain.SavedPlaces
+import app.itivio.domain.Stop
+import app.itivio.domain.StopTime
+import app.itivio.domain.TransitMode
 import app.itivio.ui.common.UserLocation
+import app.itivio.ui.nearby.StopDepartures
+import app.itivio.ui.nearby.toLocation
 import app.itivio.ui.planner.Endpoint
 import app.itivio.ui.search.LocationSearchView
 import app.itivio.ui.search.SavedPlacesViewModel
@@ -22,6 +35,7 @@ import app.itivio.ui.search.highlightMatch
 import app.itivio.ui.search.SearchViewModel
 import app.itivio.ui.theme.ItivioTheme
 import java.time.Duration
+import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -142,7 +156,32 @@ class LocationSearchTest {
         assertTrue(highlightMatch("Nation", "Bastille").spanStyles.isEmpty())
     }
 
-    private fun showSearch(places: FakePlacesRepository, onPick: (Endpoint) -> Unit) {
+    @Test
+    fun `nearby stops are the three nearest and a saved stop is listed once`() {
+        fun stop(name: String, meters: Double) = StopDepartures(
+            name,
+            listOf(Departure(Stop(name, GeoPoint(0.0, 0.0), stationId = name), Line("U2"), TransitMode.SUBWAY, "Ruhleben", StopTime(Instant.EPOCH), false, "t")),
+            meters,
+        )
+        val saved = stop("Saved", 10.0)
+        val near = stop("Near", 50.0).toLocation()!!
+        val places = FakePlacesRepository(SavedPlaces(favorites = listOf(saved.toLocation()!!)))
+        var picked: Endpoint? = null
+        showSearch(places, nearby = listOf(stop("Far", 900.0), stop("Last", 1200.0), stop("Middle", 300.0), saved, stop("Near", 50.0))) {
+            picked = it
+        }
+
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Saved"))
+        compose.onAllNodesWithText("Saved").assertCountEquals(1)
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Near"))
+        compose.onNodeWithText("Near").performClick()
+        compose.runOnIdle {
+            assertEquals(Endpoint.Place(near), picked)
+            assertTrue(places.saved.value.recents.isEmpty())
+        }
+    }
+
+    private fun showSearch(places: FakePlacesRepository, nearby: List<StopDepartures> = emptyList(), onPick: (Endpoint) -> Unit) {
         val viewModel = SearchViewModel(FakeRoutingRepository(), UserLocation())
         val placesViewModel = SavedPlacesViewModel(places)
         compose.setContent {
@@ -152,7 +191,7 @@ class LocationSearchTest {
                 LaunchedEffect(Unit) { state.animateToExpanded() }
                 LocationSearchView(
                     state, text, "Destination", offerMyLocation = false, onPick = onPick,
-                    viewModel = viewModel, places = placesViewModel,
+                    viewModel = viewModel, places = placesViewModel, nearby = nearby,
                 )
             }
         }

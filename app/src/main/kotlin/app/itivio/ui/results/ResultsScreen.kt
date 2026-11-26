@@ -40,6 +40,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.clickable
@@ -255,6 +257,7 @@ private fun ResultsList(
                         route = route,
                         selected = route.any { it.id == highlighted },
                         now = now,
+                        arriveBy = state.time.takeIf { state.arriveBy },
                         onClick = {
                             onSelect(route.first().id)
                             onOpen(route.first().id)
@@ -310,19 +313,29 @@ internal fun FilterButton(
     enabled: Boolean = true,
     @DrawableRes leadingIcon: Int? = null,
     @DrawableRes trailingIcon: Int? = null,
+    supporting: String? = null,
 ) {
+    val description = if (supporting != null) stringResource(R.string.filter_button_description, label, supporting) else null
     FilledTonalToggleButton(
         checked = checked,
+        modifier = modifier.semantics { description?.let { contentDescription = it } },
         onCheckedChange = { onClick() },
         enabled = enabled,
         contentPadding = if (leadingIcon != null) ButtonDefaults.ButtonWithIconContentPadding else ButtonDefaults.ContentPadding,
-        modifier = modifier,
     ) {
         if (leadingIcon != null) {
             Icon(painterResource(leadingIcon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
             Spacer(Modifier.width(ButtonDefaults.IconSpacing))
         }
-        Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        if (supporting == null) {
+            Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        } else {
+            // A second, small line keeps a long label short, so the next buttons stay in view.
+            Column {
+                Text(label, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                Text(supporting, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+            }
+        }
         if (trailingIcon != null) {
             Icon(painterResource(trailingIcon), contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
         }
