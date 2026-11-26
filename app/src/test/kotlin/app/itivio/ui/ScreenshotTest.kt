@@ -175,6 +175,18 @@ open class ScreenshotTest {
     }
 
     @Test
+    fun searchNearby() = capture("search_nearby") {
+        val state = rememberSearchBarState()
+        val text = rememberTextFieldState()
+        LaunchedEffect(Unit) { state.animateToExpanded() }
+        // The fixture stops have no IDs; a nearby stop needs one to be a place.
+        val nearby = sampleDepartures.map { group ->
+            group.copy(departures = group.departures.map { it.copy(stop = it.stop.copy(stopId = group.name)) })
+        }
+        LocationSearchView(state, text, "Destination", offerMyLocation = false, onPick = {}, nearby = nearby)
+    }
+
+    @Test
     fun explore() = capture("explore") {
         ExploreScreen(
             wide = false, locationGranted = false, nearby = LoadState.Idle, now = t0,
@@ -441,7 +453,7 @@ open class ScreenshotTest {
     @Test
     fun trainChoicesFailed() = capture("train_choices_failed") {
         app.itivio.ui.itinerary.TrainDepartures(
-            departures = sampleDepartures.first().departures,
+            departures = ruhlebenTrains.take(3).map { it.withArrival() },
             selectedTripId = "d1", now = t0,
             loading = false, canSelect = true, changed = false, failed = true,
             onSelect = {}, onReset = {},
@@ -521,6 +533,10 @@ open class ScreenshotTest {
             StopTime(t0.plusSeconds(min * 60), liveDelay?.let { t0.plusSeconds((min + it) * 60) })
         fun stop(name: String, track: String? = null) = Stop(name, GeoPoint(52.5, 13.4), track = track, zone = berlin)
 
+        /** The destination arrival of a train choice: 21 minutes after its time, live when the departure is. */
+        fun Departure.withArrival() =
+            copy(alightTime = StopTime(time.scheduled.plusSeconds(1_260), time.estimated?.plusSeconds(1_260)))
+
         val sampleDepartures: List<StopDepartures> = NearbyViewModel.group(
             listOf(
                 Departure(stop("S+U Alexanderplatz", "2"), Line("U2", color = 0xFFDA421E.toInt(), textColor = 0xFFFFFFFF.toInt()),
@@ -539,12 +555,21 @@ open class ScreenshotTest {
             from = GeoPoint(52.5013, 13.4),
         )
 
-        /** Train choices in each state: late and selected, planned, live, and cancelled. Each has its arrival. */
-        val sampleTrains: List<Departure> = sampleDepartures.first().departures.let { trains ->
-            (trains.take(1).map { it.copy(time = StopTime(it.time.scheduled, it.time.scheduled.plusSeconds(600))) } +
-                trains.drop(1) + trains[1].copy(tripId = "d7", cancelled = true, time = at(12)))
-                .map { it.copy(alightTime = StopTime(it.time.scheduled.plusSeconds(1_260), it.time.estimated?.plusSeconds(1_260))) }
+        /** U2 trains towards Ruhleben, the only ones a leg can offer: late and selected, planned, live, and cancelled. */
+        val ruhlebenTrains: List<Departure> = sampleDepartures.first().departures.first().let { train ->
+            listOf(
+                train,
+                train.copy(tripId = "d2", time = at(7)),
+                train.copy(tripId = "d3", time = at(14, 0)),
+                train.copy(tripId = "d7", time = at(19), cancelled = true),
+            )
         }
+
+        /** Train choices in each state. Each has its arrival. */
+        val sampleTrains: List<Departure> =
+            (ruhlebenTrains.take(1).map { it.copy(time = StopTime(it.time.scheduled, it.time.scheduled.plusSeconds(600))) } +
+                ruhlebenTrains.drop(1))
+                .map { it.withArrival() }
 
         val sampleExit = app.itivio.domain.StationExit("50147981", "3", "r. M. Chasles", GeoPoint(52.509, 13.376))
 

@@ -12,20 +12,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalUriHandler
@@ -60,6 +58,20 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
+import app.itivio.domain.stackedDisruptions
+import androidx.core.net.toUri
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
 
 /**
  * The service disruptions on the saved stops and on the stops near the device. [now] picks the
@@ -83,9 +95,10 @@ fun DisruptionsScreen(state: LoadState<DisruptionGroups>, now: Instant, onRetry:
 
 /**
  * Adds the disruptions to a list: the two groups, or the loading, empty, or error state. The
- * page and the home sheet show the same list.
+ * page and the home sheet show the same list; the home sheet has less room, so it shows [compact]
+ * rows that open into the full card.
  */
-fun LazyListScope.disruptions(state: LoadState<DisruptionGroups>, now: Instant, onRetry: () -> Unit) {
+fun LazyListScope.disruptions(state: LoadState<DisruptionGroups>, now: Instant, onRetry: () -> Unit, compact: Boolean = false) {
     when (state) {
         LoadState.Idle, LoadState.Loading -> item(key = "loading") {
             Skeleton {
@@ -106,13 +119,13 @@ fun LazyListScope.disruptions(state: LoadState<DisruptionGroups>, now: Instant, 
                 )
             }
         } else {
-            group("saved", R.string.disruptions_saved, state.value.saved, now)
-            group("nearby", R.string.disruptions_nearby, state.value.nearby, now)
+            group("saved", R.string.disruptions_saved, state.value.saved, now, compact)
+            group("nearby", R.string.disruptions_nearby, state.value.nearby, now, compact)
         }
     }
 }
 
-private fun LazyListScope.group(key: String, title: Int, disruptions: List<Disruption>, now: Instant) {
+private fun LazyListScope.group(key: String, title: Int, disruptions: List<Disruption>, now: Instant, compact: Boolean) {
     if (disruptions.isEmpty()) return
     item(key = "$key-title") {
         Text(
@@ -122,8 +135,83 @@ private fun LazyListScope.group(key: String, title: Int, disruptions: List<Disru
             modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 4.dp).semantics { heading() },
         )
     }
-    items(disruptions, key = { "$key-${it.alert.hashCode()}" }) { disruption ->
-        DisruptionCard(disruption, now, Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+    itemsIndexed(stackedDisruptions(disruptions), key = { index, _ -> "$key-$index" }) { _, stack ->
+        val modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        if (compact) CompactDisruption(stack, now, modifier) else DisruptionCard(stack, now, modifier)
+    }
+}
+
+/**
+ * A disruption stack in one short row: the effect, the lines, the first header on one line, and
+ * the stops with the time period. A tap opens the full card in place, with a button to close it.
+ * The full card keeps its own alert expansion, so closing it starts again with every alert shut.
+ */
+@Composable
+private fun CompactDisruption(stack: List<Disruption>, now: Instant, modifier: Modifier = Modifier) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    if (open) {
+        Column(modifier) {
+            DisruptionCard(stack, now)
+            TextButton(onClick = { open = false }, modifier = Modifier.align(Alignment.End)) {
+                Text(stringResource(R.string.disruption_collapse))
+            }
+        }
+        return
+    }
+    val first = stack.first()
+    val scheme = MaterialTheme.colorScheme
+    Surface(
+        color = scheme.surfaceContainerHigh,
+        shape = MaterialTheme.shapes.largeIncreased,
+        modifier = modifier.fillMaxWidth().clip(MaterialTheme.shapes.largeIncreased)
+            .clickable(onClickLabel = stringResource(R.string.disruption_show_more)) { open = true },
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                StackHeader(stack, 4.dp)
+                Text(first.alert.header, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                val place = listOfNotNull(first.stops.joinToString(", ").ifEmpty { null }, periodText(first.alert.impactPeriods, now))
+                if (place.isNotEmpty()) {
+                    Text(place.joinToString(" · "), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Light,
+                        color = scheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            Icon(painterResource(R.drawable.ic_expand_more), contentDescription = null, tint = scheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** The effect, the lines, and the alert count of a stack, shown once for the whole stack. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun StackHeader(stack: List<Disruption>, spacing: Dp) {
+    val first = stack.first()
+    val scheme = MaterialTheme.colorScheme
+    val severe = first.alert.level == AlertSeverity.SEVERE
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        val effect = stringResource(first.alert.effect.label())
+        when {
+            severe -> Tag(R.drawable.ic_warning, effect, color = scheme.error, contentColor = scheme.onError)
+            first.alert.level >= AlertSeverity.WARNING -> Tag(R.drawable.ic_warning, effect)
+            else -> Tag(R.drawable.ic_info, effect)
+        }
+        first.lines.forEach { LineBadge(it.line, it.mode) }
+        if (stack.size > 1) {
+            Text(
+                pluralStringResource(R.plurals.disruption_count, stack.size, stack.size),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+            )
+        }
     }
 }
 
@@ -157,36 +245,34 @@ private val BlankLines = Regex("\\n\\s*\\n")
 /** How many lines of the description show before the user opens the card. */
 private const val CLOSED_LINES = 3
 
+/** How many lines of the header show before the user opens the card. */
+private const val CLOSED_HEADER_LINES = 2
+
 /**
- * One disruption: its effect, the lines, the header, the time period and the cause, the stops, the
- * description, and the link. A severe disruption has the error container only on its header band;
- * the body stays on the card color, so the long text is easy to read. A tap shows the full
- * description.
+ * A stack of disruptions with the same lines and effect: the effect and the lines once, then each
+ * alert with its header, its time period and cause, its stops, its description, and its link. A
+ * severe stack has the error container only on its header band; the body stays on the card color,
+ * so the long text is easy to read. A tap on an alert shows its full header and description.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DisruptionCard(disruption: Disruption, now: Instant, modifier: Modifier = Modifier) {
-    val alert = disruption.alert
+private fun DisruptionCard(stack: List<Disruption>, now: Instant, modifier: Modifier = Modifier) {
+    val first = stack.first()
     val scheme = MaterialTheme.colorScheme
-    val severe = alert.level == AlertSeverity.SEVERE
-    var open by rememberSaveable { mutableStateOf(false) }
-    // The provider can send HTML. The text is shown, and no link in it is followed. Paragraphs
-    // become single line breaks, so the closed card does not spend its lines on blank ones.
-    val description = remember(alert.description) {
-        AnnotatedString.fromHtml(alert.description).text.trim().replace(BlankLines, "\n")
-    }
+    val severe = first.alert.level == AlertSeverity.SEVERE
+    val single = stack.size == 1
+    val opened = rememberSaveable(saver = listSaver(save = { it.toList() }, restore = { it.toMutableStateList() })) { mutableStateListOf<Int>() }
+    var headerClipped by remember { mutableStateOf(false) }
+    val expandable = single && plainDescription(first.alert.description).let { it.isNotEmpty() && it != first.alert.header }
+    fun isOpen(index: Int) = index in opened
+    fun toggle(index: Int) { if (!opened.remove(index)) opened.add(index) }
     Surface(
         color = scheme.surfaceContainerHigh,
         contentColor = scheme.onSurface,
         shape = MaterialTheme.shapes.largeIncreased,
         modifier = modifier.fillMaxWidth(),
     ) {
-        Column(
-            Modifier.clickable(
-                enabled = description.isNotEmpty(),
-                onClickLabel = stringResource(if (open) R.string.disruption_show_less else R.string.disruption_show_more),
-            ) { open = !open },
-        ) {
+        Column {
             Surface(
                 color = if (severe) scheme.errorContainer else Color.Transparent,
                 contentColor = if (severe) scheme.onErrorContainer else scheme.onSurface,
@@ -194,50 +280,83 @@ private fun DisruptionCard(disruption: Disruption, now: Instant, modifier: Modif
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = if (severe) 16.dp else 0.dp),
+                    modifier = Modifier
+                        .then(if (single) Modifier.clickable(enabled = expandable || headerClipped || isOpen(0), onClickLabel = openLabel(isOpen(0))) { toggle(0) } else Modifier)
+                        .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = if (severe) 16.dp else 0.dp),
                 ) {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        itemVerticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        val effect = stringResource(alert.effect.label())
-                        when {
-                            severe -> Tag(R.drawable.ic_warning, effect, color = scheme.error, contentColor = scheme.onError)
-                            alert.level >= AlertSeverity.WARNING -> Tag(R.drawable.ic_warning, effect)
-                            else -> Tag(R.drawable.ic_info, effect)
-                        }
-                        disruption.lines.forEach { LineBadge(it.line, it.mode) }
-                    }
-                    Text(alert.header, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    StackHeader(stack, 6.dp)
+                    if (single) Header(first.alert.header, isOpen(0)) { headerClipped = it }
                 }
             }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = if (severe) 12.dp else 8.dp, bottom = 16.dp),
-            ) {
-                val muted = scheme.onSurfaceVariant
-                val period = periodText(alert.impactPeriods, now)
-                val cause = alert.cause?.let { stringResource(it.label()) }
-                listOfNotNull(period, cause).takeIf { it.isNotEmpty() }?.let {
-                    Detail(if (period != null) R.drawable.ic_schedule else R.drawable.ic_info, it.joinToString(" · "), muted)
-                }
-                if (disruption.stops.isNotEmpty()) Detail(R.drawable.ic_location_on, disruption.stops.joinToString(", "), muted)
-                if (description.isNotEmpty() && description != alert.header) {
-                    Text(
-                        description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = if (open) Int.MAX_VALUE else CLOSED_LINES,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                // The link comes from the provider: only web links open.
-                alert.url?.takeIf { it.startsWith("https://") || it.startsWith("http://") }?.let { url ->
-                    val uriHandler = LocalUriHandler.current
-                    TextButton(onClick = { uriHandler.openUri(url) }) {
-                        Icon(painterResource(R.drawable.ic_open_in_new), contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text(stringResource(R.string.disruption_more_information), modifier = Modifier.padding(start = 8.dp))
-                    }
+            stack.forEachIndexed { index, disruption ->
+                if (index > 0) HorizontalDivider(Modifier.padding(horizontal = 16.dp), color = scheme.outlineVariant)
+                AlertBody(
+                    disruption, now, open = isOpen(index), showHeader = !single,
+                    top = if (single && severe) 12.dp else if (single) 8.dp else 12.dp,
+                    onToggle = { toggle(index) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun openLabel(open: Boolean): String = stringResource(if (open) R.string.disruption_show_less else R.string.disruption_show_more)
+
+@Composable
+private fun Header(header: String, open: Boolean, onClipped: (Boolean) -> Unit = {}) {
+    Text(
+        header,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        maxLines = if (open) Int.MAX_VALUE else CLOSED_HEADER_LINES,
+        overflow = TextOverflow.Ellipsis,
+        onTextLayout = { onClipped(it.hasVisualOverflow) },
+    )
+}
+
+private fun plainDescription(html: String): String = AnnotatedString.fromHtml(html).text.trim().replace(BlankLines, "\n")
+
+/** One alert of a stack: its header when the stack has more than one, then its details. A tap opens it. */
+@Composable
+private fun AlertBody(disruption: Disruption, now: Instant, open: Boolean, showHeader: Boolean, top: Dp, onToggle: () -> Unit) {
+    val alert = disruption.alert
+    val scheme = MaterialTheme.colorScheme
+    // The provider can send HTML. The text is shown, and no link in it is followed. Paragraphs
+    // become single line breaks, so the closed card does not spend its lines on blank ones.
+    val description = remember(alert.description) { plainDescription(alert.description) }
+    val canOpen = description.isNotEmpty() || showHeader
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .clickable(enabled = canOpen, onClickLabel = openLabel(open), onClick = onToggle)
+            .padding(start = 16.dp, end = 16.dp, top = top, bottom = 16.dp),
+    ) {
+        if (showHeader) Header(alert.header, open)
+        val muted = scheme.onSurfaceVariant
+        val period = periodText(alert.impactPeriods, now)
+        val cause = alert.cause?.let { stringResource(it.label()) }
+        listOfNotNull(period, cause).takeIf { it.isNotEmpty() }?.let {
+            Detail(if (period != null) R.drawable.ic_schedule else R.drawable.ic_info, it.joinToString(" · "), muted)
+        }
+        if (disruption.stops.isNotEmpty()) Detail(R.drawable.ic_location_on, disruption.stops.joinToString(", "), muted)
+        if (description.isNotEmpty() && description != alert.header) {
+            Text(
+                description,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = if (open) Int.MAX_VALUE else CLOSED_LINES,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        // The link comes from the provider: only web links open. The button names the site it opens.
+        alert.url?.takeIf { it.startsWith("https://") || it.startsWith("http://") }?.let { url ->
+            val uriHandler = LocalUriHandler.current
+            val site = remember(url) { url.toUri().host?.removePrefix("www.") }
+            FilledTonalButton(onClick = { uriHandler.openUri(url) }, contentPadding = ButtonDefaults.ButtonWithIconContentPadding) {
+                Icon(painterResource(R.drawable.ic_open_in_new), contentDescription = null, modifier = Modifier.size(18.dp))
+                Column(Modifier.padding(start = 8.dp)) {
+                    Text(stringResource(R.string.disruption_more_information))
+                    site?.let { Text(it, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Normal) }
                 }
             }
         }
