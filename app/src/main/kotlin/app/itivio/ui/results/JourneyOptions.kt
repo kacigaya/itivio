@@ -76,7 +76,10 @@ fun JourneyOptionsDialog(options: JourneyOptions, onDismiss: () -> Unit, onConfi
         onDismiss = onDismiss,
         buttons = { close ->
             TextButton(onClick = { draft = JourneyOptions() }, enabled = !draft.isDefault) {
-                Text(stringResource(R.string.options_reset))
+                Text(
+                    if (draft.isDefault) stringResource(R.string.options_reset)
+                    else pluralStringResource(R.plurals.options_reset_count, draft.changeCount, draft.changeCount),
+                )
             }
             TextButton(onClick = { close(onDismiss) }) { Text(stringResource(R.string.cancel)) }
             Button(onClick = { close { onConfirm(draft) } }) { Text(stringResource(R.string.done)) }
