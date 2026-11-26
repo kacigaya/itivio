@@ -231,6 +231,7 @@
     <string name="no_transfers">Direct</string>
     <string name="walk_distance">%1$s à pied</string>
     <string name="time_range">%1$s – %2$s</string>
+    <string name="route_time_range_description">Départ à %1$s, arrivée à %2$s</string>
     <string name="cancelled">Supprimé</string>
     <string name="sort_best">Meilleur</string>
     <string name="sort_fastest">Le plus rapide</string>
