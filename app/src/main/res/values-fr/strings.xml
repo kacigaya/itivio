@@ -65,6 +65,8 @@
     <string name="stop_directions">Itinéraire vers cet arrêt</string>
     <string name="stop_favorite">Favori</string>
     <string name="stop_departures">Départs</string>
+    <string name="stop_all_lines">Toutes les lignes</string>
+    <string name="stop_line_filter">Ligne %1$s</string>
     <string name="stop_empty_title">Aucun départ à venir</string>
     <string name="stop_empty_body">Les horaires n’ont aucun départ prochain à cet arrêt, ou ils ne couvrent pas cet arrêt.</string>
 

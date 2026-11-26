@@ -30,7 +30,7 @@
 - Place and stop search with suggestions.
 - Favorite places and stops, Home and Work shortcuts, and recent searches. They stay on your device.
 - Departures from stops near you, with live countdowns.
-- A departure board for each stop. Tap a stop on the map, or select "Show departures" for a stop in the search.
+- A departure board for each stop, with filters for each line and service alerts for the selected line. Tap a stop on the map, or select "Show departures" for a stop in the search.
 - Journey planning with all public transport modes. Leave now, leave at a time, or arrive by a time.
 - Journey options: transport modes, a transfer limit, wheelchair-accessible routing, and walking speed. The app keeps them between starts.
 - Routes grouped by line, with the next departures of each route.
