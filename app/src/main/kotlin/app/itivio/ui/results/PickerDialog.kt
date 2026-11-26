@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.itivio.ui.common.BackGestureEasing
 import app.itivio.ui.common.BackMillis
@@ -96,14 +97,19 @@ internal fun PickerDialog(
             modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(title, style = MaterialTheme.typography.headlineSmall)
+            Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
             Column(
                 horizontalAlignment = fieldsAlignment,
                 verticalArrangement = fieldsArrangement,
                 modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
                 content = fields,
             )
-            FlowRow(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth(), content = { buttons(close) })
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
+                itemVerticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
+                content = { buttons(close) },
+            )
         }
     }
 }
