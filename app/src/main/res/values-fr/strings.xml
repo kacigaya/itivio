@@ -157,6 +157,18 @@
     <string name="travel_day_time">%1$s, %2$s</string>
     <string name="travel_today">Aujourd’hui</string>
     <string name="travel_tomorrow">Demain</string>
+    <string name="travel_plus_minutes">+%1$d min</string>
+    <string name="travel_plus_hours">+%1$d h</string>
+    <plurals name="travel_add_minutes">
+        <item quantity="one">Ajouter %d minute</item>
+        <item quantity="many">Ajouter %d minutes</item>
+        <item quantity="other">Ajouter %d minutes</item>
+    </plurals>
+    <plurals name="travel_add_hours">
+        <item quantity="one">Ajouter %d heure</item>
+        <item quantity="many">Ajouter %d heures</item>
+        <item quantity="other">Ajouter %d heures</item>
+    </plurals>
 
     <!-- Journey options -->
     <string name="options_chip">Options</string>
@@ -174,6 +186,11 @@
     <string name="options_speed_normal">Normale</string>
     <string name="options_speed_fast">Rapide</string>
     <string name="options_reset">Réinitialiser</string>
+    <plurals name="options_reset_count">
+        <item quantity="one">Annuler %d modification</item>
+        <item quantity="many">Annuler %d modifications</item>
+        <item quantity="other">Annuler %d modifications</item>
+    </plurals>
 
     <!-- Results -->
     <string name="results_empty_title">Aucun itinéraire trouvé</string>
@@ -346,7 +363,7 @@
     <string name="itinerary_reset_train">Réinitialiser</string>
     <string name="itinerary_changing_train">Mise à jour du train…</string>
     <string name="itinerary_loading_departures">Chargement des départs…</string>
-    <string name="itinerary_change_train_failed">Impossible de changer de train. Réessayez.</string>
+    <string name="itinerary_change_train_failed">Impossible de changer de train.</string>
     <string name="itinerary_missed_connection">Cette correspondance n’est plus possible. Choisissez un autre départ pour la prochaine étape.</string>
     <string name="itinerary_platform_changed">Le quai a changé. Suivez les panneaux dans la gare.</string>
 </resources>
